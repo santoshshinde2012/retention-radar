@@ -1,170 +1,157 @@
 # Retention Radar
 
-Human-in-the-loop churn ranking for a fictional AI platform — ranks quiet fade-out risk and returns a flight checklist for a human. It does **not** auto-cancel anyone.
+Human-in-the-loop churn ranking for a fictional AI platform.
+
+It ranks quiet fade-out risk and returns a checklist for a human. It does **not** auto-cancel anyone.
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](runtime.txt)
-[![pytest](https://img.shields.io/badge/pytest-21%20pass-brightgreen.svg)](#quick-start)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**GitHub:** [santoshshinde2012/retention-radar](https://github.com/santoshshinde2012/retention-radar)
+**Repo:** [santoshshinde2012/retention-radar](https://github.com/santoshshinde2012/retention-radar)
 
-## What this is / What this is not
+---
 
-| Is | Is not |
-|----|--------|
-| FOSS teaching codebase for train → evaluate → serve | Production CRM or billing integration |
-| Synthetic users only (seed **42**); no real PII | A claim of production ROI or fairness audit |
-| HITL policy (`auto_action: none`) | Automated account cancellation |
-| Source of truth for **code + benchmarks + results analysis** | Article / Medium home (authored separately, internal) |
-| Cookiecutter-data-science + src-layout conventions | Airflow / DVC / MLflow / FastAPI stack |
+## What this is
 
-**Seed 42 reference (one record):** validate → 22 features → raw **0.043** → calibrated **0.017** → band **low** → SHAP → HITL **monitor** (`auto_action: none`). Honest ladder (test AUC from [`models/metrics.json`](models/metrics.json)): LogReg **0.872** / CatBoost **0.872** / XGB Optuna **0.870** / RF **0.868** / LightGBM **0.865**; Brier **0.138 → 0.106**. Serving hero = calibrated XGB.
+| This project | Not this project |
+|--------------|------------------|
+| FOSS teaching path: train → evaluate → serve | Production CRM or billing |
+| Synthetic users (seed **42**), no real PII | ROI or fairness claims |
+| HITL only (`auto_action: none`) | Auto account cancellation |
+| Public **code + benchmarks + results** | Medium article home (internal) |
 
-## Repository map
+**One-record example (seed 42):** raw **0.043** → calibrated **0.017** → band **low** → HITL **monitor**.
+
+**Honest ladder (test AUC):** LogReg / CatBoost **0.872** · Optuna XGB **0.870** · RF **0.868** · LightGBM **0.865**. Serving hero = **calibrated XGBoost**. Full tables: [`models/metrics.json`](models/metrics.json) · [results/BENCHMARKS.md](results/BENCHMARKS.md).
+
+---
+
+## Related repos
 
 | Repo | Role |
 |------|------|
-| **This repo (`retention-radar`)** | **Public** use-case **source code + benchmarks + results analysis** |
-| Articles (authored separately) | Medium series is written in an **internal** workspace — not a public reader destination; **this repo is the public code home** |
-| [local-data-lakehouse](https://github.com/santoshshinde2012/local-data-lakehouse) | **Data foundation / SoR** (SILO · N=5000 gold) → sync into `data/external/` |
+| **This repo** | Public code, benchmarks, and results |
+| [local-data-lakehouse](https://github.com/santoshshinde2012/local-data-lakehouse) | Data foundation (SILO · N=5000 gold) |
+| Articles | Written in a separate **internal** workspace |
 
-Dual-world notes: [docs/data/data-foundation-lakehouse.md](docs/data/data-foundation-lakehouse.md). Published ladder stays on the synthetic generator.
+---
 
 ## Requirements
 
-- **Python 3.11+** (`runtime.txt` pins `python-3.11`)
-- Linux, macOS, or Windows (WSL recommended on Windows)
-- CPU-only; no GPU required
-- **macOS:** `brew install libomp` if XGBoost/LightGBM fail to load OpenMP (`libomp`); CatBoost is pip-only on most Macs
+- Python **3.11+**
+- Linux, macOS, or Windows (WSL on Windows)
+- CPU only
+- **macOS:** `brew install libomp` if XGBoost or LightGBM fail to load
 
-## Installation
+---
+
+## Install
 
 ```bash
 git clone https://github.com/santoshshinde2012/retention-radar.git
 cd retention-radar
 python3 -m venv .venv
-source .venv/bin/activate   # Windows: .venv\Scripts\activate
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 pip install -e .
-# If you skip editable install, set:
-# export PYTHONPATH="$(pwd)/src"
 ```
 
-Optional: `make setup` (venv + `pip install -r requirements.txt` + `pip install -e .`).  
-Env template: [`.env.example`](.env.example) (`CHURN_DATA_SOURCE`, `N_USERS`, `N_OPTUNA_TRIALS`).
+Or: `make setup`
+
+Optional env template: [`.env.example`](.env.example)
+
+---
 
 ## Quick start
 
 ```bash
-chmod +x scripts/run_all.sh
 CHURN_DATA_SOURCE=synthetic ./scripts/run_all.sh
 ```
 
-1. Cite holdout metrics from **`models/metrics.json`**.
-2. Read the narrative in [results/BENCHMARKS.md](results/BENCHMARKS.md) and [results/SANTOSH_ANALYSIS.md](results/SANTOSH_ANALYSIS.md).
-3. Launch the UI: `streamlit run app/streamlit_app.py` (or `make ui`).
-4. Run tests: `CHURN_DATA_SOURCE=synthetic PYTHONPATH=src pytest -q` (or `make test`).
+Then:
 
-Faster smoke: `N_USERS=800 N_OPTUNA_TRIALS=5 ./scripts/run_all.sh`.
+| Step | Command / file |
+|------|----------------|
+| Cite metrics | [`models/metrics.json`](models/metrics.json) |
+| Read benchmarks | [results/BENCHMARKS.md](results/BENCHMARKS.md) |
+| Score Santosh | `make infer` |
+| Open UI | `make ui` |
+| Run tests | `make test` |
 
-Score the Santosh record: `make infer` (writes `artifacts/santosh_decision_packet.json`).
+Faster smoke:
+
+```bash
+N_USERS=800 N_OPTUNA_TRIALS=5 CHURN_DATA_SOURCE=synthetic ./scripts/run_all.sh
+```
 
 ### Make targets
 
+| Target | What it does |
+|--------|----------------|
+| `make setup` | Create venv and install |
+| `make run` | Synthetic full pipeline |
+| `make test` | Pytest (synthetic) |
+| `make infer` | Santosh decision packet |
+| `make ui` | Streamlit UI |
+| `make run-lakehouse` | Lakehouse E2E (needs lakehouse checkout) |
+
+CLI (after install):
+
 ```bash
-make setup          # venv + pip install -r requirements.txt + pip install -e .
-make run            # synthetic run_all
-make run-lakehouse  # lakehouse E2E (needs sibling lakehouse checkout)
-make test           # CHURN_DATA_SOURCE=synthetic PYTHONPATH=src pytest -q
-make infer          # Santosh decision packet
-make ui             # Streamlit
-make docs-results   # copy artifact PNGs → results/plots/
+python -m retention_radar.cli.train
+python -m retention_radar.cli.infer --user santosh
 ```
 
-## Dual data path (synthetic vs lakehouse)
+---
+
+## Data paths
 
 | Path | How | Notes |
 |------|-----|-------|
-| **Synthetic (default / CI)** | `CHURN_DATA_SOURCE=synthetic ./scripts/run_all.sh` | Seed-42 teaching ladder; committed `models/` bundle |
-| **Lakehouse gold** | `./scripts/run_lakehouse_e2e.sh /path/to/local-data-lakehouse` | **Overwrites** `models/` and regenerated docs |
-| **Auto** | `CHURN_DATA_SOURCE=auto` (default in code) | Prefers `data/external/` when present |
+| **Synthetic** (CI / published numbers) | `CHURN_DATA_SOURCE=synthetic` | Seed-42 ladder; committed `models/` |
+| **Lakehouse gold** | `./scripts/run_lakehouse_e2e.sh /path/to/local-data-lakehouse` | **Overwrites** `models/` |
+| **Sync only** | `./scripts/sync_lakehouse_exports.sh …/data/export` | No retrain |
 
-**Warning:** Lakehouse E2E overwrites published seed-42 artifacts. Restore before committing:
+> **Warning:** Lakehouse E2E overwrites published seed-42 artifacts. Restore with:
+> `git checkout -- models/ docs/MODEL_CARD.md docs/data/data-dictionary.md`
 
-```bash
-git checkout -- models/ docs/MODEL_CARD.md docs/data/data-dictionary.md
-```
+Details: [docs/data/data-foundation-lakehouse.md](docs/data/data-foundation-lakehouse.md)
 
-Sync exports only (no retrain):
-
-```bash
-./scripts/sync_lakehouse_exports.sh /path/to/local-data-lakehouse/data/export
-```
+---
 
 ## Project structure
 
-Production-style layout (cookiecutter-data-science data layers + src-layout package). Teaching FOSS scope — no Airflow/DVC/MLflow/FastAPI.
-
 ```text
 retention-radar/
-├── README.md, LICENSE, CHANGELOG.md, CONTRIBUTING.md, Makefile
-├── pyproject.toml, requirements.txt, requirements.lock, runtime.txt
-├── .env.example, .gitignore
-├── .github/workflows/ci.yml
-├── configs/                         # contracts & config home
-│   ├── README.md
-│   └── schemas/
-│       └── user_record.schema.json
-├── src/retention_radar/             # ONLY Python package (src-layout)
-│   ├── config.py, protocols.py, docs_gen.py
-│   ├── cli/                         # train, evaluate, infer, single_record, …
-│   ├── data/, features/, training/, evaluation/, serving/
-├── app/                             # Streamlit (serve-only)
-├── scripts/                         # shell orchestration
-├── data/
-│   ├── README.md                    # raw / interim / processed / external
-│   ├── raw/                         # Santosh JSON; users.csv (gitignored)
-│   ├── interim/                     # CDS parity (empty)
-│   ├── processed/                   # CDS parity (empty; features in-memory)
-│   └── external/                    # lakehouse gold sync
-├── models/                          # seed-42 serve bundle + metrics.json
-├── results/                         # ≡ reports/ in CDS templates (name kept for article URLs)
-│   ├── README.md, BENCHMARKS.md, SANTOSH_ANALYSIS.md
-│   └── plots/                       # ≡ reports/figures
-├── artifacts/                       # runtime dumps (gitignored)
-├── notebooks/                       # exploration only; import package
-├── docs/                            # architecture, model card, guides/, data/, case-study/
+├── src/retention_radar/     # Package + CLI
+├── app/                     # Streamlit UI
+├── scripts/                 # run_all, lakehouse sync
+├── configs/schemas/         # Serve payload schema
+├── data/                    # raw · interim · processed · external
+├── models/                  # Seed-42 serve bundle + metrics
+├── results/                 # Benchmarks, Santosh analysis, plots
+├── artifacts/               # Runtime output (gitignored)
+├── notebooks/               # Exploration only
+├── docs/                    # Guides, architecture, model card
 └── tests/
 ```
 
-Full map: [docs/FOLDER_STRUCTURE.md](docs/FOLDER_STRUCTURE.md).
+Full map: [docs/FOLDER_STRUCTURE.md](docs/FOLDER_STRUCTURE.md)
 
-## Results & benchmarks
+---
 
-| Doc | Contents |
-|-----|----------|
-| [results/BENCHMARKS.md](results/BENCHMARKS.md) | Honest ladder, calibration, latency, τ — cite [`models/metrics.json`](models/metrics.json) |
-| [results/SANTOSH_ANALYSIS.md](results/SANTOSH_ANALYSIS.md) | Single-record outcome (raw / calibrated / HITL) |
-| [docs/MODEL_CARD.md](docs/MODEL_CARD.md) | Intended use + metrics from `models/metrics.json` |
-| [docs/guides/ALGORITHM_LANDSCAPE.md](docs/guides/ALGORITHM_LANDSCAPE.md) | Ladder IN vs deferred (TabPFN, survival, conformal, …) |
-| [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) | 10-minute path |
+## Docs
 
-## Development
+| Doc | Purpose |
+|-----|---------|
+| [results/BENCHMARKS.md](results/BENCHMARKS.md) | Ladder, calibration, latency |
+| [results/SANTOSH_ANALYSIS.md](results/SANTOSH_ANALYSIS.md) | Single-record outcome |
+| [docs/MODEL_CARD.md](docs/MODEL_CARD.md) | Intended use + metrics |
+| [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) | Short walkthrough |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Train ≠ serve design |
+| [docs/guides/ALGORITHM_LANDSCAPE.md](docs/guides/ALGORITHM_LANDSCAPE.md) | What we use vs defer |
 
-```bash
-make setup && make test
-python -m retention_radar.cli.docs_gen   # refresh model card / data dictionary after a train
-```
-
-See [CONTRIBUTING.md](CONTRIBUTING.md). Keep PRs on the synthetic path so CI metrics stay comparable.
-
-## Related projects
-
-- Articles are authored separately (**internal**); this repo is the public code home for Medium readers
-- [local-data-lakehouse](https://github.com/santoshshinde2012/local-data-lakehouse) — SILO gold / data SoR (foundation)
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — SOLID train/serve boundary
-- [docs/guides/BEST_PRACTICES.md](docs/guides/BEST_PRACTICES.md)
-- [docs/guides/e2e-free-platforms.md](docs/guides/e2e-free-platforms.md)
+---
 
 ## License
 
