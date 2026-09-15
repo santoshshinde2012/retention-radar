@@ -1,6 +1,6 @@
 # Data dictionary
 
-Auto-generated from `src/retention_radar/config.py` `schemas/user_record.schema.json`, and `src/retention_radar/data/generate.py`.
+Auto-generated from `src/retention_radar/config.py`, `configs/schemas/user_record.schema.json`, and `src/retention_radar/data/generate.py`.
 Synthetic AI-platform churn dataset — no real PII.
 
 _Generated: 2026-09-15 · seed=42_

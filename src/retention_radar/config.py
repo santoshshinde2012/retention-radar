@@ -20,12 +20,14 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
 RAW_DIR = DATA_DIR / "raw"
 EXTERNAL_DIR = DATA_DIR / "external"  # lakehouse gold exports
+INTERIM_DIR = DATA_DIR / "interim"  # CDS parity (empty in teaching path)
+PROCESSED_DIR = DATA_DIR / "processed"  # CDS parity (features usually in-memory)
 MODELS_DIR = PROJECT_ROOT / "models"
 ARTIFACTS_DIR = PROJECT_ROOT / "artifacts"
 DOCS_DIR = PROJECT_ROOT / "docs"
 RESEARCH_DIR = DOCS_DIR  # compat alias (teaching docs live under docs/)
 ARTICLES_DIR = PROJECT_ROOT / "articles"  # unused in this teaching repo
-SCHEMAS_DIR = PROJECT_ROOT / "schemas"
+SCHEMAS_DIR = PROJECT_ROOT / "configs" / "schemas"
 
 # Key files
 USERS_CSV = RAW_DIR / "users.csv"

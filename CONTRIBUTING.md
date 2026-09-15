@@ -13,8 +13,9 @@ cd retention-radar
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+pip install -e .
 # Optional informational pins: requirements.lock (CI still uses requirements.txt)
-export PYTHONPATH="$(pwd)/src"
+# If you skip editable install: export PYTHONPATH="$(pwd)/src"
 ```
 
 ## Run the full pipeline

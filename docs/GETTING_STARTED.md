@@ -14,10 +14,12 @@ cd retention-radar
 python3 -m venv .venv
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-export PYTHONPATH="$(pwd)/src"
+pip install -e .
+# If you skip editable install:
+# export PYTHONPATH="$(pwd)/src"
 ```
 
-Requires **Python 3.11+**. Or run `make setup`.
+Requires **Python 3.11+**. Or run `make setup` (venv + requirements + editable install).
 
 **macOS note:** XGBoost / LightGBM need OpenMP (CatBoost is usually fine via pip). If `pip install` or import fails with `libomp`, install once:
 
@@ -25,6 +27,7 @@ Requires **Python 3.11+**. Or run `make setup`.
 brew install libomp
 ```
 
+Env template: [`.env.example`](../.env.example) (`CHURN_DATA_SOURCE`, `N_USERS`, `N_OPTUNA_TRIALS`).
 
 ## 2. Run the full pipeline
 
@@ -53,7 +56,7 @@ Expect raw ≈ **0.043**, calibrated ≈ **0.017**, band **low**, HITL **monitor
 streamlit run app/streamlit_app.py
 # or: make ui
 
-CHURN_DATA_SOURCE=synthetic pytest -q
+CHURN_DATA_SOURCE=synthetic PYTHONPATH=src pytest -q
 # or: make test
 ```
 

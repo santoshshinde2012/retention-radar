@@ -4,6 +4,18 @@ How we measure success, what the reference run produced, and how to read the lad
 
 **Cite:** [`../models/metrics.json`](../models/metrics.json) · **Card:** [`../docs/MODEL_CARD.md`](../docs/MODEL_CARD.md) · **Landscape:** [`../docs/guides/ALGORITHM_LANDSCAPE.md`](../docs/guides/ALGORITHM_LANDSCAPE.md) · **Santosh:** [`SANTOSH_ANALYSIS.md`](SANTOSH_ANALYSIS.md)
 
+## Contents
+
+1. [What we measure](#what-we-measure)
+2. [Table A — Honest ladder (test)](#table-a--honest-ladder-test)
+3. [Table B — Calibration & threshold](#table-b--calibration--threshold)
+4. [Table C — Latency (warm, calibrated path)](#table-c--latency-warm-calibrated-path)
+5. [Table D — Optuna meta](#table-d--optuna-meta)
+6. [Reference plots](#reference-plots)
+7. [How to reproduce](#how-to-reproduce)
+8. [How to refresh after retrain](#how-to-refresh-after-retrain)
+9. [What not to claim](#what-not-to-claim)
+
 ---
 
 ## What we measure
@@ -21,6 +33,8 @@ Splits: stratified n_train / val / test = **3000 / 1000 / 1000**, seed **42**. O
 ---
 
 ## Table A — Honest ladder (test)
+
+Numbers rounded from [`../models/metrics.json`](../models/metrics.json) (CatBoost `catboost_test`, LogReg `logreg_test`, etc.).
 
 | Model | Test AUC-ROC | Test PR-AUC | Test F1 @ 0.5 | Notes |
 |-------|--------------|-------------|----------------|-------|
@@ -92,19 +106,42 @@ Fine for Streamlit; SHAP is separate and should stay on-demand.
 
 ## How to reproduce
 
+Exact commands for the **published** seed-42 ladder (`N_USERS=5000`, `N_OPTUNA_TRIALS=20`, `RANDOM_SEED=42`):
+
 ```bash
 cd retention-radar
-source .venv/bin/activate
-export PYTHONPATH="$(pwd)/src"
-CHURN_DATA_SOURCE=synthetic ./scripts/run_all.sh
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+pip install -e .
+# or: export PYTHONPATH="$(pwd)/src"
+
+export CHURN_DATA_SOURCE=synthetic
+export N_USERS=5000
+export N_OPTUNA_TRIALS=20
+./scripts/run_all.sh
+
 python -m json.tool models/metrics.json | less
 python -m retention_radar.cli.infer --user santosh
 make docs-results   # refresh results/plots/ from artifacts/
 ```
 
-Same seed + same package versions should match within float noise. Changing the generator breaks bit-identical AUC — update the card and this narrative together.
+Same seed + same package versions should match within float noise. Changing the generator breaks bit-identical AUC — update the model card and this narrative together.
+
+**Cite the JSON**, not this markdown alone: every Table A–D cell is a rounded view of [`../models/metrics.json`](../models/metrics.json).
 
 **Dual world:** lakehouse gold E2E overwrites `models/` and is **not** the published ladder. See [`lakehouse-e2e-summary.json`](lakehouse-e2e-summary.json) and [docs/data/data-foundation-lakehouse.md](../docs/data/data-foundation-lakehouse.md). Restore: `git checkout -- models/ docs/MODEL_CARD.md docs/data/data-dictionary.md`.
+
+---
+
+## How to refresh after retrain
+
+After a deliberate retrain on the synthetic path:
+
+1. Confirm `models/metrics.json` changed intentionally (diff AUC / Brier / τ).
+2. Regenerate prose artifacts: `python -m retention_radar.cli.docs_gen` → `docs/MODEL_CARD.md`, `docs/data/data-dictionary.md`.
+3. Copy charts: `make docs-results`.
+4. Update **this file** (Tables A–D) and [`SANTOSH_ANALYSIS.md`](SANTOSH_ANALYSIS.md) so rounded numbers still match the JSON.
+5. Do **not** mix lakehouse E2E metrics into the published ladder without a separate section.
 
 ---
 
