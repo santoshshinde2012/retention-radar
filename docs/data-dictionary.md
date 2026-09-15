@@ -78,10 +78,44 @@ Order used at train / infer time:
 | `pro` | 2 |
 | `enterprise` | 3 |
 
+## Santosh Shinde — feature contract (inference)
+
+Payload: `data/raw/santosh_shinde.json` (no `churned`).
+
+| Field | Example value |
+|-------|----------------|
+| `user_id` | santosh_shinde |
+| `user_name` | Santosh Shinde |
+| `days_since_signup` | 420 |
+| `sessions_last_7d` | 9 |
+| `sessions_last_30d` | 38 |
+| `avg_session_minutes` | 28.5 |
+| `models_used_count` | 7 |
+| `api_calls_last_30d` | 1850 |
+| `tokens_consumed_last_30d` | 420000 |
+| `tools_used_count` | 8 |
+| `failed_requests_rate` | 0.12 |
+| `support_tickets_last_90d` | 2 |
+| `plan_tier` | pro |
+| `payment_failures_last_90d` | 1 |
+| `feature_adoption_score` | 0.78 |
+| `nps_score` | 7.0 |
+| `last_active_days_ago` | 8 |
+| `weekend_usage_ratio` | 0.22 |
+| `engagement_trend` | 0.9474 |
+| `spend_usd_last_30d` | 189.0 |
+| `days_until_renewal` | 21 |
+| `agent_runs_last_30d` | 52 |
+| `ide_plugin_sessions_last_30d` | 28 |
+| `seat_utilization` | 0.72 |
+
+See also [santosh-case-study.md](santosh-case-study.md) and [single-record-checklist.md](single-record-checklist.md).
+
+
 ## Related reading
 
-- [ARCHITECTURE.md](../ARCHITECTURE.md) — SOLID package map
-- [MODEL_CARD.md](../MODEL_CARD.md)
+- [ARCHITECTURE.md](ARCHITECTURE.md) — SOLID package map
+- [MODEL_CARD.md](MODEL_CARD.md)
 - [Santosh case study](santosh-case-study.md)
 - [Single-record checklist](single-record-checklist.md)
 - [Data foundation / lakehouse](data-foundation-lakehouse.md)

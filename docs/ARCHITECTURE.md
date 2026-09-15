@@ -1,6 +1,6 @@
 # Architecture — Retention Radar (XGBoost AI Platform Churn)
 
-**Model card:** [MODEL_CARD.md](MODEL_CARD.md) · **Practices:** [docs/BEST_PRACTICES.md](docs/BEST_PRACTICES.md) · **Lakehouse:** [docs/data-foundation-lakehouse.md](docs/data-foundation-lakehouse.md)
+**Model card:** [MODEL_CARD.md](MODEL_CARD.md) · **Practices:** [BEST_PRACTICES.md](BEST_PRACTICES.md) · **Lakehouse:** [data-foundation-lakehouse.md](data-foundation-lakehouse.md) · **Results:** [../results/BENCHMARKS.md](../results/BENCHMARKS.md)
 
 ## Purpose
 
@@ -96,7 +96,8 @@ retention-radar/
 ├── models/        # churn_xgb.joblib, calibrator, feature_names.json, metrics.json
 ├── artifacts/     # plots + santosh_decision_packet.json
 ├── docs/          # dictionary, checklist, lakehouse notes, result charts
-├── ARCHITECTURE.md / MODEL_CARD.md
+├── docs/ARCHITECTURE.md / docs/MODEL_CARD.md
+├── results/  # BENCHMARKS + plots + Santosh analysis
 ├── data/external/ # lakehouse gold sync (gitignored)
 └── scripts/       # run_all.sh + run_lakehouse_e2e.sh
 ```
@@ -174,6 +175,6 @@ Related: [src/retention_radar/protocols.py](src/retention_radar/protocols.py)
 
 ## Related docs
 
-- [MODEL_CARD.md](MODEL_CARD.md) · [docs/data-dictionary.md](docs/data-dictionary.md)
+- [MODEL_CARD.md](MODEL_CARD.md) · [data-dictionary.md](data-dictionary.md) · [../results/](../results/)
 - [docs/BEST_PRACTICES.md](docs/BEST_PRACTICES.md) · [docs/data-foundation-lakehouse.md](docs/data-foundation-lakehouse.md)
 - [src/retention_radar/protocols.py](src/retention_radar/protocols.py)

@@ -7,9 +7,7 @@ End-to-end walkthrough of one JSON record through the AI-platform **Retention Ra
 **Seed:** 42 · **Synthetic only** — not a real person score.
 
 
-![Santosh flight checklist](ARCHITECTURE.md)
-
-*Flight checklist: validate → score → explain → HITL decide — never auto-cancel.*
+*Flight checklist: validate → score → explain → HITL decide — never auto-cancel. Full narrative: [../results/SANTOSH_ANALYSIS.md](../results/SANTOSH_ANALYSIS.md).*
 
 
 ```mermaid
@@ -195,7 +193,7 @@ Full dump: `models/metrics.json`. Always prefer a fresh run over prose.
 
 1. CLI packet (above)
 2. Streamlit → **Decision** tab: validation, raw vs cal, threshold, HITL, cohort bars, top drivers
-3. Docs: this case study + [single-record-checklist.md](single-record-checklist.md) · articles [05](ARCHITECTURE.md)
+3. Docs: this case study + [single-record-checklist.md](single-record-checklist.md) · [../results/SANTOSH_ANALYSIS.md](../results/SANTOSH_ANALYSIS.md)
 
 ---
 
@@ -212,4 +210,4 @@ Full dump: `models/metrics.json`. Always prefer a fresh run over prose.
 
 - [RESEARCH.md](RESEARCH.md) — Single-record completeness  
 - [data-dictionary.md](data-dictionary.md) · [model-card.md](model-card.md)  
-- [ARCHITECTURE.md](../ARCHITECTURE.md) · [MODEL_CARD.md](../MODEL_CARD.md) · [single-record-checklist.md](single-record-checklist.md)
+- [ARCHITECTURE.md](ARCHITECTURE.md) · [MODEL_CARD.md](MODEL_CARD.md) · [../results/SANTOSH_ANALYSIS.md](../results/SANTOSH_ANALYSIS.md) · [single-record-checklist.md](single-record-checklist.md)

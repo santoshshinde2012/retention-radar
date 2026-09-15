@@ -3,7 +3,7 @@
 Thanks for improving **Retention Radar**, a FOSS AI-platform churn teaching repo.  
 Repo: [https://github.com/santoshshinde2012/retention-radar](https://github.com/santoshshinde2012/retention-radar)
 
-Prefer focused PRs: code + engineering docs only (no Medium article trees).
+Prefer focused PRs: code + benchmarks + results analysis. Articles live in [xgboost-ai-churn](https://github.com/santoshshinde2012/xgboost-ai-churn).
 
 ## Setup
 
@@ -34,7 +34,7 @@ Faster smoke: `N_USERS=800 N_OPTUNA_TRIALS=5 ./scripts/run_all.sh`
 python -m src.docs_gen
 ```
 
-Writes `MODEL_CARD.md` and `docs/data-dictionary.md`.
+Writes `docs/MODEL_CARD.md` and `docs/data-dictionary.md`.
 
 ## Tests
 
@@ -51,7 +51,7 @@ Lakehouse E2E (optional, overwrites `models/`):
 
 ```bash
 ./scripts/run_lakehouse_e2e.sh /path/to/local-data-lakehouse
-git checkout -- models/ MODEL_CARD.md docs/data-dictionary.md
+git checkout -- models/ docs/MODEL_CARD.md docs/data-dictionary.md
 ```
 
 ## Style notes

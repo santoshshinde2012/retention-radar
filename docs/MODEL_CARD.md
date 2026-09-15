@@ -61,17 +61,17 @@ Method: `isotonic`.
 
 ## Result plots
 
-Committed copies live under `docs/results/` (runtime dumps in `artifacts/`).
+Committed copies live under `results/plots/` (runtime dumps in `artifacts/`).
 
-![ROC](docs/results/roc_curve.png)
+![ROC](../results/plots/roc_curve.png)
 
-![Precision–Recall](docs/results/pr_curve.png)
+![Precision–Recall](../results/plots/pr_curve.png)
 
-![Calibration](docs/results/calibration_curve.png)
+![Calibration](../results/plots/calibration_curve.png)
 
-![Confusion matrix](docs/results/confusion_matrix.png)
+![Confusion matrix](../results/plots/confusion_matrix.png)
 
-![Threshold vs F1](docs/results/threshold_f1.png)
+![Threshold vs F1](../results/plots/threshold_f1.png)
 
 ## Artifacts
 
@@ -85,18 +85,20 @@ Committed copies live under `docs/results/` (runtime dumps in `artifacts/`).
 | `artifacts/calibration_curve.png` | Reliability diagram |
 | `artifacts/confusion_matrix.png` | Confusion @ 0.5 |
 | `artifacts/threshold_f1.png` | Threshold vs F1 / precision / recall |
-| `docs/results/*.png` | Committed copies of the same plots |
+| `results/plots/*.png` | Committed copies of the same plots |
 
 ## Ethical notes
 
 - Labels and features are synthetic; do not treat scores as real risk.
 - Calibration improves probability meaning but does not fix selection bias.
 - SHAP explains this score, not causation.
-- Single-record path is HITL only (`auto_action: none`) — see [docs/single-record-checklist.md](docs/single-record-checklist.md).
+- Single-record path is HITL only (`auto_action: none`) — see [single-record-checklist.md](single-record-checklist.md).
 
 ## Related reading
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) — SOLID package map
-- [docs/data-dictionary.md](docs/data-dictionary.md)
-- [docs/BEST_PRACTICES.md](docs/BEST_PRACTICES.md)
-- [docs/santosh-case-study.md](docs/santosh-case-study.md)
+- [data-dictionary.md](data-dictionary.md)
+- [BEST_PRACTICES.md](BEST_PRACTICES.md)
+- [santosh-case-study.md](santosh-case-study.md)
+- [../results/BENCHMARKS.md](../results/BENCHMARKS.md)
+- [../results/SANTOSH_ANALYSIS.md](../results/SANTOSH_ANALYSIS.md)

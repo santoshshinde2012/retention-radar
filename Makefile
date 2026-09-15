@@ -20,5 +20,5 @@ ui:
 	PYTHONPATH=. streamlit run app/streamlit_app.py
 
 docs-results:
-	mkdir -p docs/results
-	cp artifacts/roc_curve.png artifacts/pr_curve.png artifacts/calibration_curve.png artifacts/confusion_matrix.png artifacts/threshold_f1.png docs/results/
+	mkdir -p results/plots
+	cp artifacts/roc_curve.png artifacts/pr_curve.png artifacts/calibration_curve.png artifacts/confusion_matrix.png artifacts/threshold_f1.png results/plots/

@@ -5,7 +5,7 @@ You do **not** need Databricks, SageMaker, Vertex, a hosted MLflow cloud, Snowfl
 
 Synthetic data only. Seed **42**. HITL packets always set `auto_action: none`.
 
-Related: [GETTING_STARTED.md](GETTING_STARTED.md) · [FOLDER_STRUCTURE.md](FOLDER_STRUCTURE.md) · [architecture.md](../ARCHITECTURE.md)
+Related: [GETTING_STARTED.md](GETTING_STARTED.md) · [FOLDER_STRUCTURE.md](FOLDER_STRUCTURE.md) · [ARCHITECTURE.md](ARCHITECTURE.md)
 
 ## What “E2E” means here
 

@@ -14,7 +14,7 @@ Short checklist for contributors and readers adapting this teaching repo.
 
 - [ ] **Published article / model-card ladder** is the **synthetic** seed-42 run. Do not overwrite committed `models/` with a lakehouse retrain.
 - [ ] Feature SoR is [local-data-lakehouse](https://github.com/santoshshinde2012/local-data-lakehouse): `make churn-gold-local` (no Docker) or `make churn-e2e` (Spark). Sync with `./scripts/sync_lakehouse_exports.sh`.
-- [ ] `CHURN_DATA_SOURCE=auto|synthetic|lakehouse`. After `./scripts/run_lakehouse_e2e.sh`, restore: `git checkout -- models/ MODEL_CARD.md docs/data-dictionary.md`.
+- [ ] `CHURN_DATA_SOURCE=auto|synthetic|lakehouse`. After `./scripts/run_lakehouse_e2e.sh`, restore: `git checkout -- models/ docs/MODEL_CARD.md docs/data-dictionary.md`.
 - [ ] Lakehouse Santosh is event-aggregated as-of **2024-03-02**. Scores differ from seed-42 Santosh **by design**. Do not mix the two in one caption.
 
 ## Leakage & evaluation honesty
@@ -66,9 +66,9 @@ Short checklist for contributors and readers adapting this teaching repo.
 
 - [ ] `pytest -q` green before PR (`tests/test_articles_medium.py` is part of that).
 - [ ] After metric-changing PRs, refresh guides via `python -m src.docs_gen` — but not after a lakehouse smoke if you still publish the synthetic ladder.
-- [ ] Keep engineering docs under `docs/` and root `ARCHITECTURE.md` / `MODEL_CARD.md`.
+- [ ] Keep engineering docs under `docs/` (`ARCHITECTURE.md`, `MODEL_CARD.md`); analysis under `results/`.
 - [ ] Free E2E path stays documented in [e2e-free-platforms.md](e2e-free-platforms.md).
 
 ## Related
 
-- [FOLDER_STRUCTURE.md](FOLDER_STRUCTURE.md) · [architecture.md](../ARCHITECTURE.md) · [anti-patterns.md](anti-patterns.md) · [CONTRIBUTING.md](../CONTRIBUTING.md) · [data-foundation-lakehouse.md](data-foundation-lakehouse.md)
+- [FOLDER_STRUCTURE.md](FOLDER_STRUCTURE.md) · [ARCHITECTURE.md](ARCHITECTURE.md) · [CONTRIBUTING.md](../CONTRIBUTING.md) · [data-foundation-lakehouse.md](data-foundation-lakehouse.md) · [../results/BENCHMARKS.md](../results/BENCHMARKS.md)

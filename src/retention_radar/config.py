@@ -41,7 +41,9 @@ FEATURE_NAMES_PATH = MODELS_DIR / "feature_names.json"
 FEATURE_STATS_PATH = MODELS_DIR / "feature_stats.json"
 USER_RECORD_SCHEMA_PATH = SCHEMAS_DIR / "user_record.schema.json"
 GUIDES_DIR = DOCS_DIR  # checklist + case study + dictionary
-MODEL_CARD_PATH = PROJECT_ROOT / "MODEL_CARD.md"
+MODEL_CARD_PATH = DOCS_DIR / "MODEL_CARD.md"
+RESULTS_DIR = PROJECT_ROOT / "results"
+RESULTS_PLOTS_DIR = RESULTS_DIR / "plots"
 DATA_DICTIONARY_PATH = DOCS_DIR / "data-dictionary.md"
 
 # ---------------------------------------------------------------------------

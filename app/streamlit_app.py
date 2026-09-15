@@ -420,9 +420,9 @@ Beginner tip: **AUC** ranks users; **Brier** checks if probabilities are honest;
             f"(raw: {metrics.get('brier_raw_test', 'n/a')})"
         )
     st.markdown(
-        "Docs: [model card](../MODEL_CARD.md) · "
+        "Docs: [model card](../docs/MODEL_CARD.md) · "
         "[data dictionary](../docs/data-dictionary.md) · "
-        "[architecture](../ARCHITECTURE.md) · "
+        "[architecture](../docs/ARCHITECTURE.md) · "
         "[Santosh case](../docs/santosh-case-study.md)"
     )
 
