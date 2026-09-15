@@ -13,7 +13,7 @@ retention-radar/
 │   ├── MODEL_CARD.md         # metrics + intended use (from metrics.json)
 │   ├── FOLDER_STRUCTURE.md   # this file
 │   ├── GETTING_STARTED.md
-│   ├── BEST_PRACTICES.md, data-dictionary.md, e2e-free-platforms.md
+│   ├── BEST_PRACTICES.md, ALGORITHM_LANDSCAPE.md, data-dictionary.md, e2e-free-platforms.md
 │   ├── data-foundation-lakehouse.md, santosh-case-study.md, single-record-checklist.md
 ├── src/retention_radar/      # SOLID package (data, features, training, evaluation, serving)
 ├── src/*.py                  # thin shims (`python -m src.train`, …)

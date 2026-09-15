@@ -383,7 +383,7 @@ def tab_methodology(metrics: dict):
     st.markdown(
         """
 1. **Synthetic data** — fake AI-platform users (seed 42), no real PII.
-2. **Honest baselines** — dummy, logistic regression, Random Forest, and LightGBM peers (XGBoost remains the teaching hero).
+2. **Honest baselines** — dummy, logistic regression, Random Forest, LightGBM, and CatBoost peers (XGBoost remains the teaching hero).
 3. **XGBoost + Optuna** — tune trees on validation AUC.
 4. **Calibration** — isotonic regression on validation probabilities.
 5. **Holdout test** — ROC, PR, Brier, threshold sweep for business action.
@@ -402,6 +402,7 @@ Beginner tip: **AUC** ranks users; **Brier** checks if probabilities are honest;
             ("XGBoost default", "xgb_default_test"),
             ("XGBoost tuned", "tuned_test"),
             ("LightGBM", "lgbm_test"),
+            ("CatBoost", "catboost_test"),
             ("XGBoost calibrated", "calibrated_test"),
         ]:
             block = metrics.get(key) or {}

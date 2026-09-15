@@ -1,10 +1,10 @@
 # Architecture — Retention Radar (XGBoost AI Platform Churn)
 
-**Model card:** [MODEL_CARD.md](MODEL_CARD.md) · **Practices:** [BEST_PRACTICES.md](BEST_PRACTICES.md) · **Lakehouse:** [data-foundation-lakehouse.md](data-foundation-lakehouse.md) · **Results:** [../results/BENCHMARKS.md](../results/BENCHMARKS.md)
+**Model card:** [MODEL_CARD.md](MODEL_CARD.md) · **Landscape:** [ALGORITHM_LANDSCAPE.md](ALGORITHM_LANDSCAPE.md) · **Practices:** [BEST_PRACTICES.md](BEST_PRACTICES.md) · **Lakehouse:** [data-foundation-lakehouse.md](data-foundation-lakehouse.md) · **Results:** [../results/BENCHMARKS.md](../results/BENCHMARKS.md)
 
 ## Purpose
 
-End-to-end view of the fictional AI-platform **Retention Radar**: synthetic data through Streamlit single-record inference for **Santosh Shinde**. All components are FOSS (Python, pandas, scikit-learn, XGBoost, Optuna, SHAP, Streamlit).
+End-to-end view of the fictional AI-platform **Retention Radar**: synthetic data through Streamlit single-record inference for **Santosh Shinde**. All components are FOSS (Python, pandas, scikit-learn, XGBoost, LightGBM, CatBoost, Optuna, SHAP, Streamlit).
 
 The radar ranks quiet fade-out risk and hands a flight checklist to a human — it does not auto-act.
 
@@ -17,7 +17,7 @@ flowchart TB
     A["Synthetic data generator"] --> B["Ingest + validate"]
     B --> C["Feature engineering<br/>22 columns"]
     C --> D["Train / val / test split"]
-    D --> E["Honest ladder<br/>Dummy → LogReg → RF → XGB → LightGBM"]
+    D --> E["Honest ladder<br/>Dummy → LogReg → RF → XGB → LightGBM → CatBoost"]
     E --> F["Evaluate + calibrate + τ"]
     F --> G["Artifacts bundle"]
   end
@@ -153,7 +153,7 @@ The layout is a **teaching** SOLID sketch, not a claim that every file is a text
 | `data/ingest.py` | Load + validate; fail loud on NaNs / bad plans | Extra checks can be added without changing transform | — | Validation is not mixed with Optuna | Train/eval depend on `load_users` |
 | `features/transform.py` | Encode `plan_tier`, build X/y | New columns via `MODEL_FEATURE_COLUMNS` | `DefaultFeatureTransformer` honours `FeatureTransformer` | Transform-only API | Train/serve call the transformer, not pandas ad-hoc |
 | `training/split.py` | Stratified split only | — | Same split helper for train/eval | No model API | Train/eval depend on split, not sklearn calls inline |
-| `training/baselines.py` | Dummy + LogReg + RF + LightGBM peers | New baseline = new function; ladder stays | Sklearn/LGBM estimators stay substitutable via `predict_proba` | No SHAP/UI | Train depends on `run_baselines` |
+| `training/baselines.py` | Dummy + LogReg + RF + LightGBM + CatBoost peers | New baseline = new function; ladder stays | Sklearn/LGBM/CatBoost stay substitutable via `predict_proba` | No SHAP/UI | Train depends on `run_baselines` |
 | `training/train.py` | Fit default XGB + Optuna; write artifacts | Optuna search space can grow without serve changes | Best model still `predict_proba` | Does not own HITL copy | Writes files; UI never imports Optuna |
 | `training/calibrate.py` | Fit/persist probability map | Method `isotonic`/`sigmoid` | `ProbabilityCalibrator` honours `Calibrator` | Transform-only | Scorer depends on Protocol, not sklearn class |
 | `evaluation/metrics.py` | Metric dict helper | Extra keys without changing plots | — | No I/O | Train/eval share one helper |

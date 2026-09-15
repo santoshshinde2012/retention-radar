@@ -146,6 +146,8 @@ def test_train_and_infer_smoke(tiny_data):
         "rf_test",
         "lgbm_val",
         "lgbm_test",
+        "catboost_val",
+        "catboost_test",
         "xgb_default_val",
         "xgb_default_test",
         "tuned_test",

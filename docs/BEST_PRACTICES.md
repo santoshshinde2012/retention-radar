@@ -21,7 +21,7 @@ Short checklist for contributors and readers adapting this teaching repo.
 
 - [ ] Features available at **score time only** (no post-churn or label-derived columns).
 - [ ] Optuna / threshold search on **validation**; touch **test** once.
-- [ ] Report Dummy + LogReg + RF + default XGB + Optuna XGB + LightGBM (honest ladder), not XGB alone.
+- [ ] Report Dummy + LogReg + RF + default XGB + Optuna XGB + LightGBM + CatBoost (honest ladder), not XGB alone.
 - [ ] If AUC ≈ 1.0 on synthetic data, **stop and debug** before celebrating.
 - [ ] Unknown `plan_tier` **raises**. Silent zeros are train/serve skew.
 

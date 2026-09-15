@@ -19,7 +19,7 @@ export PYTHONPATH="$(pwd)"
 
 Requires **Python 3.11+**. Or run `make setup`.
 
-**macOS note:** XGBoost / LightGBM need OpenMP. If `pip install` or import fails with `libomp`, install once:
+**macOS note:** XGBoost / LightGBM need OpenMP (CatBoost is usually fine via pip). If `pip install` or import fails with `libomp`, install once:
 
 ```bash
 brew install libomp

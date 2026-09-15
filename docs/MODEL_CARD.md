@@ -27,7 +27,7 @@ See [data-dictionary.md](data-dictionary.md) for dtype, ranges, and nullability.
 
 ## Metrics (holdout) — from `models/metrics.json`
 
-Honest ladder: **Dummy(prior) → LogReg → RF → default XGB → Optuna XGB → LightGBM** (calibrated XGB is the Santosh / serving hero). No simple-rule baseline is logged. CatBoost is deferred.
+Honest ladder: **Dummy(prior) → LogReg → RF → default XGB → Optuna XGB → LightGBM → CatBoost** (calibrated XGB is the Santosh / serving hero). No simple-rule baseline is logged. GBDT trilogy peers: XGB / LightGBM / CatBoost.
 
 | Model | Val AUC | Val F1 | Test AUC | Test F1 | Test PR-AUC |
 |-------|---------|--------|----------|---------|-------------|
@@ -37,6 +37,7 @@ Honest ladder: **Dummy(prior) → LogReg → RF → default XGB → Optuna XGB �
 | XGBoost (default) | 0.9061 | 0.6652 | 0.8691 | 0.5961 | 0.6382 |
 | XGBoost (Optuna, raw) | 0.9133 | 0.6599 | 0.8699 | 0.5801 | 0.6415 |
 | LightGBM (default) | 0.9091 | 0.6524 | 0.8648 | 0.5835 | 0.6332 |
+| CatBoost (default) | 0.9145 | 0.6750 | 0.8715 | 0.5826 | 0.6355 |
 | XGBoost (calibrated) | 0.9206 | 0.6781 | 0.8665 | 0.6006 | 0.6117 |
 
 ### Calibration (Brier — lower is better)
@@ -57,7 +58,7 @@ Method: `isotonic`.
 | Best F1 threshold τ | `0.34` |
 | Best F1 at τ | `0.6015` |
 | F1 @ 0.5 | `0.6006` |
-| Warm latency p50 / p95 (ms) | `1.63` / `2.02` |
+| Warm latency p50 / p95 (ms) | `2.01` / `2.15` |
 
 ## Result plots
 
@@ -100,5 +101,6 @@ Committed copies live under `results/plots/` (runtime dumps in `artifacts/`).
 - [data-dictionary.md](data-dictionary.md)
 - [BEST_PRACTICES.md](BEST_PRACTICES.md)
 - [santosh-case-study.md](santosh-case-study.md)
+- [ALGORITHM_LANDSCAPE.md](ALGORITHM_LANDSCAPE.md) — what is on the ladder vs deferred
 - [../results/BENCHMARKS.md](../results/BENCHMARKS.md)
 - [../results/SANTOSH_ANALYSIS.md](../results/SANTOSH_ANALYSIS.md)

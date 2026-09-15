@@ -1,15 +1,16 @@
 """Honest non-XGBoost baselines + peer tree models.
 
 Ladder in metrics.json:
-  Dummy(prior) → LogReg → Random Forest → default XGB → Optuna XGB → LightGBM
+  Dummy(prior) → LogReg → Random Forest → default XGB → Optuna XGB → LightGBM → CatBoost
   (+ calibrated XGB for serving)
 
-XGBoost remains the teaching / Santosh hero. RF and LightGBM are bake-off peers.
-There is no separate “simple rule” baseline in this repo. CatBoost is deferred.
+XGBoost remains the teaching / Santosh hero. RF, LightGBM, and CatBoost are bake-off
+peers (GBDT trilogy). There is no separate “simple rule” baseline in this repo.
 """
 
 from __future__ import annotations
 
+from catboost import CatBoostClassifier
 from lightgbm import LGBMClassifier
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import RandomForestClassifier
@@ -86,12 +87,33 @@ def train_lightgbm(X_train, y_train) -> LGBMClassifier:
     return clf
 
 
+def train_catboost(X_train, y_train) -> CatBoostClassifier:
+    """Sane-default CatBoost peer booster (same seed / imbalance handling as LightGBM)."""
+    spw = _scale_pos_weight(y_train)
+    clf = CatBoostClassifier(
+        iterations=120,
+        depth=4,
+        learning_rate=0.08,
+        subsample=0.9,
+        bootstrap_type="Bernoulli",
+        rsm=0.9,
+        scale_pos_weight=spw,
+        random_seed=config.RANDOM_SEED,
+        thread_count=2,
+        verbose=False,
+        allow_writing_files=False,
+    )
+    clf.fit(X_train, y_train)
+    return clf
+
+
 def run_baselines(X_train, y_train, X_val, y_val, X_test, y_test) -> dict:
-    """Fit Dummy, LogReg, RF, LightGBM; return metrics on val and test."""
+    """Fit Dummy, LogReg, RF, LightGBM, CatBoost; return metrics on val and test."""
     dummy = train_dummy(X_train, y_train)
     logreg = train_logreg(X_train, y_train)
     rf = train_random_forest(X_train, y_train)
     lgbm = train_lightgbm(X_train, y_train)
+    catboost = train_catboost(X_train, y_train)
 
     def _pair(model):
         return (
@@ -103,12 +125,14 @@ def run_baselines(X_train, y_train, X_val, y_val, X_test, y_test) -> dict:
     logreg_val, logreg_test = _pair(logreg)
     rf_val, rf_test = _pair(rf)
     lgbm_val, lgbm_test = _pair(lgbm)
+    catboost_val, catboost_test = _pair(catboost)
 
     return {
         "dummy": dummy,
         "logreg": logreg,
         "random_forest": rf,
         "lightgbm": lgbm,
+        "catboost": catboost,
         "metrics": {
             "dummy_val": dummy_val,
             "dummy_test": dummy_test,
@@ -118,5 +142,7 @@ def run_baselines(X_train, y_train, X_val, y_val, X_test, y_test) -> dict:
             "rf_test": rf_test,
             "lgbm_val": lgbm_val,
             "lgbm_test": lgbm_test,
+            "catboost_val": catboost_val,
+            "catboost_test": catboost_test,
         },
     }

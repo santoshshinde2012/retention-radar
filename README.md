@@ -13,7 +13,7 @@ Human-in-the-loop churn ranking for a fictional AI platform. Ranks quiet fade-ou
 | HITL policy (`auto_action: none`) | Automated account cancellation |
 | Source of truth for **code + benchmarks + results analysis** | Article / Medium home (see related projects) |
 
-**Seed 42 reference (one record):** validate → 22 features → raw **0.043** → calibrated **0.017** → band **low** → SHAP → HITL **monitor** (`auto_action: none`). Honest ladder (test AUC): LogReg **0.872** / RF **0.868** / XGB **0.870** / LightGBM **0.865**; Brier **0.138 → 0.106**.
+**Seed 42 reference (one record):** validate → 22 features → raw **0.043** → calibrated **0.017** → band **low** → SHAP → HITL **monitor** (`auto_action: none`). Honest ladder (test AUC): LogReg **0.872** / CatBoost **0.872** / XGB **0.870** / RF **0.868** / LightGBM **0.865**; Brier **0.138 → 0.106**. Serving hero = calibrated XGB.
 
 ## Repository map
 
@@ -27,7 +27,7 @@ Dual-world notes: [docs/data-foundation-lakehouse.md](docs/data-foundation-lakeh
 
 ## Features
 
-- End-to-end pipeline: generate/load → features → train (LogReg, RF, XGBoost, LightGBM, Optuna) → calibrate → evaluate → serve
+- End-to-end pipeline: generate/load → features → train (LogReg, RF, XGBoost, LightGBM, CatBoost, Optuna) → calibrate → evaluate → serve
 - Committed seed-42 model bundle under `models/` for offline serve and Cloud demos
 - Single-record decision packet (Santosh hero JSON) with SHAP drivers and HITL action
 - Streamlit serve-only UI
@@ -39,7 +39,7 @@ Dual-world notes: [docs/data-foundation-lakehouse.md](docs/data-foundation-lakeh
 - **Python 3.11+** (`runtime.txt` pins `python-3.11`)
 - Linux, macOS, or Windows (WSL recommended on Windows)
 - CPU-only; no GPU required
-- **macOS:** `brew install libomp` if XGBoost/LightGBM fail to load OpenMP (`libomp`)
+- **macOS:** `brew install libomp` if XGBoost/LightGBM fail to load OpenMP (`libomp`); CatBoost is pip-only on most Macs
 
 ## Installation
 
@@ -114,6 +114,7 @@ Full map: [docs/FOLDER_STRUCTURE.md](docs/FOLDER_STRUCTURE.md).
 | [results/BENCHMARKS.md](results/BENCHMARKS.md) | Honest ladder, calibration, latency, τ |
 | [results/SANTOSH_ANALYSIS.md](results/SANTOSH_ANALYSIS.md) | Single-record outcome (raw / calibrated / HITL) |
 | [docs/MODEL_CARD.md](docs/MODEL_CARD.md) | Intended use + metrics from `models/metrics.json` |
+| [docs/ALGORITHM_LANDSCAPE.md](docs/ALGORITHM_LANDSCAPE.md) | Ladder IN vs deferred (TabPFN, survival, conformal, …) |
 | [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) | 10-minute path |
 
 ## Development

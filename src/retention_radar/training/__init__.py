@@ -1,1 +1,1 @@
-"""Training: splits, honest baselines (incl. RF + LightGBM), calibration, Optuna XGB."""
+"""Training: splits, honest baselines (incl. RF + LightGBM + CatBoost), calibration, Optuna XGB."""

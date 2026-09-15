@@ -63,6 +63,22 @@
     "recall": 0.7225130890052356,
     "f1": 0.5835095137420718
   },
+  "catboost_val": {
+    "roc_auc": 0.914502423650166,
+    "average_precision": 0.7522962967606989,
+    "accuracy": 0.844,
+    "precision": 0.5605536332179931,
+    "recall": 0.8481675392670157,
+    "f1": 0.675
+  },
+  "catboost_test": {
+    "roc_auc": 0.8715044751778097,
+    "average_precision": 0.6355005075562634,
+    "accuracy": 0.798,
+    "precision": 0.4812286689419795,
+    "recall": 0.7382198952879581,
+    "f1": 0.5826446280991735
+  },
   "baseline_val": {
     "roc_auc": 0.9061474640659077,
     "average_precision": 0.723052374003429,
@@ -237,12 +253,12 @@
   "latency": {
     "n_warmup": 20,
     "n_runs": 200,
-    "latency_ms_mean": 1.6908032237552106,
-    "latency_ms_p50": 1.6306060133501887,
-    "latency_ms_p95": 2.0165191963315006,
-    "latency_ms_p99": 2.121750271180643,
-    "latency_ms_min": 1.5665179817005992,
-    "latency_ms_max": 4.5837899670004845,
+    "latency_ms_mean": 2.0127890802541515,
+    "latency_ms_p50": 2.0062140029040165,
+    "latency_ms_p95": 2.151544154912699,
+    "latency_ms_p99": 2.244689655635738,
+    "latency_ms_min": 1.8087589996866882,
+    "latency_ms_max": 2.3903760011307895,
     "calibrated": true
   }
 }

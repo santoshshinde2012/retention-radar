@@ -1,4 +1,4 @@
-"""Train honest baselines (incl. RF + LightGBM) + Optuna XGBoost + calibrator.
+"""Train honest baselines (incl. RF + LightGBM + CatBoost) + Optuna XGBoost + calibrator.
 
 Run:
     python -m src.train
@@ -131,7 +131,7 @@ def main(n_trials: int | None = None) -> None:
         f"churn_train={y_train.mean():.3f}"
     )
 
-    print("Honest baselines (Dummy + LogReg + RF + LightGBM)...")
+    print("Honest baselines (Dummy + LogReg + RF + LightGBM + CatBoost)...")
     base = run_baselines(X_train, y_train, X_val, y_val, X_test, y_test)
     print(
         f"  Dummy   val AUC={base['metrics']['dummy_val']['roc_auc']:.4f} "
@@ -148,6 +148,10 @@ def main(n_trials: int | None = None) -> None:
     print(
         f"  LightGBM val AUC={base['metrics']['lgbm_val']['roc_auc']:.4f} "
         f"F1={base['metrics']['lgbm_val']['f1']:.4f}"
+    )
+    print(
+        f"  CatBoost val AUC={base['metrics']['catboost_val']['roc_auc']:.4f} "
+        f"F1={base['metrics']['catboost_val']['f1']:.4f}"
     )
 
     print("Training default XGBoost (tree baseline)...")
@@ -218,6 +222,8 @@ def main(n_trials: int | None = None) -> None:
         "rf_test": base["metrics"]["rf_test"],
         "lgbm_val": base["metrics"]["lgbm_val"],
         "lgbm_test": base["metrics"]["lgbm_test"],
+        "catboost_val": base["metrics"]["catboost_val"],
+        "catboost_test": base["metrics"]["catboost_test"],
         "baseline_val": xgb_default_val,
         "xgb_default_val": xgb_default_val,
         "xgb_default_test": xgb_default_test,
