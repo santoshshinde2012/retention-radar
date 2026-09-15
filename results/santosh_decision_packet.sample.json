@@ -67,7 +67,74 @@
     ]
   },
   "outliers": [],
-  "cohort_compare": {},
+  "cohort_compare": {
+    "sessions_last_30d": {
+      "value": 38.0,
+      "percentile": 93.18,
+      "population_median": 17.0,
+      "population_mean": 19.2144
+    },
+    "engagement_trend": {
+      "value": 0.9474,
+      "percentile": 47.4,
+      "population_median": 0.97265,
+      "population_mean": 0.94295092
+    },
+    "feature_adoption_score": {
+      "value": 0.78,
+      "percentile": 98.9,
+      "population_median": 0.45565,
+      "population_mean": 0.44362986
+    },
+    "failed_requests_rate": {
+      "value": 0.12,
+      "percentile": 23.44,
+      "population_median": 0.18425,
+      "population_mean": 0.18868332000000002
+    },
+    "last_active_days_ago": {
+      "value": 8.0,
+      "percentile": 11.46,
+      "population_median": 21.0,
+      "population_mean": 21.5846
+    },
+    "spend_usd_last_30d": {
+      "value": 189.0,
+      "percentile": 92.3,
+      "population_median": 27.98,
+      "population_mean": 81.94564799999999
+    },
+    "days_until_renewal": {
+      "value": 21.0,
+      "percentile": 6.06,
+      "population_median": 180.0,
+      "population_mean": 180.3994
+    },
+    "agent_runs_last_30d": {
+      "value": 52.0,
+      "percentile": 97.02,
+      "population_median": 27.0,
+      "population_mean": 27.53
+    },
+    "ide_plugin_sessions_last_30d": {
+      "value": 28.0,
+      "percentile": 94.06,
+      "population_median": 17.0,
+      "population_mean": 16.4322
+    },
+    "seat_utilization": {
+      "value": 0.72,
+      "percentile": 78.7,
+      "population_median": 0.5983,
+      "population_mean": 0.5922132999999999
+    },
+    "nps_score": {
+      "value": 7.0,
+      "percentile": 48.82,
+      "population_median": 7.1,
+      "population_mean": 6.9744600000000005
+    }
+  },
   "hitl": {
     "action": "monitor",
     "rationale": "Calibrated P(churn)=0.016 < 0.5\u00d7threshold (0.170); continue passive monitoring.",
@@ -75,12 +142,12 @@
     "hitl_required": true
   },
   "meta": {
-    "model_path": "models/churn_xgb.joblib",
-    "calibrator_path": "models/calibrator.joblib",
-    "feature_stats_path": "models/feature_stats.json",
-    "metrics_path": "models/metrics.json",
+    "model_path": "/workspace/retention-radar/models/churn_xgb.joblib",
+    "calibrator_path": "/workspace/retention-radar/models/calibrator.joblib",
+    "feature_stats_path": "/workspace/retention-radar/models/feature_stats.json",
+    "metrics_path": "/workspace/retention-radar/models/metrics.json",
     "feature_count": 22,
     "data_source": "synthetic",
-    "users_csv": "data/raw/users.csv"
+    "users_csv": "/workspace/retention-radar/data/raw/users.csv"
   }
 }

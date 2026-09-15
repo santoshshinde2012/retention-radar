@@ -241,9 +241,9 @@ def write_model_card(metrics: dict | None = None, path: Path | None = None) -> P
         "",
         "## Metrics (holdout) — from `models/metrics.json`",
         "",
-        "Honest ladder: **Dummy(prior) → LogReg → RF → default XGB → Optuna XGB → LightGBM** "
+        "Honest ladder: **Dummy(prior) → LogReg → RF → default XGB → Optuna XGB → LightGBM → CatBoost** "
         "(calibrated XGB is the Santosh / serving hero). No simple-rule baseline is logged. "
-        "CatBoost is deferred.",
+        "GBDT trilogy peers: XGB / LightGBM / CatBoost.",
         "",
         "| Model | Val AUC | Val F1 | Test AUC | Test F1 | Test PR-AUC |",
         "|-------|---------|--------|----------|---------|-------------|",
@@ -277,6 +277,11 @@ def write_model_card(metrics: dict | None = None, path: Path | None = None) -> P
         f"{_fmt(metrics.get('lgbm_test'))} | "
         f"{_fmt(metrics.get('lgbm_test'), 'f1')} | "
         f"{_fmt(metrics.get('lgbm_test'), 'average_precision')} |",
+        f"| CatBoost (default) | {_fmt(metrics.get('catboost_val'))} | "
+        f"{_fmt(metrics.get('catboost_val'), 'f1')} | "
+        f"{_fmt(metrics.get('catboost_test'))} | "
+        f"{_fmt(metrics.get('catboost_test'), 'f1')} | "
+        f"{_fmt(metrics.get('catboost_test'), 'average_precision')} |",
         f"| XGBoost (calibrated) | {_fmt(metrics.get('calibrated_val'))} | "
         f"{_fmt(metrics.get('calibrated_val'), 'f1')} | "
         f"{_fmt(metrics.get('calibrated_test'))} | "
@@ -355,6 +360,7 @@ def write_model_card(metrics: dict | None = None, path: Path | None = None) -> P
         "- [data-dictionary.md](data-dictionary.md)",
         "- [BEST_PRACTICES.md](BEST_PRACTICES.md)",
         "- [santosh-case-study.md](santosh-case-study.md)",
+        "- [ALGORITHM_LANDSCAPE.md](ALGORITHM_LANDSCAPE.md) — what is on the ladder vs deferred",
         "- [../results/BENCHMARKS.md](../results/BENCHMARKS.md)",
         "- [../results/SANTOSH_ANALYSIS.md](../results/SANTOSH_ANALYSIS.md)",
         "",

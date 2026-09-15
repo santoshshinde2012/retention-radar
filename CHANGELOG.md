@@ -1,3 +1,8 @@
+## Unreleased
+
+- Add CatBoost (default) to the honest bake-off ladder; keep calibrated Optuna XGBoost as serving hero.
+- Document algorithm landscape (IN vs DEFER: TabPFN, survival, conformal, uplift, …).
+
 # Changelog
 
 ## 0.1.0 — 2026-09-15

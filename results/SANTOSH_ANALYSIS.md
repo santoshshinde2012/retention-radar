@@ -62,6 +62,7 @@ Published Medium / README numbers are the **synthetic** row.
 ## Related
 
 - [BENCHMARKS.md](BENCHMARKS.md) — ladder, Brier, τ, latency  
+- [docs/ALGORITHM_LANDSCAPE.md](../docs/ALGORITHM_LANDSCAPE.md) — CatBoost IN; TabPFN/survival/conformal DEFER  
 - [docs/single-record-checklist.md](../docs/single-record-checklist.md)  
 - [docs/MODEL_CARD.md](../docs/MODEL_CARD.md)  
 - Articles: authored separately (**internal**); this repo is the public code / results home  

@@ -4,7 +4,7 @@ This folder is the **analysis home** for Retention Radar (seed **42** synthetic 
 
 | Path | Role |
 |------|------|
-| [`BENCHMARKS.md`](BENCHMARKS.md) | Honest ladder table, latency, Brier, τ — narrative |
+| [`BENCHMARKS.md`](BENCHMARKS.md) | Honest ladder (incl. CatBoost), latency, Brier, τ — narrative |
 | [`SANTOSH_ANALYSIS.md`](SANTOSH_ANALYSIS.md) | Single-record outcome for Santosh Shinde |
 | [`plots/`](plots/) | Committed ROC / PR / calibration / confusion / threshold charts |
 | [`santosh_decision_packet.sample.json`](santosh_decision_packet.sample.json) | Sample HITL packet |

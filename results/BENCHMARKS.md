@@ -2,7 +2,7 @@
 
 How we measure success, what the reference run produced, and how to read the ladder honestly.
 
-**Cite:** [`../models/metrics.json`](../models/metrics.json) · **Card:** [`../docs/MODEL_CARD.md`](../docs/MODEL_CARD.md) · **Santosh:** [`SANTOSH_ANALYSIS.md`](SANTOSH_ANALYSIS.md)
+**Cite:** [`../models/metrics.json`](../models/metrics.json) · **Card:** [`../docs/MODEL_CARD.md`](../docs/MODEL_CARD.md) · **Landscape:** [`../docs/ALGORITHM_LANDSCAPE.md`](../docs/ALGORITHM_LANDSCAPE.md) · **Santosh:** [`SANTOSH_ANALYSIS.md`](SANTOSH_ANALYSIS.md)
 
 ---
 
@@ -25,14 +25,15 @@ Splits: stratified n_train / val / test = **3000 / 1000 / 1000**, seed **42**. O
 | Model | Test AUC-ROC | Test PR-AUC | Test F1 @ 0.5 | Notes |
 |-------|--------------|-------------|----------------|-------|
 | Dummy (prior) | **0.500** | **0.191** | **0.000** | Accuracy **0.809** by predicting non-churn |
-| Logistic regression | **0.872** | **0.644** | **0.578** | **Best AUC on this data** |
+| Logistic regression | **0.872** | **0.644** | **0.578** | Best AUC at full float (edges CatBoost) |
 | Random Forest | **0.868** | **0.643** | **0.584** | Mid-tier ensemble peer |
 | XGBoost default | **0.869** | **0.638** | **0.596** | Sane hyperparameters |
-| XGBoost Optuna (raw) | **0.870** | **0.641** | **0.580** | Slightly behind LogReg on AUC |
+| XGBoost Optuna (raw) | **0.870** | **0.641** | **0.580** | Teaching / SHAP vehicle |
 | LightGBM (default) | **0.865** | **0.633** | **0.584** | FOSS peer booster |
-| XGBoost calibrated | **0.866** | **0.612** | **0.601** | Serving hero; threshold-sensitive |
+| CatBoost (default) | **0.872** | **0.636** | **0.583** | GBDT trilogy peer (ties LogReg at 3dp) |
+| XGBoost calibrated | **0.866** | **0.612** | **0.601** | **Serving hero**; threshold-sensitive |
 
-**Honest finding:** On this synthetic, mostly additive label, **LogReg slightly beats Optuna XGBoost on test AUC** (0.872 vs 0.870). RF (0.868) and LightGBM (0.865) sit in the same band. That does not invalidate the XGBoost teaching path (SHAP, nonlinear capacity, calibration demo) — it *does* forbid booster-only victory laps.
+**Honest finding:** On this synthetic, mostly additive label, **LogReg and CatBoost land at published test AUC 0.872** (LogReg slightly ahead at full float: 0.8719 vs 0.8715). Optuna XGBoost **0.870**, RF **0.868**, LightGBM **0.865**. That does not invalidate the XGBoost teaching path (SHAP, nonlinear capacity, calibration demo) — it *does* forbid booster-only victory laps. **Serving hero stays calibrated XGB** even when CatBoost matches LogReg on rounded AUC.
 
 ---
 
@@ -55,9 +56,9 @@ From `metrics.json` → `latency` (host-dependent; cite the JSON):
 
 | Quantity | Value |
 |----------|-------|
-| p50 | **~1.63 ms** |
-| p95 | **~2.02 ms** |
-| mean | **~1.69 ms** |
+| p50 | **~2.01 ms** |
+| p95 | **~2.15 ms** |
+| mean | **~2.01 ms** |
 | warmup / runs | 20 / 200 |
 
 Fine for Streamlit; SHAP is separate and should stay on-demand.
@@ -111,5 +112,5 @@ Same seed + same package versions should match within float noise. Changing the 
 
 - Production ROI from synthetic lift  
 - Fairness / DPIA from plan-tier slices alone  
-- That XGBoost “won” when LogReg edged AUC  
+- That XGBoost or CatBoost “won production churn” when LogReg/CatBoost tie or edge AUC  
 - Mixing lakehouse Santosh scores with the seed-42 packet in one caption  
