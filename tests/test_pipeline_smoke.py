@@ -34,12 +34,12 @@ def tiny_data(tmp_path, monkeypatch):
     artifacts = tmp_path / "artifacts"
     research = tmp_path / "research"
     guides = research
-    schemas = tmp_path / "schemas"
+    schemas = tmp_path / "configs" / "schemas"
     raw.mkdir()
     models.mkdir()
     artifacts.mkdir()
     guides.mkdir()
-    schemas.mkdir()
+    schemas.mkdir(parents=True)
 
     users_csv = raw / "users.csv"
     santosh_json = raw / "santosh_shinde.json"
@@ -52,7 +52,7 @@ def tiny_data(tmp_path, monkeypatch):
     data_dict = guides / "data-dictionary.md"
     schema_path = schemas / "user_record.schema.json"
 
-    real_schema = Path(config.PROJECT_ROOT) / "schemas" / "user_record.schema.json"
+    real_schema = Path(config.PROJECT_ROOT) / "configs" / "schemas" / "user_record.schema.json"
     if real_schema.exists():
         schema_path.write_text(real_schema.read_text(encoding="utf-8"), encoding="utf-8")
 

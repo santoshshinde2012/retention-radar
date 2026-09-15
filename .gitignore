@@ -32,11 +32,21 @@ htmlcov/
 .mypy_cache/
 .ruff_cache/
 
-# Data (keep directory placeholders)
+# Local env (keep .env.example)
+.env
+.env.local
+
+# Data (keep directory placeholders + documented samples)
 data/raw/*.csv
 data/raw/*.json
 !data/raw/santosh_shinde.json
 !data/raw/.gitkeep
+
+data/interim/*
+!data/interim/.gitkeep
+
+data/processed/*
+!data/processed/.gitkeep
 
 # Models: commit the serve bundle so Streamlit Community Cloud / HF Spaces
 # can load artifacts without running Optuna. Other dumps stay local.
@@ -63,3 +73,4 @@ catboost_info/
 data/external/*.csv
 data/external/*.json
 !data/external/README.md
+!data/external/.gitkeep

@@ -2,11 +2,13 @@
 
 This folder is the **analysis home** for Retention Radar (seed **42** synthetic reference run).
 
+> **Naming note:** In cookiecutter-data-science and many production templates this role is called `reports/` (with figures under `reports/figures/`). We keep the name **`results/`** (and `results/plots/`) so public article dig-deeper URLs to `results/BENCHMARKS.md` stay stable.
+
 | Path | Role |
 |------|------|
 | [`BENCHMARKS.md`](BENCHMARKS.md) | Honest ladder (incl. CatBoost), latency, Brier, τ — narrative |
 | [`SANTOSH_ANALYSIS.md`](SANTOSH_ANALYSIS.md) | Single-record outcome for Santosh Shinde |
-| [`plots/`](plots/) | Committed ROC / PR / calibration / confusion / threshold charts |
+| [`plots/`](plots/) | Committed ROC / PR / calibration / confusion / threshold charts (≡ `reports/figures`) |
 | [`santosh_decision_packet.sample.json`](santosh_decision_packet.sample.json) | Sample HITL packet |
 | [`lakehouse-e2e-summary.json`](lakehouse-e2e-summary.json) | Optional dual-world lakehouse summary (not the published ladder) |
 

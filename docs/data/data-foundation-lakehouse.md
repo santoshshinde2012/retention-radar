@@ -16,7 +16,7 @@ bronze (users / daily usage / tickets / payments)
   → train / calibrate / Santosh infer / Streamlit
 ```
 
-Feature column contract matches `schemas/user_record.schema.json` 1:1 (24 serve fields + `churned` on train). **Models consume gold features; algorithm choice lives in this repo** (see [ALGORITHM_LANDSCAPE.md](../guides/ALGORITHM_LANDSCAPE.md)) — not in the lakehouse.
+Feature column contract matches `configs/schemas/user_record.schema.json` 1:1 (24 serve fields + `churned` on train). **Models consume gold features; algorithm choice lives in this repo** (see [ALGORITHM_LANDSCAPE.md](../guides/ALGORITHM_LANDSCAPE.md)) — not in the lakehouse.
 
 ## Two ways to build gold
 

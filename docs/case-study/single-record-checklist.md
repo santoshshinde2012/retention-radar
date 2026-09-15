@@ -128,7 +128,7 @@ Notes:
 | E3 | pytest smoke (features + packet keys) | ✅ |
 | E4 | PYTHONPATH=src / venv documented | ✅ |
 | E5 | Feature contract file (`feature_names.json`) | ✅ |
-| E6 | Schema file under `schemas/` | ✅ |
+| E6 | Schema file under `configs/schemas/` | ✅ |
 | E7 | Research spine + article links | ✅ |
 | E8 | MIT license | ✅ |
 | E9 | CI on GitHub Actions | ✅ |

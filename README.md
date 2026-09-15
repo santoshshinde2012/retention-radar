@@ -1,6 +1,10 @@
 # Retention Radar
 
-Human-in-the-loop churn ranking for a fictional AI platform. Ranks quiet fade-out risk and returns a flight checklist for a human — it does **not** auto-cancel anyone.
+Human-in-the-loop churn ranking for a fictional AI platform — ranks quiet fade-out risk and returns a flight checklist for a human. It does **not** auto-cancel anyone.
+
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](runtime.txt)
+[![pytest](https://img.shields.io/badge/pytest-21%20pass-brightgreen.svg)](#quick-start)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 **GitHub:** [santoshshinde2012/retention-radar](https://github.com/santoshshinde2012/retention-radar)
 
@@ -11,9 +15,10 @@ Human-in-the-loop churn ranking for a fictional AI platform. Ranks quiet fade-ou
 | FOSS teaching codebase for train → evaluate → serve | Production CRM or billing integration |
 | Synthetic users only (seed **42**); no real PII | A claim of production ROI or fairness audit |
 | HITL policy (`auto_action: none`) | Automated account cancellation |
-| Source of truth for **code + benchmarks + results analysis** | Article / Medium home (see related projects) |
+| Source of truth for **code + benchmarks + results analysis** | Article / Medium home (authored separately, internal) |
+| Cookiecutter-data-science + src-layout conventions | Airflow / DVC / MLflow / FastAPI stack |
 
-**Seed 42 reference (one record):** validate → 22 features → raw **0.043** → calibrated **0.017** → band **low** → SHAP → HITL **monitor** (`auto_action: none`). Honest ladder (test AUC): LogReg **0.872** / CatBoost **0.872** / XGB **0.870** / RF **0.868** / LightGBM **0.865**; Brier **0.138 → 0.106**. Serving hero = calibrated XGB.
+**Seed 42 reference (one record):** validate → 22 features → raw **0.043** → calibrated **0.017** → band **low** → SHAP → HITL **monitor** (`auto_action: none`). Honest ladder (test AUC from [`models/metrics.json`](models/metrics.json)): LogReg **0.872** / CatBoost **0.872** / XGB Optuna **0.870** / RF **0.868** / LightGBM **0.865**; Brier **0.138 → 0.106**. Serving hero = calibrated XGB.
 
 ## Repository map
 
@@ -24,15 +29,6 @@ Human-in-the-loop churn ranking for a fictional AI platform. Ranks quiet fade-ou
 | [local-data-lakehouse](https://github.com/santoshshinde2012/local-data-lakehouse) | **Data foundation / SoR** (SILO · N=5000 gold) → sync into `data/external/` |
 
 Dual-world notes: [docs/data/data-foundation-lakehouse.md](docs/data/data-foundation-lakehouse.md). Published ladder stays on the synthetic generator.
-
-## Features
-
-- End-to-end pipeline: generate/load → features → train (LogReg, RF, XGBoost, LightGBM, CatBoost, Optuna) → calibrate → evaluate → serve
-- Committed seed-42 model bundle under `models/` for offline serve and Cloud demos
-- Single-record decision packet (Santosh hero JSON) with SHAP drivers and HITL action
-- Streamlit serve-only UI
-- Dual data path: synthetic (CI / published metrics) or lakehouse gold sync
-- Benchmarks and analysis under `results/`
 
 ## Requirements
 
@@ -49,10 +45,13 @@ cd retention-radar
 python3 -m venv .venv
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-export PYTHONPATH="$(pwd)/src"
+pip install -e .
+# If you skip editable install, set:
+# export PYTHONPATH="$(pwd)/src"
 ```
 
-Optional: `make setup` creates the venv and installs requirements.
+Optional: `make setup` (venv + `pip install -r requirements.txt` + `pip install -e .`).  
+Env template: [`.env.example`](.env.example) (`CHURN_DATA_SOURCE`, `N_USERS`, `N_OPTUNA_TRIALS`).
 
 ## Quick start
 
@@ -64,11 +63,23 @@ CHURN_DATA_SOURCE=synthetic ./scripts/run_all.sh
 1. Cite holdout metrics from **`models/metrics.json`**.
 2. Read the narrative in [results/BENCHMARKS.md](results/BENCHMARKS.md) and [results/SANTOSH_ANALYSIS.md](results/SANTOSH_ANALYSIS.md).
 3. Launch the UI: `streamlit run app/streamlit_app.py` (or `make ui`).
-4. Run tests: `CHURN_DATA_SOURCE=synthetic pytest -q` (or `make test`).
+4. Run tests: `CHURN_DATA_SOURCE=synthetic PYTHONPATH=src pytest -q` (or `make test`).
 
 Faster smoke: `N_USERS=800 N_OPTUNA_TRIALS=5 ./scripts/run_all.sh`.
 
 Score the Santosh record: `make infer` (writes `artifacts/santosh_decision_packet.json`).
+
+### Make targets
+
+```bash
+make setup          # venv + pip install -r requirements.txt + pip install -e .
+make run            # synthetic run_all
+make run-lakehouse  # lakehouse E2E (needs sibling lakehouse checkout)
+make test           # CHURN_DATA_SOURCE=synthetic PYTHONPATH=src pytest -q
+make infer          # Santosh decision packet
+make ui             # Streamlit
+make docs-results   # copy artifact PNGs → results/plots/
+```
 
 ## Dual data path (synthetic vs lakehouse)
 
@@ -90,20 +101,41 @@ Sync exports only (no retrain):
 ./scripts/sync_lakehouse_exports.sh /path/to/local-data-lakehouse/data/export
 ```
 
-## Project layout
+## Project structure
 
-| Path | Role |
-|------|------|
-| `src/retention_radar/` | Packages: data, features, training, evaluation, serving |
-| `src/retention_radar/cli/` | CLI (`python -m retention_radar.cli.train`, `.infer`, …) |
-| `app/` | Streamlit (serve-only) |
-| `scripts/` | `run_all`, lakehouse sync / E2E |
-| `data/raw/` | Santosh JSON (+ generated `users.csv`, gitignored) |
-| `data/external/` | Lakehouse gold sync (CSVs gitignored) |
-| `models/` | Seed-42 serve bundle (`joblib` + `metrics.json`) |
-| `results/` | Benchmarks + Santosh analysis + committed plots |
-| `artifacts/` | Runtime plots + Santosh packet (gitignored) |
-| `docs/` | Architecture, model card, guides/, data/, case-study/ |
+Production-style layout (cookiecutter-data-science data layers + src-layout package). Teaching FOSS scope — no Airflow/DVC/MLflow/FastAPI.
+
+```text
+retention-radar/
+├── README.md, LICENSE, CHANGELOG.md, CONTRIBUTING.md, Makefile
+├── pyproject.toml, requirements.txt, requirements.lock, runtime.txt
+├── .env.example, .gitignore
+├── .github/workflows/ci.yml
+├── configs/                         # contracts & config home
+│   ├── README.md
+│   └── schemas/
+│       └── user_record.schema.json
+├── src/retention_radar/             # ONLY Python package (src-layout)
+│   ├── config.py, protocols.py, docs_gen.py
+│   ├── cli/                         # train, evaluate, infer, single_record, …
+│   ├── data/, features/, training/, evaluation/, serving/
+├── app/                             # Streamlit (serve-only)
+├── scripts/                         # shell orchestration
+├── data/
+│   ├── README.md                    # raw / interim / processed / external
+│   ├── raw/                         # Santosh JSON; users.csv (gitignored)
+│   ├── interim/                     # CDS parity (empty)
+│   ├── processed/                   # CDS parity (empty; features in-memory)
+│   └── external/                    # lakehouse gold sync
+├── models/                          # seed-42 serve bundle + metrics.json
+├── results/                         # ≡ reports/ in CDS templates (name kept for article URLs)
+│   ├── README.md, BENCHMARKS.md, SANTOSH_ANALYSIS.md
+│   └── plots/                       # ≡ reports/figures
+├── artifacts/                       # runtime dumps (gitignored)
+├── notebooks/                       # exploration only; import package
+├── docs/                            # architecture, model card, guides/, data/, case-study/
+└── tests/
+```
 
 Full map: [docs/FOLDER_STRUCTURE.md](docs/FOLDER_STRUCTURE.md).
 
@@ -111,7 +143,7 @@ Full map: [docs/FOLDER_STRUCTURE.md](docs/FOLDER_STRUCTURE.md).
 
 | Doc | Contents |
 |-----|----------|
-| [results/BENCHMARKS.md](results/BENCHMARKS.md) | Honest ladder, calibration, latency, τ |
+| [results/BENCHMARKS.md](results/BENCHMARKS.md) | Honest ladder, calibration, latency, τ — cite [`models/metrics.json`](models/metrics.json) |
 | [results/SANTOSH_ANALYSIS.md](results/SANTOSH_ANALYSIS.md) | Single-record outcome (raw / calibrated / HITL) |
 | [docs/MODEL_CARD.md](docs/MODEL_CARD.md) | Intended use + metrics from `models/metrics.json` |
 | [docs/guides/ALGORITHM_LANDSCAPE.md](docs/guides/ALGORITHM_LANDSCAPE.md) | Ladder IN vs deferred (TabPFN, survival, conformal, …) |
@@ -120,16 +152,9 @@ Full map: [docs/FOLDER_STRUCTURE.md](docs/FOLDER_STRUCTURE.md).
 ## Development
 
 ```bash
-make setup          # venv + pip
-make run            # synthetic run_all
-make run-lakehouse  # lakehouse E2E (needs sibling lakehouse checkout)
-make test           # CHURN_DATA_SOURCE=synthetic pytest -q
-make infer          # Santosh decision packet
-make ui             # Streamlit
-make docs-results   # copy artifact PNGs → results/plots/
+make setup && make test
+python -m retention_radar.cli.docs_gen   # refresh model card / data dictionary after a train
 ```
-
-Refresh model card / data dictionary after a train: `python -m retention_radar.cli.docs_gen`.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). Keep PRs on the synthetic path so CI metrics stay comparable.
 
