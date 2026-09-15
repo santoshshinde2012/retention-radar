@@ -64,4 +64,4 @@ Published Medium / README numbers are the **synthetic** row.
 - [BENCHMARKS.md](BENCHMARKS.md) — ladder, Brier, τ, latency  
 - [docs/single-record-checklist.md](../docs/single-record-checklist.md)  
 - [docs/MODEL_CARD.md](../docs/MODEL_CARD.md)  
-- Articles: [xgboost-ai-churn/articles](https://github.com/santoshshinde2012/xgboost-ai-churn/tree/main/articles)  
+- Articles: authored separately (**internal**); this repo is the public code / results home  

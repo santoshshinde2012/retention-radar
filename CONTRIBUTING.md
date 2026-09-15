@@ -3,7 +3,7 @@
 Thanks for improving **Retention Radar**, a FOSS AI-platform churn teaching repo.  
 Repo: [https://github.com/santoshshinde2012/retention-radar](https://github.com/santoshshinde2012/retention-radar)
 
-Prefer focused PRs: code + benchmarks + results analysis. Articles live in [xgboost-ai-churn](https://github.com/santoshshinde2012/xgboost-ai-churn).
+Prefer focused PRs: code + benchmarks + results analysis. Articles are authored separately (internal); this repo is the public code home.
 
 ## Setup
 
