@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CHURN_DATA_SOURCE: synthetic
-      PYTHONPATH: ${{ github.workspace }}
+      PYTHONPATH: ${{ github.workspace }}/src
       N_USERS: "800"
       N_OPTUNA_TRIALS: "5"
     steps:
@@ -24,7 +24,9 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: |
+          pip install -r requirements.txt
+          pip install -e .
 
       - name: End-to-end pipeline (synthetic)
         run: ./scripts/run_all.sh
@@ -33,4 +35,4 @@ jobs:
         run: pytest -q
 
       - name: Lite drift check (strict)
-        run: python -m src.drift_check --strict --z-threshold 3.0
+        run: python -m retention_radar.cli.drift_check --strict --z-threshold 3.0

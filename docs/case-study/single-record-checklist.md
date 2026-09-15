@@ -95,7 +95,7 @@ Legend: ✅ done in this project · ⬜ not in scope / deferred
 **UX subtotal:** 14 ✅ / 1 ⬜ → **93%**
 
 Notes:
-- **C15** — `python -m src.single_record --dir path/to/jsons` writes `artifacts/batch_decision_packets.jsonl` (one packet per file). Single `--user santosh` unchanged. Not a multi-user Streamlit batch UI / CRM push (those remain enterprise).
+- **C15** — `python -m retention_radar.cli.single_record --dir path/to/jsons` writes `artifacts/batch_decision_packets.jsonl` (one packet per file). Single `--user santosh` unchanged. Not a multi-user Streamlit batch UI / CRM push (those remain enterprise).
 
 ---
 
@@ -126,7 +126,7 @@ Notes:
 | E1 | `scripts/run_all.sh` E2E | ✅ |
 | E2 | `run_all` ends with Santosh decision packet | ✅ |
 | E3 | pytest smoke (features + packet keys) | ✅ |
-| E4 | PYTHONPATH / venv documented | ✅ |
+| E4 | PYTHONPATH=src / venv documented | ✅ |
 | E5 | Feature contract file (`feature_names.json`) | ✅ |
 | E6 | Schema file under `schemas/` | ✅ |
 | E7 | Research spine + article links | ✅ |
@@ -140,7 +140,7 @@ Notes:
 
 Notes:
 - **E9** — `.github/workflows/ci.yml`: push/PR to `main`, Python 3.11, `N_USERS=800`, `N_OPTUNA_TRIALS=5`, generate → train → evaluate → pytest → single_record → drift_check. Local defaults remain 5000 users / 20 trials when env unset.
-- **E11** — `python -m src.drift_check` compares CSV means to `models/feature_stats.json` (abs mean z-score). Writes `artifacts/drift_report.json`. **Exits 0 by default** (demo); `--strict` exits 1 only on severe drift. Wired non-fatally in `run_all.sh` before the Santosh decision packet (E2: script still ends with the packet). Not a production Evidently / GE monitor (enterprise).
+- **E11** — `python -m retention_radar.cli.drift_check` compares CSV means to `models/feature_stats.json` (abs mean z-score). Writes `artifacts/drift_report.json`. **Exits 0 by default** (demo); `--strict` exits 1 only on severe drift. Wired non-fatally in `run_all.sh` before the Santosh decision packet (E2: script still ends with the packet). Not a production Evidently / GE monitor (enterprise).
 
 Enterprise deferred (still ⬜): **A28–A30, B14–B16, C14, D8, E10, E12**.
 
@@ -168,8 +168,8 @@ In-scope FOSS teaching goals for this case study are essentially complete; remai
 ```bash
 ./scripts/run_all.sh
 pytest -q
-python -m src.single_record --user santosh --out artifacts/santosh_decision_packet.json
-python -m src.single_record --dir /tmp/batch_jsons --out artifacts/batch_decision_packets.jsonl
-python -m src.drift_check
+python -m retention_radar.cli.single_record --user santosh --out artifacts/santosh_decision_packet.json
+python -m retention_radar.cli.single_record --dir /tmp/batch_jsons --out artifacts/batch_decision_packets.jsonl
+python -m retention_radar.cli.drift_check
 python -c "import app.streamlit_app"  # or: streamlit run app/streamlit_app.py
 ```

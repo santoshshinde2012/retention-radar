@@ -96,14 +96,14 @@ def main() -> None:
 
     import joblib
 
-    from src.retention_radar import config
-    from src.retention_radar.data.ingest import load_users
-    from src.retention_radar.features.transform import prepare_xy
-    from src.retention_radar.training.calibrate import load_calibrator
-    from src.retention_radar.training.split import stratified_train_val_test
+    from retention_radar import config
+    from retention_radar.data.ingest import load_users
+    from retention_radar.features.transform import prepare_xy
+    from retention_radar.training.calibrate import load_calibrator
+    from retention_radar.training.split import stratified_train_val_test
 
     if not config.MODEL_PATH.exists():
-        raise SystemExit(f"Model not found: {config.MODEL_PATH}. Run python -m src.train first.")
+        raise SystemExit(f"Model not found: {config.MODEL_PATH}. Run python -m retention_radar.cli.train first.")
 
     df = load_users()
     X, y = prepare_xy(df)

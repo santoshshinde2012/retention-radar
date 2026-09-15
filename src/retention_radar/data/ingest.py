@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from src.retention_radar import config
+from retention_radar import config
 
 
 def _required_columns() -> list[str]:
@@ -47,7 +47,7 @@ def load_users(path: Path | None = None) -> pd.DataFrame:
     csv_path = resolve_users_csv(path)
     if not csv_path.exists():
         hint = (
-            "Run: python -m src.generate_data"
+            "Run: python -m retention_radar.cli.generate_data"
             if csv_path == config.USERS_CSV
             else "Copy lakehouse exports into data/external/ (see scripts/sync_lakehouse_exports.sh)"
         )

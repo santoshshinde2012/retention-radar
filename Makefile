@@ -2,7 +2,7 @@
 
 setup:
 	python3 -m venv .venv
-	. .venv/bin/activate && pip install -r requirements.txt
+	. .venv/bin/activate && pip install -r requirements.txt && pip install -e .
 
 run:
 	CHURN_DATA_SOURCE=synthetic ./scripts/run_all.sh
@@ -11,13 +11,13 @@ run-lakehouse:
 	./scripts/run_lakehouse_e2e.sh
 
 test:
-	CHURN_DATA_SOURCE=synthetic PYTHONPATH=. pytest -q
+	CHURN_DATA_SOURCE=synthetic PYTHONPATH=src pytest -q
 
 infer:
-	PYTHONPATH=. python -m src.single_record --user santosh --out artifacts/santosh_decision_packet.json
+	PYTHONPATH=src python -m retention_radar.cli.single_record --user santosh --out artifacts/santosh_decision_packet.json
 
 ui:
-	PYTHONPATH=. streamlit run app/streamlit_app.py
+	PYTHONPATH=src streamlit run app/streamlit_app.py
 
 docs-results:
 	mkdir -p results/plots

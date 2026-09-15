@@ -6,45 +6,49 @@ Data foundation / SoR → [local-data-lakehouse](https://github.com/santoshshind
 
 ```text
 retention-radar/
-├── README.md                 # use-case overview + repo map
-├── LICENSE, Makefile, pyproject.toml, requirements.txt, runtime.txt, .gitignore
-├── docs/
-│   ├── ARCHITECTURE.md       # SOLID / train≠serve map
-│   ├── MODEL_CARD.md         # metrics + intended use (from metrics.json)
-│   ├── FOLDER_STRUCTURE.md   # this file
-│   ├── GETTING_STARTED.md
-│   ├── BEST_PRACTICES.md, ALGORITHM_LANDSCAPE.md, data-dictionary.md, e2e-free-platforms.md
-│   ├── data-foundation-lakehouse.md, santosh-case-study.md, single-record-checklist.md
-├── src/retention_radar/      # SOLID package (data, features, training, evaluation, serving)
-├── src/*.py                  # thin shims (`python -m src.train`, …)
-├── app/streamlit_app.py      # serve-only UI
-├── scripts/                  # run_all, sync_lakehouse, run_lakehouse_e2e
-├── schemas/
-├── models/                   # committed seed-42 joblibs + metrics.json + feature_*
+├── README.md, LICENSE, CHANGELOG.md, CONTRIBUTING.md, Makefile
+├── pyproject.toml, requirements.txt, requirements.lock, runtime.txt, .gitignore
+├── .github/workflows/ci.yml
+├── src/retention_radar/           # ONLY Python package under src/
+│   ├── __init__.py
+│   ├── config.py, protocols.py, docs_gen.py
+│   ├── cli/                       # train, evaluate, infer, single_record, …
+│   ├── data/, features/, training/, evaluation/, serving/
+├── app/streamlit_app.py
+├── scripts/                       # shell orchestration only
+├── schemas/user_record.schema.json
 ├── data/raw/, data/external/
-├── results/                  # analysis of results (benchmarks + Santosh + plots)
-│   ├── README.md, BENCHMARKS.md, SANTOSH_ANALYSIS.md
-│   ├── plots/                # ROC/PR/calibration/confusion/threshold
-│   └── *.json                # sample packet + optional lakehouse summary
-├── artifacts/                # runtime dumps (gitignored except .gitkeep)
-├── tests/
-└── .github/workflows/
+├── models/                        # seed-42 serve bundle (joblibs + metrics)
+├── results/                       # BENCHMARKS, SANTOSH_ANALYSIS, plots/, samples
+├── artifacts/                     # runtime-only (.gitkeep committed; * gitignored)
+├── docs/
+│   ├── README.md                  # this index
+│   ├── GETTING_STARTED.md
+│   ├── FOLDER_STRUCTURE.md
+│   ├── ARCHITECTURE.md
+│   ├── MODEL_CARD.md
+│   ├── guides/
+│   ├── data/
+│   └── case-study/
+└── tests/
 ```
 
 ## Folder purposes
 
 | Path | Purpose |
 |------|---------|
-| `src/retention_radar/` | Implementation packages (SOLID boundaries) |
-| `src/*.py` | CLI/compat shims so `python -m src.*` stays stable |
+| `src/retention_radar/` | Product package (SOLID boundaries) |
+| `src/retention_radar/cli/` | CLI entrypoints (`python -m retention_radar.cli.*`) |
 | `app/` | Streamlit — **serve-only** |
 | `scripts/` | E2E + lakehouse sync helpers (`make run` / `make run-lakehouse`) |
 | `models/` | Seed-42 serve bundle — **commit** for Cloud |
 | `results/` | Committed analysis + charts (not runtime) |
-| `artifacts/` | Local evaluate / infer dumps |
-| `docs/` | Engineering docs + model card + architecture |
+| `artifacts/` | Local evaluate / infer dumps — **never commit** |
+| `docs/` | Engineering docs + model card + nested guides |
 | `data/external/` | Lakehouse gold sync (CSVs gitignored) |
 
-**Charts:** `artifacts/` is what evaluate writes. `results/plots/` is the committed pack. Refresh with `make docs-results`.
+**Product vs scratch:** package + `app/` + committed `models/` + `results/` are product. `artifacts/`, generated `data/raw/users.csv`, Optuna DBs, and `__pycache__` are scratch.
+
+**Charts:** `artifacts/` is what evaluate writes at runtime. `results/plots/` is the committed pack. Refresh with `make docs-results`.
 
 More: [GETTING_STARTED.md](GETTING_STARTED.md) · [ARCHITECTURE.md](ARCHITECTURE.md) · [../results/README.md](../results/README.md)

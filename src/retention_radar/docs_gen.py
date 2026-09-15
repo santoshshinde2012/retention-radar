@@ -6,7 +6,7 @@ import json
 from datetime import date
 from pathlib import Path
 
-from src.retention_radar import config
+from retention_radar import config
 
 
 def load_user_record_schema() -> dict:
@@ -77,15 +77,15 @@ def _fmt_scalar(val, digits: int = 4) -> str:
 
 def write_data_dictionary(path: Path | None = None) -> Path:
     path = path or config.DATA_DICTIONARY_PATH
+    path.parent.mkdir(parents=True, exist_ok=True)
     config.GUIDES_DIR.mkdir(parents=True, exist_ok=True)
     schema = load_user_record_schema()
 
     lines = [
         "# Data dictionary",
         "",
-        "Auto-generated from `src/retention_radar/config.py` "
-        "(compat: `src/config.py`), `schemas/user_record.schema.json`, "
-        "and `src/retention_radar/data/generate.py`.",
+        "Auto-generated from `src/retention_radar/config.py`, "
+        "`schemas/user_record.schema.json`, and `src/retention_radar/data/generate.py`.",
         "Synthetic AI-platform churn dataset — no real PII.",
         "",
         f"_Generated: {date.today().isoformat()} · seed={config.RANDOM_SEED}_",
@@ -151,7 +151,7 @@ def write_data_dictionary(path: Path | None = None) -> Path:
         lines.append(f"| `{name}` | {i} |")
 
     try:
-        from src.retention_radar.data.generate import santosh_profile
+        from retention_radar.data.generate import santosh_profile
 
         profile = {k: v for k, v in santosh_profile().items() if k != "churned"}
         lines += [
@@ -167,8 +167,8 @@ def write_data_dictionary(path: Path | None = None) -> Path:
             lines.append(f"| `{k}` | {v} |")
         lines += [
             "",
-            "See also [santosh-case-study.md](santosh-case-study.md) and "
-            "[single-record-checklist.md](single-record-checklist.md).",
+            "See also [santosh-case-study.md](../case-study/santosh-case-study.md) and "
+            "[single-record-checklist.md](../case-study/single-record-checklist.md).",
             "",
         ]
     except Exception:
@@ -178,10 +178,10 @@ def write_data_dictionary(path: Path | None = None) -> Path:
         "",
         "## Related reading",
         "",
-        "- [ARCHITECTURE.md](ARCHITECTURE.md) — SOLID package map",
-        "- [MODEL_CARD.md](MODEL_CARD.md)",
-        "- [Santosh case study](santosh-case-study.md)",
-        "- [Single-record checklist](single-record-checklist.md)",
+        "- [ARCHITECTURE.md](../ARCHITECTURE.md) — SOLID package map",
+        "- [MODEL_CARD.md](../MODEL_CARD.md)",
+        "- [Santosh case study](../case-study/santosh-case-study.md)",
+        "- [Single-record checklist](../case-study/single-record-checklist.md)",
         "- [Data foundation / lakehouse](data-foundation-lakehouse.md)",
         "",
     ]
@@ -237,7 +237,7 @@ def write_model_card(metrics: dict | None = None, path: Path | None = None) -> P
         "",
         f"{len(config.MODEL_FEATURE_COLUMNS)} numeric features after ordinal "
         "`plan_tier` encoding.",
-        "See [data-dictionary.md](data-dictionary.md) for dtype, ranges, and nullability.",
+        "See [data-dictionary.md](data/data-dictionary.md) for dtype, ranges, and nullability.",
         "",
         "## Metrics (holdout) — from `models/metrics.json`",
         "",
@@ -352,15 +352,15 @@ def write_model_card(metrics: dict | None = None, path: Path | None = None) -> P
         "- Calibration improves probability meaning but does not fix selection bias.",
         "- SHAP explains this score, not causation.",
         "- Single-record path is HITL only (`auto_action: none`) — "
-        "see [single-record-checklist.md](single-record-checklist.md).",
+        "see [single-record-checklist.md](case-study/single-record-checklist.md).",
         "",
         "## Related reading",
         "",
         "- [ARCHITECTURE.md](ARCHITECTURE.md) — SOLID package map",
-        "- [data-dictionary.md](data-dictionary.md)",
-        "- [BEST_PRACTICES.md](BEST_PRACTICES.md)",
-        "- [santosh-case-study.md](santosh-case-study.md)",
-        "- [ALGORITHM_LANDSCAPE.md](ALGORITHM_LANDSCAPE.md) — what is on the ladder vs deferred",
+        "- [data-dictionary.md](data/data-dictionary.md)",
+        "- [BEST_PRACTICES.md](guides/BEST_PRACTICES.md)",
+        "- [santosh-case-study.md](case-study/santosh-case-study.md)",
+        "- [ALGORITHM_LANDSCAPE.md](guides/ALGORITHM_LANDSCAPE.md) — what is on the ladder vs deferred",
         "- [../results/BENCHMARKS.md](../results/BENCHMARKS.md)",
         "- [../results/SANTOSH_ANALYSIS.md](../results/SANTOSH_ANALYSIS.md)",
         "",

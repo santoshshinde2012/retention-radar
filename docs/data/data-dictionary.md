@@ -1,6 +1,6 @@
 # Data dictionary
 
-Auto-generated from `src/retention_radar/config.py` (compat: `src/config.py`), `schemas/user_record.schema.json`, and `src/retention_radar/data/generate.py`.
+Auto-generated from `src/retention_radar/config.py` `schemas/user_record.schema.json`, and `src/retention_radar/data/generate.py`.
 Synthetic AI-platform churn dataset — no real PII.
 
 _Generated: 2026-09-15 · seed=42_
@@ -109,13 +109,13 @@ Payload: `data/raw/santosh_shinde.json` (no `churned`).
 | `ide_plugin_sessions_last_30d` | 28 |
 | `seat_utilization` | 0.72 |
 
-See also [santosh-case-study.md](santosh-case-study.md) and [single-record-checklist.md](single-record-checklist.md).
+See also [santosh-case-study.md](../case-study/santosh-case-study.md) and [single-record-checklist.md](../case-study/single-record-checklist.md).
 
 
 ## Related reading
 
-- [ARCHITECTURE.md](ARCHITECTURE.md) — SOLID package map
-- [MODEL_CARD.md](MODEL_CARD.md)
-- [Santosh case study](santosh-case-study.md)
-- [Single-record checklist](single-record-checklist.md)
+- [ARCHITECTURE.md](../ARCHITECTURE.md) — SOLID package map
+- [MODEL_CARD.md](../MODEL_CARD.md)
+- [Santosh case study](../case-study/santosh-case-study.md)
+- [Single-record checklist](../case-study/single-record-checklist.md)
 - [Data foundation / lakehouse](data-foundation-lakehouse.md)

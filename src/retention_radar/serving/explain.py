@@ -82,10 +82,10 @@ def main() -> None:
     """Write gain-based XGBoost importance from the saved bundle."""
     import joblib
 
-    from src.retention_radar import config
+    from retention_radar import config
 
     if not config.MODEL_PATH.exists():
-        raise SystemExit(f"Model not found: {config.MODEL_PATH}. Run python -m src.train first.")
+        raise SystemExit(f"Model not found: {config.MODEL_PATH}. Run python -m retention_radar.cli.train first.")
 
     config.ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
     bundle = joblib.load(config.MODEL_PATH)

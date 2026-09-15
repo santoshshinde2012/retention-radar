@@ -1,7 +1,7 @@
 """Single-record inference latency benchmark (CPU).
 
 Run:
-    python -m src.benchmark
+    python -m retention_radar.cli.benchmark
 """
 
 from __future__ import annotations
@@ -12,10 +12,10 @@ import time
 import joblib
 import numpy as np
 
-from src.retention_radar import config
-from src.retention_radar.data.ingest import resolve_santosh_json
-from src.retention_radar.features.transform import row_to_feature_frame
-from src.retention_radar.training.calibrate import load_calibrator
+from retention_radar import config
+from retention_radar.data.ingest import resolve_santosh_json
+from retention_radar.features.transform import row_to_feature_frame
+from retention_radar.training.calibrate import load_calibrator
 
 
 def _percentile(arr: np.ndarray, q: float) -> float:
@@ -99,7 +99,7 @@ def main() -> None:
         json.dump(out, f, indent=2)
     print(f"Updated {config.METRICS_PATH}")
 
-    from src.retention_radar.docs_gen import write_model_card
+    from retention_radar.docs_gen import write_model_card
 
     write_model_card(out)
 

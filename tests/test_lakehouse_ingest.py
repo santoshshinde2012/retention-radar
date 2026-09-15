@@ -7,8 +7,8 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from src.retention_radar import config
-from src.retention_radar.data.ingest import (
+from retention_radar import config
+from retention_radar.data.ingest import (
     load_users,
     resolve_santosh_json,
     resolve_users_csv,
@@ -74,8 +74,8 @@ def test_sync_lakehouse_exports(tmp_path, monkeypatch):
 def test_drift_cli_defaults_to_active_users_table():
     import inspect
 
-    from src.retention_radar.serving import drift as drift_mod
-    from src.retention_radar.serving import packet as packet_mod
+    from retention_radar.serving import drift as drift_mod
+    from retention_radar.serving import packet as packet_mod
 
     assert "resolve_users_csv()" in inspect.getsource(drift_mod.main)
     assert "resolve_users_csv()" in inspect.getsource(packet_mod.cohort_percentiles)
@@ -137,7 +137,7 @@ def test_load_users_from_lakehouse_shaped_export(tmp_path, monkeypatch):
     assert "feature_as_of" not in df.columns
     assert set(df["churned"].unique()).issubset({0, 1})
 
-    from src.retention_radar.features.transform import prepare_xy
+    from retention_radar.features.transform import prepare_xy
 
     X, y = prepare_xy(df)
     assert list(X.columns) == list(config.MODEL_FEATURE_COLUMNS)
@@ -145,7 +145,7 @@ def test_load_users_from_lakehouse_shaped_export(tmp_path, monkeypatch):
 
 
 def test_unknown_plan_tier_fails_loud():
-    from src.retention_radar.features.transform import encode_plan_tier
+    from retention_radar.features.transform import encode_plan_tier
 
     df = _gold_frame(n=2)
     df.loc[0, "plan_tier"] = "gold"

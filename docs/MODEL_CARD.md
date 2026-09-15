@@ -23,7 +23,7 @@ Stack: XGBoost (Optuna-tuned) + post-hoc probability calibration (`isotonic`) on
 ## Features
 
 22 numeric features after ordinal `plan_tier` encoding.
-See [data-dictionary.md](data-dictionary.md) for dtype, ranges, and nullability.
+See [data-dictionary.md](data/data-dictionary.md) for dtype, ranges, and nullability.
 
 ## Metrics (holdout) — from `models/metrics.json`
 
@@ -93,14 +93,14 @@ Committed copies live under `results/plots/` (runtime dumps in `artifacts/`).
 - Labels and features are synthetic; do not treat scores as real risk.
 - Calibration improves probability meaning but does not fix selection bias.
 - SHAP explains this score, not causation.
-- Single-record path is HITL only (`auto_action: none`) — see [single-record-checklist.md](single-record-checklist.md).
+- Single-record path is HITL only (`auto_action: none`) — see [single-record-checklist.md](case-study/single-record-checklist.md).
 
 ## Related reading
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) — SOLID package map
-- [data-dictionary.md](data-dictionary.md)
-- [BEST_PRACTICES.md](BEST_PRACTICES.md)
-- [santosh-case-study.md](santosh-case-study.md)
-- [ALGORITHM_LANDSCAPE.md](ALGORITHM_LANDSCAPE.md) — what is on the ladder vs deferred
+- [data-dictionary.md](data/data-dictionary.md)
+- [BEST_PRACTICES.md](guides/BEST_PRACTICES.md)
+- [santosh-case-study.md](case-study/santosh-case-study.md)
+- [ALGORITHM_LANDSCAPE.md](guides/ALGORITHM_LANDSCAPE.md) — what is on the ladder vs deferred
 - [../results/BENCHMARKS.md](../results/BENCHMARKS.md)
 - [../results/SANTOSH_ANALYSIS.md](../results/SANTOSH_ANALYSIS.md)

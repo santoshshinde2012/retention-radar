@@ -1,7 +1,7 @@
 """Generate synthetic AI-platform user data and Santosh Shinde's profile.
 
 Run from project root:
-    python -m src.generate_data
+    python -m retention_radar.cli.generate_data
 """
 
 from __future__ import annotations
@@ -13,7 +13,7 @@ import os
 import numpy as np
 import pandas as pd
 
-from src.retention_radar import config
+from retention_radar import config
 
 
 def _clip(arr: np.ndarray, lo: float, hi: float) -> np.ndarray:

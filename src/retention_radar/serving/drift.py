@@ -11,9 +11,9 @@ and severity is ``severe``. Gate CI / pipelines with ``--strict``.
 
 Examples::
 
-    python -m src.drift_check
-    python -m src.drift_check --strict --z-threshold 3.0
-    python -m src.drift_check --csv data/external/churn_user_features.csv
+    python -m retention_radar.cli.drift_check
+    python -m retention_radar.cli.drift_check --strict --z-threshold 3.0
+    python -m retention_radar.cli.drift_check --csv data/external/churn_user_features.csv
 """
 
 from __future__ import annotations
@@ -25,9 +25,9 @@ from pathlib import Path
 
 import pandas as pd
 
-from src.retention_radar import config
-from src.retention_radar.data.ingest import resolve_users_csv
-from src.retention_radar.features.transform import encode_plan_tier
+from retention_radar import config
+from retention_radar.data.ingest import resolve_users_csv
+from retention_radar.features.transform import encode_plan_tier
 
 
 def load_feature_stats(path: Path) -> dict:

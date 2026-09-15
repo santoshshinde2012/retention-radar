@@ -38,7 +38,7 @@ cp -f "$ROOT/models/metrics.json" "$ROOT/artifacts/lakehouse_run/metrics.json"
 cp -f "$ROOT/models/feature_stats.json" "$ROOT/artifacts/lakehouse_run/feature_stats.json" 2>/dev/null || true
 cp -f "$ROOT/artifacts/santosh_decision_packet.json" "$ROOT/artifacts/lakehouse_run/santosh_decision_packet.json" 2>/dev/null || true
 echo "==> archived lakehouse run → artifacts/lakehouse_run/"
-echo "    Tip: git checkout -- models/ docs/MODEL_CARD.md docs/data-dictionary.md"
+echo "    Tip: git checkout -- models/ docs/MODEL_CARD.md docs/data/data-dictionary.md"
 echo "         restores the published synthetic seed-42 ladder."
 
 echo "==> lakehouse E2E complete"

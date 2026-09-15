@@ -1,6 +1,6 @@
 # Architecture — Retention Radar (XGBoost AI Platform Churn)
 
-**Model card:** [MODEL_CARD.md](MODEL_CARD.md) · **Landscape:** [ALGORITHM_LANDSCAPE.md](ALGORITHM_LANDSCAPE.md) · **Practices:** [BEST_PRACTICES.md](BEST_PRACTICES.md) · **Lakehouse:** [data-foundation-lakehouse.md](data-foundation-lakehouse.md) · **Results:** [../results/BENCHMARKS.md](../results/BENCHMARKS.md)
+**Model card:** [MODEL_CARD.md](MODEL_CARD.md) · **Landscape:** [ALGORITHM_LANDSCAPE.md](guides/ALGORITHM_LANDSCAPE.md) · **Practices:** [BEST_PRACTICES.md](guides/BEST_PRACTICES.md) · **Lakehouse:** [data-foundation-lakehouse.md](data/data-foundation-lakehouse.md) · **Results:** [../results/BENCHMARKS.md](../results/BENCHMARKS.md)
 
 ## Purpose
 
@@ -89,7 +89,7 @@ flowchart TB
 ```text
 retention-radar/
 ├── src/retention_radar/   # packages: data, features, training, evaluation, serving
-├── src/*.py               # shims: python -m src.train, src.infer, …
+├── src/retention_radar/cli/  # python -m retention_radar.cli.train, .infer, …
 ├── app/streamlit_app.py
 ├── scripts/run_all.sh
 ├── data/raw/      # users.csv, santosh_shinde.json
@@ -115,7 +115,7 @@ retention-radar/
 | Evaluate | AUC, PR, F1, Brier, τ, latency | `metrics.json`, plots |
 | Infer | Load bundle, score one row | Probability + band + drivers |
 | UI | Presets, forms, Decision tab | Streamlit HITL |
-| Ops-lite | Drift, retrain, when not to ship | docs/BEST_PRACTICES.md |
+| Ops-lite | Drift, retrain, when not to ship | guides/BEST_PRACTICES.md |
 
 ## Key artifacts contract
 
@@ -171,10 +171,10 @@ The layout is a **teaching** SOLID sketch, not a claim that every file is a text
 
 **`serving/scoring.py` in one sentence:** SRP = turn an estimator + optional calibrator into probability vectors; OCP = new models/calibrators without editing Streamlit; LSP = Dummy/LogReg/XGB are interchangeable via `predict_proba`; ISP = no fat “ModelService”; DIP = `CalibratedScorer` depends on Protocols in `protocols.py`, not on `XGBClassifier`.
 
-Related: [src/retention_radar/protocols.py](src/retention_radar/protocols.py)
+Related: [src/retention_radar/protocols.py](../src/retention_radar/protocols.py)
 
 ## Related docs
 
-- [MODEL_CARD.md](MODEL_CARD.md) · [data-dictionary.md](data-dictionary.md) · [../results/](../results/)
-- [docs/BEST_PRACTICES.md](docs/BEST_PRACTICES.md) · [docs/data-foundation-lakehouse.md](docs/data-foundation-lakehouse.md)
-- [src/retention_radar/protocols.py](src/retention_radar/protocols.py)
+- [MODEL_CARD.md](MODEL_CARD.md) · [data-dictionary.md](data/data-dictionary.md) · [../results/](../results/)
+- [guides/BEST_PRACTICES.md](guides/BEST_PRACTICES.md) · [data/data-foundation-lakehouse.md](data/data-foundation-lakehouse.md)
+- [src/retention_radar/protocols.py](../src/retention_radar/protocols.py)

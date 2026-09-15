@@ -1,7 +1,7 @@
 """Streamlit demo: Predict / Explain / Decision / Methodology / Benchmarks.
 
 Run from project root:
-    export PYTHONPATH="$(pwd)"
+    export PYTHONPATH="$(pwd)/src"
     streamlit run app/streamlit_app.py
 """
 
@@ -16,11 +16,12 @@ import pandas as pd
 import streamlit as st
 
 ROOT = Path(__file__).resolve().parent.parent
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
+SRC = ROOT / "src"
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
 
-from src.calibrate import load_calibrator  # noqa: E402
-from src.config import (  # noqa: E402
+from retention_radar.training.calibrate import load_calibrator  # noqa: E402
+from retention_radar.config import (  # noqa: E402
     ARTIFACTS_DIR,
     CALIBRATOR_PATH,
     GUIDES_DIR,
@@ -28,14 +29,14 @@ from src.config import (  # noqa: E402
     MODEL_PATH,
     PLAN_TIER_ORDER,
 )
-from src.infer import predict_user  # noqa: E402
-from src.single_record import build_decision_packet  # noqa: E402
-from src.retention_radar.data.ingest import (  # noqa: E402
+from retention_radar.serving.infer import predict_user  # noqa: E402
+from retention_radar.serving.packet import build_decision_packet  # noqa: E402
+from retention_radar.data.ingest import (  # noqa: E402
     resolve_santosh_json,
     resolve_users_csv,
 )
-from src.retention_radar.serving.policy import risk_band  # noqa: E402
-from src.retention_radar import config as rr_config  # noqa: E402
+from retention_radar.serving.policy import risk_band  # noqa: E402
+from retention_radar import config as rr_config  # noqa: E402
 
 
 @st.cache_resource
@@ -422,9 +423,9 @@ Beginner tip: **AUC** ranks users; **Brier** checks if probabilities are honest;
         )
     st.markdown(
         "Docs: [model card](../docs/MODEL_CARD.md) · "
-        "[data dictionary](../docs/data-dictionary.md) · "
+        "[data dictionary](../docs/data/data-dictionary.md) · "
         "[architecture](../docs/ARCHITECTURE.md) · "
-        "[Santosh case](../docs/santosh-case-study.md)"
+        "[Santosh case](../docs/case-study/santosh-case-study.md)"
     )
 
 
@@ -438,7 +439,7 @@ def tab_benchmarks(metrics: dict):
             f"n={lat.get('n_runs', '?')})."
         )
     else:
-        st.info("Run `python -m src.benchmark` to populate latency metrics.")
+        st.info("Run `python -m retention_radar.cli.benchmark` to populate latency metrics.")
 
     for fname, caption in [
         ("roc_curve.png", "ROC curve"),
@@ -470,7 +471,7 @@ def main() -> None:
     if bundle is None:
         st.error(
             f"Model not found at `{MODEL_PATH}`. "
-            "Run `./scripts/run_all.sh` or `python -m src.train` first."
+            "Run `./scripts/run_all.sh` or `python -m retention_radar.cli.train` first."
         )
         return
 

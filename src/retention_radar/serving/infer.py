@@ -1,8 +1,8 @@
 """Score a user JSON with the trained churn model.
 
 Examples:
-    python -m src.infer --user santosh
-    python -m src.infer --json data/raw/santosh_shinde.json
+    python -m retention_radar.cli.infer --user santosh
+    python -m retention_radar.cli.infer --json data/raw/santosh_shinde.json
 """
 
 from __future__ import annotations
@@ -13,13 +13,13 @@ from pathlib import Path
 
 import joblib
 
-from src.retention_radar import config
-from src.retention_radar.data.ingest import resolve_santosh_json
-from src.retention_radar.features.transform import row_to_feature_frame
-from src.retention_radar.serving.explain import top_contributing_features
-from src.retention_radar.serving.policy import risk_band
-from src.retention_radar.serving.scoring import CalibratedScorer
-from src.retention_radar.training.calibrate import load_calibrator
+from retention_radar import config
+from retention_radar.data.ingest import resolve_santosh_json
+from retention_radar.features.transform import row_to_feature_frame
+from retention_radar.serving.explain import top_contributing_features
+from retention_radar.serving.policy import risk_band
+from retention_radar.serving.scoring import CalibratedScorer
+from retention_radar.training.calibrate import load_calibrator
 
 
 def load_payload(path: Path) -> dict:
@@ -79,7 +79,7 @@ def main(argv: list[str] | None = None) -> None:
     model_path = Path(args.model) if args.model else config.MODEL_PATH
     if not model_path.exists():
         raise SystemExit(
-            f"Model not found: {model_path}. Run python -m src.train first."
+            f"Model not found: {model_path}. Run python -m retention_radar.cli.train first."
         )
 
     bundle = load_payload(model_path)

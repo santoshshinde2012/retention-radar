@@ -2,9 +2,9 @@
 
 End-to-end outcome for the hero JSON through Retention Radar (seed **42**, synthetic only).
 
-**Reproduce:** `PYTHONPATH=. python -m src.single_record --user santosh --out artifacts/santosh_decision_packet.json`  
+**Reproduce:** `PYTHONPATH=src python -m retention_radar.cli.single_record --user santosh --out artifacts/santosh_decision_packet.json`  
 **Sample packet:** [`santosh_decision_packet.sample.json`](santosh_decision_packet.sample.json)  
-**Case study (longer walkthrough):** [`../docs/santosh-case-study.md`](../docs/santosh-case-study.md)
+**Case study (longer walkthrough):** [`../docs/case-study/santosh-case-study.md`](../docs/case-study/santosh-case-study.md)
 
 ---
 
@@ -62,7 +62,7 @@ Published Medium / README numbers are the **synthetic** row.
 ## Related
 
 - [BENCHMARKS.md](BENCHMARKS.md) — ladder, Brier, τ, latency  
-- [docs/ALGORITHM_LANDSCAPE.md](../docs/ALGORITHM_LANDSCAPE.md) — CatBoost IN; TabPFN/survival/conformal DEFER  
-- [docs/single-record-checklist.md](../docs/single-record-checklist.md)  
+- [docs/guides/ALGORITHM_LANDSCAPE.md](../docs/guides/ALGORITHM_LANDSCAPE.md) — CatBoost IN; TabPFN/survival/conformal DEFER  
+- [docs/case-study/single-record-checklist.md](../docs/case-study/single-record-checklist.md)  
 - [docs/MODEL_CARD.md](../docs/MODEL_CARD.md)  
 - Articles: authored separately (**internal**); this repo is the public code / results home  

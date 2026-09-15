@@ -14,7 +14,7 @@ from sklearn.isotonic import IsotonicRegression
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import brier_score_loss
 
-from src.retention_radar import config
+from retention_radar import config
 
 
 class ProbabilityCalibrator:

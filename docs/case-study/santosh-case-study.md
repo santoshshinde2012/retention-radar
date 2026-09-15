@@ -107,7 +107,7 @@ Mild-whisper story: cooling trend + near renewal + one payment failure + 8 days 
 ## 3. Decision packet (reference run)
 
 ```bash
-python -m src.single_record --user santosh --out artifacts/santosh_decision_packet.json
+python -m retention_radar.cli.single_record --user santosh --out artifacts/santosh_decision_packet.json
 ```
 
 ### Validation
@@ -199,8 +199,8 @@ Full dump: `models/metrics.json`. Always prefer a fresh run over prose.
 
 ## 6. Batch, drift, and slice diagnostics (FOSS extras)
 
-- **Batch CLI:** `python -m src.single_record --dir path/to/jsons` → `artifacts/batch_decision_packets.jsonl`
-- **Lite drift:** `python -m src.drift_check` → `artifacts/drift_report.json`
+- **Batch CLI:** `python -m retention_radar.cli.single_record --dir path/to/jsons` → `artifacts/batch_decision_packets.jsonl`
+- **Lite drift:** `python -m retention_radar.cli.drift_check` → `artifacts/drift_report.json`
 - **Slice metrics:** per-`plan_tier` diagnostics in `metrics.json` — **educational only, not a fairness audit**
 - **CI:** GitHub Actions uses `N_USERS=800` / `N_OPTUNA_TRIALS=5`
 
@@ -210,5 +210,5 @@ Full dump: `models/metrics.json`. Always prefer a fresh run over prose.
 
 - [../results/SANTOSH_ANALYSIS.md](../results/SANTOSH_ANALYSIS.md) — Single-record outcome (seed-42)  
 - [../results/BENCHMARKS.md](../results/BENCHMARKS.md) — Published ladder tables  
-- [data-dictionary.md](data-dictionary.md) · [MODEL_CARD.md](MODEL_CARD.md)  
-- [ARCHITECTURE.md](ARCHITECTURE.md) · [single-record-checklist.md](single-record-checklist.md)
+- [data-dictionary.md](data-dictionary.md) · [MODEL_CARD.md](../MODEL_CARD.md)  
+- [ARCHITECTURE.md](../ARCHITECTURE.md) · [single-record-checklist.md](single-record-checklist.md)

@@ -4,14 +4,14 @@ from __future__ import annotations
 
 import pytest
 
-from src.retention_radar.docs_gen import (
+from retention_radar.docs_gen import (
     load_user_record_schema,
     schema_field_meta,
     write_data_dictionary,
     write_model_card,
 )
-from src.retention_radar.features.transform import row_to_feature_frame
-from src.generate_data import santosh_profile
+from retention_radar.features.transform import row_to_feature_frame
+from retention_radar.data.generate import santosh_profile
 
 
 def test_schema_meta_covers_required_fields():
@@ -27,7 +27,7 @@ def test_schema_meta_covers_required_fields():
 
 
 def test_write_dictionary_and_model_card(tmp_path, monkeypatch):
-    from src import config
+    from retention_radar import config
 
     dict_path = tmp_path / "data-dictionary.md"
     card_path = tmp_path / "model-card.md"

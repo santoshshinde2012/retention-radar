@@ -14,7 +14,7 @@ cd retention-radar
 python3 -m venv .venv
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-export PYTHONPATH="$(pwd)"
+export PYTHONPATH="$(pwd)/src"
 ```
 
 Requires **Python 3.11+**. Or run `make setup`.
@@ -42,7 +42,7 @@ Cite **`models/metrics.json`**. Narrative: [results/BENCHMARKS.md](../results/BE
 ```bash
 make infer
 # equivalent:
-# PYTHONPATH=. python -m src.single_record --user santosh --out artifacts/santosh_decision_packet.json
+# PYTHONPATH=src python -m retention_radar.cli.single_record --user santosh --out artifacts/santosh_decision_packet.json
 ```
 
 Expect raw ≈ **0.043**, calibrated ≈ **0.017**, band **low**, HITL **monitor** (`auto_action: none`). See [results/SANTOSH_ANALYSIS.md](../results/SANTOSH_ANALYSIS.md).
@@ -67,9 +67,9 @@ CHURN_DATA_SOURCE=synthetic pytest -q
 **Warning:** Lakehouse E2E overwrites committed `models/`. Restore before committing:
 
 ```bash
-git checkout -- models/ docs/MODEL_CARD.md docs/data-dictionary.md
+git checkout -- models/ docs/MODEL_CARD.md docs/data/data-dictionary.md
 ```
 
 Sync only: `./scripts/sync_lakehouse_exports.sh /path/to/local-data-lakehouse/data/export`
 
-More: [FOLDER_STRUCTURE.md](FOLDER_STRUCTURE.md) · [ARCHITECTURE.md](ARCHITECTURE.md) · [e2e-free-platforms.md](e2e-free-platforms.md) · [../README.md](../README.md)
+More: [FOLDER_STRUCTURE.md](FOLDER_STRUCTURE.md) · [ARCHITECTURE.md](ARCHITECTURE.md) · [e2e-free-platforms.md](guides/e2e-free-platforms.md) · [../README.md](../README.md)

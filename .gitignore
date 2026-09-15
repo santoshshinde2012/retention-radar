@@ -50,8 +50,9 @@ models/*
 !models/metrics.json
 
 # Runtime plots + HITL packets (evaluate / single_record). Keep .gitkeep.
-# Committed sample charts live in results/plots/ (articles live in xgboost-ai-churn).
+# Committed sample charts live in results/plots/; do not commit runtime dumps here.
 artifacts/*
+artifacts/**
 !artifacts/.gitkeep
 
 # Optuna / logs
