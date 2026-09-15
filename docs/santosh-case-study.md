@@ -208,6 +208,7 @@ Full dump: `models/metrics.json`. Always prefer a fresh run over prose.
 
 ## Related
 
-- [RESEARCH.md](RESEARCH.md) — Single-record completeness  
-- [data-dictionary.md](data-dictionary.md) · [model-card.md](model-card.md)  
-- [ARCHITECTURE.md](ARCHITECTURE.md) · [MODEL_CARD.md](MODEL_CARD.md) · [../results/SANTOSH_ANALYSIS.md](../results/SANTOSH_ANALYSIS.md) · [single-record-checklist.md](single-record-checklist.md)
+- [../results/SANTOSH_ANALYSIS.md](../results/SANTOSH_ANALYSIS.md) — Single-record outcome (seed-42)  
+- [../results/BENCHMARKS.md](../results/BENCHMARKS.md) — Published ladder tables  
+- [data-dictionary.md](data-dictionary.md) · [MODEL_CARD.md](MODEL_CARD.md)  
+- [ARCHITECTURE.md](ARCHITECTURE.md) · [single-record-checklist.md](single-record-checklist.md)

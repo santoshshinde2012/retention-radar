@@ -39,6 +39,7 @@ Dual-world notes: [docs/data-foundation-lakehouse.md](docs/data-foundation-lakeh
 - **Python 3.11+** (`runtime.txt` pins `python-3.11`)
 - Linux, macOS, or Windows (WSL recommended on Windows)
 - CPU-only; no GPU required
+- **macOS:** `brew install libomp` if XGBoost/LightGBM fail to load OpenMP (`libomp`)
 
 ## Installation
 

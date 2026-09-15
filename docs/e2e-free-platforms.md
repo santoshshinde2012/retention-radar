@@ -55,7 +55,7 @@ You should see:
 - pytest green
 - Streamlit **Decision** tab: Santosh band + HITL action, `auto_action: none`
 
-Cite **`models/metrics.json`** after a run. Prose in [RESEARCH.md](RESEARCH.md) §5b is a **reference** seed-42 full run, not a substitute for your file.
+Cite **`models/metrics.json`** after a run. Narrative reference: [../results/BENCHMARKS.md](../results/BENCHMARKS.md) (seed-42 ladder) — not a substitute for your file.
 
 ---
 
@@ -230,7 +230,7 @@ Use this once locally **or** via CI + Cloud.
 - [ ] GitHub Actions run green (fork: enable Actions)
 - [ ] (Demo host) Streamlit Cloud or HF Space using **committed** `models/` — no Optuna in the cloud
 
-Notes: data is **synthetic**. Do not treat Santosh’s probability as real risk. Published RESEARCH.md numbers are a reference full run; CI/Cloud may use a smaller bundle.
+Notes: data is **synthetic**. Do not treat Santosh’s probability as real risk. Published [results/BENCHMARKS.md](../results/BENCHMARKS.md) numbers are a reference full run; CI/Cloud may use a smaller bundle.
 
 ---
 
