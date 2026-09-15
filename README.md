@@ -1,14 +1,21 @@
 # Retention Radar
 
-FOSS **human-in-the-loop** churn ranking for a fictional AI platform. The model ranks quiet fade-out risk and hands a flight checklist to a human — it does **not** auto-cancel anyone.
-
-Synthetic data only — no real PII. Seed **42**. CPU-fast. Scores go to a **human** (`auto_action: none`).
+Human-in-the-loop churn ranking for a fictional AI platform. Ranks quiet fade-out risk and returns a flight checklist for a human — it does **not** auto-cancel anyone.
 
 **GitHub:** [santoshshinde2012/retention-radar](https://github.com/santoshshinde2012/retention-radar)
 
-> **Seed 42, one record:** validate → 22 features → raw **0.043** → calibrated **0.017** → band **low** → SHAP → HITL **monitor** (`auto_action: none`). Honest ladder: LogReg **0.872** / RF **0.868** / XGB **0.870** / LightGBM **0.865**; Brier **0.138 → 0.106**.
+## What this is / What this is not
 
-## Repo map (authoritative split)
+| Is | Is not |
+|----|--------|
+| FOSS teaching codebase for train → evaluate → serve | Production CRM or billing integration |
+| Synthetic users only (seed **42**); no real PII | A claim of production ROI or fairness audit |
+| HITL policy (`auto_action: none`) | Automated account cancellation |
+| Source of truth for **code + benchmarks + results analysis** | Article / Medium home (see related projects) |
+
+**Seed 42 reference (one record):** validate → 22 features → raw **0.043** → calibrated **0.017** → band **low** → SHAP → HITL **monitor** (`auto_action: none`). Honest ladder (test AUC): LogReg **0.872** / RF **0.868** / XGB **0.870** / LightGBM **0.865**; Brier **0.138 → 0.106**.
+
+## Repository map
 
 | Repo | Role |
 |------|------|
@@ -18,29 +25,65 @@ Synthetic data only — no real PII. Seed **42**. CPU-fast. Scores go to a **hum
 
 Dual-world notes: [docs/data-foundation-lakehouse.md](docs/data-foundation-lakehouse.md). Published ladder stays on the synthetic generator.
 
+## Features
+
+- End-to-end pipeline: generate/load → features → train (LogReg, RF, XGBoost, LightGBM, Optuna) → calibrate → evaluate → serve
+- Committed seed-42 model bundle under `models/` for offline serve and Cloud demos
+- Single-record decision packet (Santosh hero JSON) with SHAP drivers and HITL action
+- Streamlit serve-only UI
+- Dual data path: synthetic (CI / published metrics) or lakehouse gold sync
+- Benchmarks and analysis under `results/`
+
+## Requirements
+
+- **Python 3.11+** (`runtime.txt` pins `python-3.11`)
+- Linux, macOS, or Windows (WSL recommended on Windows)
+- CPU-only; no GPU required
+
+## Installation
+
+```bash
+git clone https://github.com/santoshshinde2012/retention-radar.git
+cd retention-radar
+python3 -m venv .venv
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+export PYTHONPATH="$(pwd)"
+```
+
+Optional: `make setup` creates the venv and installs requirements.
+
 ## Quick start
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-export PYTHONPATH="$(pwd)"
 chmod +x scripts/run_all.sh
-./scripts/run_all.sh
+CHURN_DATA_SOURCE=synthetic ./scripts/run_all.sh
 ```
 
-Cite **`models/metrics.json`**. Narrative: [results/BENCHMARKS.md](results/BENCHMARKS.md) · Santosh: [results/SANTOSH_ANALYSIS.md](results/SANTOSH_ANALYSIS.md).  
-Streamlit: `streamlit run app/streamlit_app.py`. Tests: `CHURN_DATA_SOURCE=synthetic pytest -q`.
+1. Cite holdout metrics from **`models/metrics.json`**.
+2. Read the narrative in [results/BENCHMARKS.md](results/BENCHMARKS.md) and [results/SANTOSH_ANALYSIS.md](results/SANTOSH_ANALYSIS.md).
+3. Launch the UI: `streamlit run app/streamlit_app.py` (or `make ui`).
+4. Run tests: `CHURN_DATA_SOURCE=synthetic pytest -q` (or `make test`).
 
-### Dual path: synthetic vs lakehouse
+Faster smoke: `N_USERS=800 N_OPTUNA_TRIALS=5 ./scripts/run_all.sh`.
+
+Score the Santosh record: `make infer` (writes `artifacts/santosh_decision_packet.json`).
+
+## Dual data path (synthetic vs lakehouse)
 
 | Path | How | Notes |
 |------|-----|-------|
 | **Synthetic (default / CI)** | `CHURN_DATA_SOURCE=synthetic ./scripts/run_all.sh` | Seed-42 teaching ladder; committed `models/` bundle |
-| **Lakehouse gold** | `./scripts/run_lakehouse_e2e.sh /path/to/local-data-lakehouse` | Overwrites `models/`; restore with `git checkout -- models/ docs/MODEL_CARD.md docs/data-dictionary.md` |
+| **Lakehouse gold** | `./scripts/run_lakehouse_e2e.sh /path/to/local-data-lakehouse` | **Overwrites** `models/` and regenerated docs |
 | **Auto** | `CHURN_DATA_SOURCE=auto` (default in code) | Prefers `data/external/` when present |
 
-Sync only:
+**Warning:** Lakehouse E2E overwrites published seed-42 artifacts. Restore before committing:
+
+```bash
+git checkout -- models/ docs/MODEL_CARD.md docs/data-dictionary.md
+```
+
+Sync exports only (no retrain):
 
 ```bash
 ./scripts/sync_lakehouse_exports.sh /path/to/local-data-lakehouse/data/export
@@ -57,27 +100,22 @@ Sync only:
 | `data/raw/` | Santosh JSON (+ generated `users.csv`, gitignored) |
 | `data/external/` | Lakehouse gold sync (CSVs gitignored) |
 | `models/` | Seed-42 serve bundle (`joblib` + `metrics.json`) |
-| `results/` | **Benchmarks + Santosh analysis + committed plots** |
+| `results/` | Benchmarks + Santosh analysis + committed plots |
 | `artifacts/` | Runtime plots + Santosh packet (gitignored) |
 | `docs/` | Architecture, model card, dictionary, getting started |
-| `docs/ARCHITECTURE.md` | SOLID package map |
-| `docs/MODEL_CARD.md` | Metrics + intended use |
 
 Full map: [docs/FOLDER_STRUCTURE.md](docs/FOLDER_STRUCTURE.md).
 
-## Docs
+## Results & benchmarks
 
-- [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) — 10-minute path
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — train/serve boundary + SOLID
-- [docs/MODEL_CARD.md](docs/MODEL_CARD.md) — holdout metrics (from `models/metrics.json`)
-- [results/BENCHMARKS.md](results/BENCHMARKS.md) — ladder, latency, Brier, τ
-- [results/SANTOSH_ANALYSIS.md](results/SANTOSH_ANALYSIS.md) — single-record outcome
-- [docs/BEST_PRACTICES.md](docs/BEST_PRACTICES.md)
-- [docs/e2e-free-platforms.md](docs/e2e-free-platforms.md)
-- [docs/data-foundation-lakehouse.md](docs/data-foundation-lakehouse.md)
-- [CONTRIBUTING.md](CONTRIBUTING.md)
+| Doc | Contents |
+|-----|----------|
+| [results/BENCHMARKS.md](results/BENCHMARKS.md) | Honest ladder, calibration, latency, τ |
+| [results/SANTOSH_ANALYSIS.md](results/SANTOSH_ANALYSIS.md) | Single-record outcome (raw / calibrated / HITL) |
+| [docs/MODEL_CARD.md](docs/MODEL_CARD.md) | Intended use + metrics from `models/metrics.json` |
+| [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) | 10-minute path |
 
-## Makefile helpers
+## Development
 
 ```bash
 make setup          # venv + pip
@@ -88,6 +126,18 @@ make infer          # Santosh decision packet
 make ui             # Streamlit
 make docs-results   # copy artifact PNGs → results/plots/
 ```
+
+Refresh model card / data dictionary after a train: `python -m src.docs_gen`.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). Keep PRs on the synthetic path so CI metrics stay comparable.
+
+## Related projects
+
+- [xgboost-ai-churn](https://github.com/santoshshinde2012/xgboost-ai-churn) — articles
+- [local-data-lakehouse](https://github.com/santoshshinde2012/local-data-lakehouse) — SILO gold / data SoR
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — SOLID train/serve boundary
+- [docs/BEST_PRACTICES.md](docs/BEST_PRACTICES.md)
+- [docs/e2e-free-platforms.md](docs/e2e-free-platforms.md)
 
 ## License
 
