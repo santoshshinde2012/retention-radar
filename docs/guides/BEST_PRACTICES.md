@@ -71,4 +71,4 @@ Short checklist for contributors and readers adapting this teaching repo.
 
 ## Related
 
-- [FOLDER_STRUCTURE.md](../FOLDER_STRUCTURE.md) · [ARCHITECTURE.md](../ARCHITECTURE.md) · [CONTRIBUTING.md](../CONTRIBUTING.md) · [data-foundation-lakehouse.md](data-foundation-lakehouse.md) · [../results/BENCHMARKS.md](../results/BENCHMARKS.md)
+- [FOLDER_STRUCTURE.md](../FOLDER_STRUCTURE.md) · [ARCHITECTURE.md](../ARCHITECTURE.md) · [CONTRIBUTING.md](../../CONTRIBUTING.md) · [data-foundation-lakehouse.md](../data/data-foundation-lakehouse.md) · [../results/BENCHMARKS.md](../../results/BENCHMARKS.md)

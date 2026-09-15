@@ -16,7 +16,7 @@ bronze (users / daily usage / tickets / payments)
   → train / calibrate / Santosh infer / Streamlit
 ```
 
-Feature column contract matches `schemas/user_record.schema.json` 1:1 (24 serve fields + `churned` on train). **Models consume gold features; algorithm choice lives in this repo** (see [ALGORITHM_LANDSCAPE.md](ALGORITHM_LANDSCAPE.md)) — not in the lakehouse.
+Feature column contract matches `schemas/user_record.schema.json` 1:1 (24 serve fields + `churned` on train). **Models consume gold features; algorithm choice lives in this repo** (see [ALGORITHM_LANDSCAPE.md](../guides/ALGORITHM_LANDSCAPE.md)) — not in the lakehouse.
 
 ## Two ways to build gold
 
@@ -46,7 +46,7 @@ Synthetic remains the CI / offline fallback so `pytest` does not need **SILO** (
 ## Related
 
 - [data-dictionary.md](data-dictionary.md)
-- [e2e-free-platforms.md](e2e-free-platforms.md)
+- [e2e-free-platforms.md](../guides/e2e-free-platforms.md)
 - Articles: parts 01–08 Dig deeper / next-steps point here; part 02 is the SoR deep dive
 
 
@@ -85,5 +85,5 @@ One-command path used: `./scripts/run_lakehouse_e2e.sh /path/to/local-data-lakeh
 
 CI pins `CHURN_DATA_SOURCE=synthetic` so PRs stay deterministic.
 
-Machine-readable summary and committed source of truth: [`results/lakehouse-e2e-summary.json`](../results/lakehouse-e2e-summary.json). A full lakehouse `metrics.json` may exist in the ignored runtime archive after a local E2E run, but it is not a published artifact here.
+Machine-readable summary and committed source of truth: [`results/lakehouse-e2e-summary.json`](../../results/lakehouse-e2e-summary.json). A full lakehouse `metrics.json` may exist in the ignored runtime archive after a local E2E run, but it is not a published artifact here.
 

@@ -144,7 +144,7 @@ Notes:
 
 Enterprise deferred (still ⬜): **A28–A30, B14–B16, C14, D8, E10, E12**.
 
-**FOSS lakehouse note (does not flip A28):** optional dual-path SoR via `local-data-lakehouse` → `data/external/` (`CHURN_DATA_SOURCE=lakehouse|auto`) is documented in [data-foundation-lakehouse.md](data-foundation-lakehouse.md) and [e2e-free-platforms.md](e2e-free-platforms.md) §5b. That is a teaching gold export, **not** a production event-log warehouse (A28 remains ⬜). Published seed-42 metrics stay synthetic.
+**FOSS lakehouse note (does not flip A28):** optional dual-path SoR via `local-data-lakehouse` → `data/external/` (`CHURN_DATA_SOURCE=lakehouse|auto`) is documented in [data-foundation-lakehouse.md](../data/data-foundation-lakehouse.md) and [e2e-free-platforms.md](../guides/e2e-free-platforms.md) §5b. That is a teaching gold export, **not** a production event-log warehouse (A28 remains ⬜). Published seed-42 metrics stay synthetic.
 
 ---
 

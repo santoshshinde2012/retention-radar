@@ -7,7 +7,7 @@ End-to-end walkthrough of one JSON record through the AI-platform **Retention Ra
 **Seed:** 42 · **Synthetic only** — not a real person score.
 
 
-*Flight checklist: validate → score → explain → HITL decide — never auto-cancel. Full narrative: [../results/SANTOSH_ANALYSIS.md](../results/SANTOSH_ANALYSIS.md).*
+*Flight checklist: validate → score → explain → HITL decide — never auto-cancel. Full narrative: [../results/SANTOSH_ANALYSIS.md](../../results/SANTOSH_ANALYSIS.md).*
 
 
 ```mermaid
@@ -53,9 +53,9 @@ stateDiagram-v2
 
 Santosh’s low calibrated score sits in the context of these ranking/calibration plots:
 
-![ROC](results/roc_curve.png)
+![ROC](../../results/plots/roc_curve.png)
 
-![Calibration](results/calibration_curve.png)
+![Calibration](../../results/plots/calibration_curve.png)
 
 ## 1. Who is Santosh in this repo?
 
@@ -193,7 +193,7 @@ Full dump: `models/metrics.json`. Always prefer a fresh run over prose.
 
 1. CLI packet (above)
 2. Streamlit → **Decision** tab: validation, raw vs cal, threshold, HITL, cohort bars, top drivers
-3. Docs: this case study + [single-record-checklist.md](single-record-checklist.md) · [../results/SANTOSH_ANALYSIS.md](../results/SANTOSH_ANALYSIS.md)
+3. Docs: this case study + [single-record-checklist.md](single-record-checklist.md) · [../results/SANTOSH_ANALYSIS.md](../../results/SANTOSH_ANALYSIS.md)
 
 ---
 
@@ -208,7 +208,7 @@ Full dump: `models/metrics.json`. Always prefer a fresh run over prose.
 
 ## Related
 
-- [../results/SANTOSH_ANALYSIS.md](../results/SANTOSH_ANALYSIS.md) — Single-record outcome (seed-42)  
-- [../results/BENCHMARKS.md](../results/BENCHMARKS.md) — Published ladder tables  
-- [data-dictionary.md](data-dictionary.md) · [MODEL_CARD.md](../MODEL_CARD.md)  
+- [../results/SANTOSH_ANALYSIS.md](../../results/SANTOSH_ANALYSIS.md) — Single-record outcome (seed-42)  
+- [../results/BENCHMARKS.md](../../results/BENCHMARKS.md) — Published ladder tables  
+- [data-dictionary.md](../data/data-dictionary.md) · [MODEL_CARD.md](../MODEL_CARD.md)  
 - [ARCHITECTURE.md](../ARCHITECTURE.md) · [single-record-checklist.md](single-record-checklist.md)
