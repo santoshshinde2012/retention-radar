@@ -182,7 +182,7 @@ Action ladder used by `src/single_record.py`:
 | Brier raw (test) | **0.138** |
 | Brier calibrated (test) | **0.106** |
 | Method | isotonic on validation |
-| Latency p50 | **~1.6 ms** (see `metrics.json` → `latency`) |
+| Latency p50 | **~2.0 ms** (see `metrics.json` → `latency`) |
 | Features | **22** |
 
 Full dump: `models/metrics.json`. Always prefer a fresh run over prose.
