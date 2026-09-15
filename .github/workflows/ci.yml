@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      CHURN_DATA_SOURCE: synthetic
+      PYTHONPATH: ${{ github.workspace }}
+      N_USERS: "800"
+      N_OPTUNA_TRIALS: "5"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: End-to-end pipeline (synthetic)
+        run: ./scripts/run_all.sh
+
+      - name: Pytest
+        run: pytest -q
+
+      - name: Lite drift check (strict)
+        run: python -m src.drift_check --strict --z-threshold 3.0

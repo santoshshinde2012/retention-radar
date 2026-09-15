@@ -1,0 +1,65 @@
+# Python
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+*.egg
+.eggs/
+dist/
+build/
+pip-wheel-metadata/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Jupyter / IDE
+.ipynb_checkpoints/
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Test / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Data (keep directory placeholders)
+data/raw/*.csv
+data/raw/*.json
+!data/raw/santosh_shinde.json
+!data/raw/.gitkeep
+
+# Models: commit the serve bundle so Streamlit Community Cloud / HF Spaces
+# can load artifacts without running Optuna. Other dumps stay local.
+models/*
+!models/.gitkeep
+!models/README.md
+!models/churn_xgb.joblib
+!models/calibrator.joblib
+!models/feature_names.json
+!models/feature_stats.json
+!models/metrics.json
+
+# Runtime plots + HITL packets (evaluate / single_record). Keep .gitkeep.
+# Committed sample charts live in research/results/ (and copies in articles/images/results/).
+artifacts/*
+!artifacts/.gitkeep
+
+# Optuna / logs
+*.log
+optuna.db
+catboost_info/
+
+# Lakehouse gold exports (sync locally; do not commit research-scale CSVs)
+data/external/*.csv
+data/external/*.json
+!data/external/README.md

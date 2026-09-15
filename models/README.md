@@ -1,0 +1,19 @@
+# Serve bundle
+
+These files are the **read-only** artifacts Streamlit Community Cloud and Hugging Face Spaces load. They exist so the demo does **not** run Optuna on page load.
+
+This committed copy is the **seed-42 reference train**: `N_USERS=5000`, default Optuna trials (**20**), n_train/val/test = **3000 / 1000 / 1000**. Cite [MODEL_CARD.md](../MODEL_CARD.md) and `models/metrics.json` together — one number set.
+
+CI still smoke-trains (`N_USERS=800`, `N_OPTUNA_TRIALS=5`) and does **not** overwrite this bundle on GitHub Actions.
+
+To refresh:
+
+```bash
+export PYTHONPATH="$(pwd)"
+unset N_USERS N_OPTUNA_TRIALS
+./scripts/run_all.sh
+python -m src.docs_gen
+make docs-results  # copies plots → docs/results/
+```
+
+Then commit the files listed in [docs/e2e-free-platforms.md](../docs/e2e-free-platforms.md).
