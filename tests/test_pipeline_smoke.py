@@ -7,13 +7,13 @@ from pathlib import Path
 
 import pytest
 
-from src import config
-from src.generate_data import generate_users, inject_santosh, santosh_profile
-from src.features import prepare_xy, row_to_feature_frame
-from src.ingest import validate_users
-from src.train import main as train_main
-from src.infer import predict_user, load_payload
-from src.calibrate import load_calibrator
+from retention_radar import config
+from retention_radar.data.generate import generate_users, inject_santosh, santosh_profile
+from retention_radar.features.transform import prepare_xy, row_to_feature_frame
+from retention_radar.data.ingest import validate_users
+from retention_radar.cli.train import main as train_main
+from retention_radar.serving.infer import predict_user, load_payload
+from retention_radar.training.calibrate import load_calibrator
 
 
 NEW_FEATURES = [
@@ -115,7 +115,7 @@ def test_new_features_in_config():
 
 
 def test_validate_and_features(tiny_data):
-    from src.ingest import load_users
+    from retention_radar.data.ingest import load_users
 
     df = load_users()
     validate_users(df)
@@ -177,8 +177,8 @@ def test_train_and_infer_smoke(tiny_data):
 
 def test_single_record_packet(tiny_data):
     train_main(n_trials=3)
-    from src.evaluate import main as eval_main
-    from src.single_record import build_decision_packet
+    from retention_radar.cli.evaluate import main as eval_main
+    from retention_radar.serving.packet import build_decision_packet
 
     eval_main()  # populates best_f1_threshold
     profile = json.loads(tiny_data["santosh_json"].read_text(encoding="utf-8"))
@@ -226,8 +226,8 @@ def test_single_record_packet(tiny_data):
 
 def test_evaluate_artifacts(tiny_data):
     train_main(n_trials=3)
-    from src.evaluate import main as eval_main
-    from src.benchmark import main as bench_main
+    from retention_radar.cli.evaluate import main as eval_main
+    from retention_radar.cli.benchmark import main as bench_main
 
     eval_main()
     for name in (

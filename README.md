@@ -23,7 +23,7 @@ Human-in-the-loop churn ranking for a fictional AI platform. Ranks quiet fade-ou
 | Articles (authored separately) | Medium series is written in an **internal** workspace — not a public reader destination; **this repo is the public code home** |
 | [local-data-lakehouse](https://github.com/santoshshinde2012/local-data-lakehouse) | **Data foundation / SoR** (SILO · N=5000 gold) → sync into `data/external/` |
 
-Dual-world notes: [docs/data-foundation-lakehouse.md](docs/data-foundation-lakehouse.md). Published ladder stays on the synthetic generator.
+Dual-world notes: [docs/data/data-foundation-lakehouse.md](docs/data/data-foundation-lakehouse.md). Published ladder stays on the synthetic generator.
 
 ## Features
 
@@ -49,7 +49,7 @@ cd retention-radar
 python3 -m venv .venv
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-export PYTHONPATH="$(pwd)"
+export PYTHONPATH="$(pwd)/src"
 ```
 
 Optional: `make setup` creates the venv and installs requirements.
@@ -81,7 +81,7 @@ Score the Santosh record: `make infer` (writes `artifacts/santosh_decision_packe
 **Warning:** Lakehouse E2E overwrites published seed-42 artifacts. Restore before committing:
 
 ```bash
-git checkout -- models/ docs/MODEL_CARD.md docs/data-dictionary.md
+git checkout -- models/ docs/MODEL_CARD.md docs/data/data-dictionary.md
 ```
 
 Sync exports only (no retrain):
@@ -95,7 +95,7 @@ Sync exports only (no retrain):
 | Path | Role |
 |------|------|
 | `src/retention_radar/` | Packages: data, features, training, evaluation, serving |
-| `src/*.py` | Shims (`python -m src.train`, `src.infer`, …) |
+| `src/retention_radar/cli/` | CLI (`python -m retention_radar.cli.train`, `.infer`, …) |
 | `app/` | Streamlit (serve-only) |
 | `scripts/` | `run_all`, lakehouse sync / E2E |
 | `data/raw/` | Santosh JSON (+ generated `users.csv`, gitignored) |
@@ -103,7 +103,7 @@ Sync exports only (no retrain):
 | `models/` | Seed-42 serve bundle (`joblib` + `metrics.json`) |
 | `results/` | Benchmarks + Santosh analysis + committed plots |
 | `artifacts/` | Runtime plots + Santosh packet (gitignored) |
-| `docs/` | Architecture, model card, dictionary, getting started |
+| `docs/` | Architecture, model card, guides/, data/, case-study/ |
 
 Full map: [docs/FOLDER_STRUCTURE.md](docs/FOLDER_STRUCTURE.md).
 
@@ -114,7 +114,7 @@ Full map: [docs/FOLDER_STRUCTURE.md](docs/FOLDER_STRUCTURE.md).
 | [results/BENCHMARKS.md](results/BENCHMARKS.md) | Honest ladder, calibration, latency, τ |
 | [results/SANTOSH_ANALYSIS.md](results/SANTOSH_ANALYSIS.md) | Single-record outcome (raw / calibrated / HITL) |
 | [docs/MODEL_CARD.md](docs/MODEL_CARD.md) | Intended use + metrics from `models/metrics.json` |
-| [docs/ALGORITHM_LANDSCAPE.md](docs/ALGORITHM_LANDSCAPE.md) | Ladder IN vs deferred (TabPFN, survival, conformal, …) |
+| [docs/guides/ALGORITHM_LANDSCAPE.md](docs/guides/ALGORITHM_LANDSCAPE.md) | Ladder IN vs deferred (TabPFN, survival, conformal, …) |
 | [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) | 10-minute path |
 
 ## Development
@@ -129,7 +129,7 @@ make ui             # Streamlit
 make docs-results   # copy artifact PNGs → results/plots/
 ```
 
-Refresh model card / data dictionary after a train: `python -m src.docs_gen`.
+Refresh model card / data dictionary after a train: `python -m retention_radar.cli.docs_gen`.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). Keep PRs on the synthetic path so CI metrics stay comparable.
 
@@ -138,8 +138,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). Keep PRs on the synthetic path so CI met
 - Articles are authored separately (**internal**); this repo is the public code home for Medium readers
 - [local-data-lakehouse](https://github.com/santoshshinde2012/local-data-lakehouse) — SILO gold / data SoR (foundation)
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — SOLID train/serve boundary
-- [docs/BEST_PRACTICES.md](docs/BEST_PRACTICES.md)
-- [docs/e2e-free-platforms.md](docs/e2e-free-platforms.md)
+- [docs/guides/BEST_PRACTICES.md](docs/guides/BEST_PRACTICES.md)
+- [docs/guides/e2e-free-platforms.md](docs/guides/e2e-free-platforms.md)
 
 ## License
 

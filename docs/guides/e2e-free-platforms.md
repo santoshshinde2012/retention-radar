@@ -5,20 +5,20 @@ You do **not** need Databricks, SageMaker, Vertex, a hosted MLflow cloud, Snowfl
 
 Synthetic data only. Seed **42**. HITL packets always set `auto_action: none`.
 
-Related: [GETTING_STARTED.md](GETTING_STARTED.md) · [FOLDER_STRUCTURE.md](FOLDER_STRUCTURE.md) · [ARCHITECTURE.md](ARCHITECTURE.md)
+Related: [GETTING_STARTED.md](../GETTING_STARTED.md) · [FOLDER_STRUCTURE.md](../FOLDER_STRUCTURE.md) · [ARCHITECTURE.md](../ARCHITECTURE.md)
 
 ## What “E2E” means here
 
 | Step | Command | Proves |
 |------|---------|--------|
-| Generate | `python -m src.generate_data` | Synthetic `users.csv` + Santosh JSON |
-| Train | `python -m src.train` | Dummy → LogReg → Optuna XGB + calibrator |
-| Metrics | `python -m src.evaluate` then `python -m src.benchmark` | Plots + `models/metrics.json` |
-| Santosh packet | `python -m src.single_record --user santosh` | Validate → score → SHAP → HITL |
+| Generate | `python -m retention_radar.cli.generate_data` | Synthetic `users.csv` + Santosh JSON |
+| Train | `python -m retention_radar.cli.train` | Dummy → LogReg → Optuna XGB + calibrator |
+| Metrics | `python -m retention_radar.cli.evaluate` then `python -m retention_radar.cli.benchmark` | Plots + `models/metrics.json` |
+| Santosh packet | `python -m retention_radar.cli.single_record --user santosh` | Validate → score → SHAP → HITL |
 | Streamlit HITL | `streamlit run app/streamlit_app.py` | Serve-only Decision tab |
-| Drift | `python -m src.drift_check` | Lite z-score vs `feature_stats.json` |
-| Slices | `python -m src.slice_metrics` | Educational `plan_tier` segments |
-| Explain | `python -m src.explain` | XGB gain importance CSV |
+| Drift | `python -m retention_radar.cli.drift_check` | Lite z-score vs `feature_stats.json` |
+| Slices | `python -m retention_radar.cli.slice_metrics` | Educational `plan_tier` segments |
+| Explain | `python -m retention_radar.cli.explain` | XGB gain importance CSV |
 | Lakehouse gold | `./scripts/run_lakehouse_e2e.sh /path/to/local-data-lakehouse` | Same pipeline on bronze→gold export |
 
 Or one shot (synthetic, published ladder): `CHURN_DATA_SOURCE=synthetic ./scripts/run_all.sh`.
@@ -35,7 +35,7 @@ Python **3.10–3.12** (CI and Streamlit Cloud: **3.11**). From the repo root:
 python3 -m venv .venv
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-export PYTHONPATH="$(pwd)"
+export PYTHONPATH="$(pwd)/src"
 chmod +x scripts/run_all.sh
 ./scripts/run_all.sh
 pytest -q
@@ -68,12 +68,12 @@ Workflow: [`.github/workflows/ci.yml`](../.github/workflows/ci.yml).
 On every push/PR to `main`, ubuntu-latest + Python 3.11:
 
 1. `pip install -r requirements.txt`
-2. `python -m src.generate_data --n-users 800`
-3. `python -m src.train` with `N_OPTUNA_TRIALS=5`
-4. `python -m src.evaluate`
+2. `python -m retention_radar.cli.generate_data --n-users 800`
+3. `python -m retention_radar.cli.train` with `N_OPTUNA_TRIALS=5`
+4. `python -m retention_radar.cli.evaluate`
 5. `pytest -q` (temp-dir smoke + package import tests)
-6. `python -m src.single_record --user santosh`
-7. `python -m src.drift_check`
+6. `python -m retention_radar.cli.single_record --user santosh`
+7. `python -m retention_radar.cli.drift_check`
 
 That is generate → train → metrics → packet → tests → drift. It does **not** start Streamlit (no GUI on Actions). Local or Community Cloud covers the UI.
 
@@ -94,9 +94,9 @@ Forks get Actions if enabled. Useful extras (still free):
 
 | Change | Why |
 |--------|-----|
-| Keep `PYTHONPATH: ${{ github.workspace }}` | `python -m src.*` shims need the repo root |
+| Keep `PYTHONPATH: ${{ github.workspace }}/src` | `python -m retention_radar.cli.*` needs `src` on PYTHONPATH (or `pip install -e .`) |
 | Do not drop `pytest -q` | Catches serve/HITL regressions |
-| Optional: add `python -m src.infer --user santosh` | Extra canary (packet already scores Santosh) |
+| Optional: add `python -m retention_radar.cli.infer --user santosh` | Extra canary (packet already scores Santosh) |
 | Optional: `N_OPTUNA_TRIALS: "3"` | Faster forks; slightly noisier smoke metrics |
 | Do **not** add paid runners or cloud training jobs | Out of scope for this teaching repo |
 
@@ -141,7 +141,7 @@ git add models/churn_xgb.joblib models/calibrator.joblib \
 6. Leave **Secrets** empty.
 7. Deploy. Wait for `pip install -r requirements.txt`.
 
-The app adds the repo root to `sys.path`, so Cloud does not need a custom `PYTHONPATH` secret.
+The app adds `src/` to `sys.path`, so Cloud does not need a custom `PYTHONPATH` secret.
 
 ### Common failures
 
@@ -149,7 +149,7 @@ The app adds the repo root to `sys.path`, so Cloud does not need a custom `PYTHO
 |---------|-----|
 | Model not found | Commit the five `models/` files above; redeploy |
 | `ModuleNotFoundError: src` | Confirm main file is `app/streamlit_app.py` at repo root layout; Cloud working directory should be the repo |
-| Deploy stuck on Optuna / OOM | Cloud must **not** train. You accidentally called `src.train` from the app — do not |
+| Deploy stuck on Optuna / OOM | Cloud must **not** train. You accidentally called `retention_radar.cli.train` from the app — do not |
 | Python 3.13 / package wheels fail | Set Python **3.11** in Advanced settings / `runtime.txt` |
 | SHAP slow first score | Expected on free CPU; fallback importance still works if SHAP errors |
 | Empty Benchmarks images | Plots live in `artifacts/` (gitignored). Tabs still show `metrics.json`. Optional: copy plots into the repo if you want Cloud charts |
@@ -217,16 +217,16 @@ That runs sample → gold CSV/JSON → sync into `data/external/` → train/eval
 Use this once locally **or** via CI + Cloud.
 
 - [ ] `python3 -m venv .venv` and `pip install -r requirements.txt`
-- [ ] `export PYTHONPATH="$(pwd)"`
-- [ ] **Generate** — `python -m src.generate_data` (or `./scripts/run_all.sh`)
-- [ ] **Train** — `python -m src.train` (seed 42; Optuna on val only)
-- [ ] **Metrics** — `python -m src.evaluate` (ROC/PR/calibration/threshold plots)
-- [ ] Optional latency — `python -m src.benchmark`
-- [ ] **Santosh packet** — `python -m src.single_record --user santosh --out artifacts/santosh_decision_packet.json`
+- [ ] `export PYTHONPATH="$(pwd)/src"`
+- [ ] **Generate** — `python -m retention_radar.cli.generate_data` (or `./scripts/run_all.sh`)
+- [ ] **Train** — `python -m retention_radar.cli.train` (seed 42; Optuna on val only)
+- [ ] **Metrics** — `python -m retention_radar.cli.evaluate` (ROC/PR/calibration/threshold plots)
+- [ ] Optional latency — `python -m retention_radar.cli.benchmark`
+- [ ] **Santosh packet** — `python -m retention_radar.cli.single_record --user santosh --out artifacts/santosh_decision_packet.json`
 - [ ] Packet `hitl.auto_action` is **`none`**
 - [ ] `pytest -q` green
 - [ ] **Streamlit HITL** — Decision tab scores Santosh; no fit on page load
-- [ ] **drift_check** — `python -m src.drift_check` (exit 0 unless `--strict`)
+- [ ] **drift_check** — `python -m retention_radar.cli.drift_check` (exit 0 unless `--strict`)
 - [ ] GitHub Actions run green (fork: enable Actions)
 - [ ] (Demo host) Streamlit Cloud or HF Space using **committed** `models/` — no Optuna in the cloud
 
@@ -238,12 +238,12 @@ Notes: data is **synthetic**. Do not treat Santosh’s probability as real risk.
 
 | You type | Implementation |
 |----------|----------------|
-| `python -m src.generate_data` | `src/retention_radar/data/generate.py` |
-| `python -m src.train` | `src/retention_radar/training/train.py` |
-| `python -m src.evaluate` | `src/retention_radar/evaluation/evaluate.py` |
-| `python -m src.infer` | `src/retention_radar/serving/infer.py` |
-| `python -m src.single_record` | `src/retention_radar/serving/packet.py` |
-| `python -m src.drift_check` | `src/retention_radar/serving/drift.py` |
+| `python -m retention_radar.cli.generate_data` | `src/retention_radar/cli/generate_data.py` → `data/generate.py` |
+| `python -m retention_radar.cli.train` | `src/retention_radar/training/train.py` |
+| `python -m retention_radar.cli.evaluate` | `src/retention_radar/evaluation/evaluate.py` |
+| `python -m retention_radar.cli.infer` | `src/retention_radar/serving/infer.py` |
+| `python -m retention_radar.cli.single_record` | `src/retention_radar/serving/packet.py` |
+| `python -m retention_radar.cli.drift_check` | `src/retention_radar/serving/drift.py` |
 | Streamlit | `app/streamlit_app.py` → serving packet + policy |
 
-Thin `src/*.py` shims keep articles and CI stable. Full map: [FOLDER_STRUCTURE.md](FOLDER_STRUCTURE.md).
+Thin `src/retention_radar/cli/` entrypoints keep articles and CI stable. Full map: [FOLDER_STRUCTURE.md](../FOLDER_STRUCTURE.md).

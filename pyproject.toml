@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "retention-radar"
 version = "0.1.0"
@@ -7,9 +11,22 @@ requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [{ name = "Santosh Shinde" }]
 
+[project.scripts]
+rr-train = "retention_radar.cli.train:main"
+rr-evaluate = "retention_radar.cli.evaluate:main"
+rr-infer = "retention_radar.cli.infer:main"
+rr-single-record = "retention_radar.cli.single_record:main"
+rr-generate-data = "retention_radar.cli.generate_data:main"
+rr-ingest = "retention_radar.cli.ingest:main"
+rr-benchmark = "retention_radar.cli.benchmark:main"
+rr-drift-check = "retention_radar.cli.drift_check:main"
+rr-explain = "retention_radar.cli.explain:main"
+rr-slice-metrics = "retention_radar.cli.slice_metrics:main"
+rr-docs-gen = "retention_radar.cli.docs_gen:main"
+
 [tool.setuptools.packages.find]
-include = ["src*", "app*"]
+where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["."]
+pythonpath = ["src"]

@@ -2,7 +2,7 @@
 
 How we measure success, what the reference run produced, and how to read the ladder honestly.
 
-**Cite:** [`../models/metrics.json`](../models/metrics.json) · **Card:** [`../docs/MODEL_CARD.md`](../docs/MODEL_CARD.md) · **Landscape:** [`../docs/ALGORITHM_LANDSCAPE.md`](../docs/ALGORITHM_LANDSCAPE.md) · **Santosh:** [`SANTOSH_ANALYSIS.md`](SANTOSH_ANALYSIS.md)
+**Cite:** [`../models/metrics.json`](../models/metrics.json) · **Card:** [`../docs/MODEL_CARD.md`](../docs/MODEL_CARD.md) · **Landscape:** [`../docs/guides/ALGORITHM_LANDSCAPE.md`](../docs/guides/ALGORITHM_LANDSCAPE.md) · **Santosh:** [`SANTOSH_ANALYSIS.md`](SANTOSH_ANALYSIS.md)
 
 ---
 
@@ -95,16 +95,16 @@ Fine for Streamlit; SHAP is separate and should stay on-demand.
 ```bash
 cd retention-radar
 source .venv/bin/activate
-export PYTHONPATH="$(pwd)"
+export PYTHONPATH="$(pwd)/src"
 CHURN_DATA_SOURCE=synthetic ./scripts/run_all.sh
 python -m json.tool models/metrics.json | less
-python -m src.infer --user santosh
+python -m retention_radar.cli.infer --user santosh
 make docs-results   # refresh results/plots/ from artifacts/
 ```
 
 Same seed + same package versions should match within float noise. Changing the generator breaks bit-identical AUC — update the card and this narrative together.
 
-**Dual world:** lakehouse gold E2E overwrites `models/` and is **not** the published ladder. See [`lakehouse-e2e-summary.json`](lakehouse-e2e-summary.json) and [docs/data-foundation-lakehouse.md](../docs/data-foundation-lakehouse.md). Restore: `git checkout -- models/ docs/MODEL_CARD.md docs/data-dictionary.md`.
+**Dual world:** lakehouse gold E2E overwrites `models/` and is **not** the published ladder. See [`lakehouse-e2e-summary.json`](lakehouse-e2e-summary.json) and [docs/data/data-foundation-lakehouse.md](../docs/data/data-foundation-lakehouse.md). Restore: `git checkout -- models/ docs/MODEL_CARD.md docs/data/data-dictionary.md`.
 
 ---
 

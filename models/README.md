@@ -9,11 +9,11 @@ CI still smoke-trains (`N_USERS=800`, `N_OPTUNA_TRIALS=5`) and does **not** over
 To refresh:
 
 ```bash
-export PYTHONPATH="$(pwd)"
+export PYTHONPATH="$(pwd)/src"
 unset N_USERS N_OPTUNA_TRIALS
 ./scripts/run_all.sh
-python -m src.docs_gen
+python -m retention_radar.cli.docs_gen
 make docs-results  # copies plots → results/plots/
 ```
 
-Then commit the files listed in [docs/e2e-free-platforms.md](../docs/e2e-free-platforms.md).
+Then commit the files listed in [docs/guides/e2e-free-platforms.md](../docs/guides/e2e-free-platforms.md).

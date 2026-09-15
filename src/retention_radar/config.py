@@ -1,10 +1,10 @@
 """Project paths, seed, and feature column definitions.
 
 All paths are relative to PROJECT_ROOT so scripts work no matter
-where you launch them from (as long as PYTHONPATH includes the root).
+where you launch them from (as long as ``src`` is on PYTHONPATH, or the
+package is installed editable).
 
-Canonical module: ``src.retention_radar.config``. ``src.config`` is an alias
-so existing imports and pytest monkeypatches share this object.
+Canonical module: ``retention_radar.config``.
 """
 
 from __future__ import annotations
@@ -40,11 +40,11 @@ METRICS_PATH = MODELS_DIR / "metrics.json"
 FEATURE_NAMES_PATH = MODELS_DIR / "feature_names.json"
 FEATURE_STATS_PATH = MODELS_DIR / "feature_stats.json"
 USER_RECORD_SCHEMA_PATH = SCHEMAS_DIR / "user_record.schema.json"
-GUIDES_DIR = DOCS_DIR  # checklist + case study + dictionary
+GUIDES_DIR = DOCS_DIR  # docs root; nested guides/data/case-study below
 MODEL_CARD_PATH = DOCS_DIR / "MODEL_CARD.md"
 RESULTS_DIR = PROJECT_ROOT / "results"
 RESULTS_PLOTS_DIR = RESULTS_DIR / "plots"
-DATA_DICTIONARY_PATH = DOCS_DIR / "data-dictionary.md"
+DATA_DICTIONARY_PATH = DOCS_DIR / "data" / "data-dictionary.md"
 
 # ---------------------------------------------------------------------------
 # Reproducibility

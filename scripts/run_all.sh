@@ -6,7 +6,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
-export PYTHONPATH="$ROOT"
+export PYTHONPATH="$ROOT/src${PYTHONPATH:+:$PYTHONPATH}"
 
 if [[ -f "$ROOT/.venv/bin/activate" ]]; then
   # shellcheck disable=SC1091
@@ -29,34 +29,34 @@ elif [[ "${CHURN_DATA_SOURCE}" == "auto" && -f data/external/churn_user_features
   echo "==> auto: lakehouse export present — skip generate_data"
 else
   echo "==> generate_data (synthetic)"
-  python -m src.generate_data
+  python -m retention_radar.cli.generate_data
 fi
 
 echo "==> ingest check"
-python -m src.ingest
+python -m retention_radar.cli.ingest
 
 echo "==> train"
-python -m src.train
+python -m retention_radar.cli.train
 
 echo "==> evaluate"
-python -m src.evaluate
+python -m retention_radar.cli.evaluate
 
 echo "==> slice_metrics (plan_tier segments)"
-python -m src.slice_metrics
+python -m retention_radar.cli.slice_metrics
 
 echo "==> explain (XGB gain importance)"
-python -m src.explain
+python -m retention_radar.cli.explain
 
 echo "==> benchmark"
-python -m src.benchmark
+python -m retention_radar.cli.benchmark
 
 echo "==> infer santosh"
-python -m src.infer --user santosh
+python -m retention_radar.cli.infer --user santosh
 
 echo "==> drift_check (non-fatal)"
-python -m src.drift_check || echo "drift_check skipped/failed (non-fatal)"
+python -m retention_radar.cli.drift_check || echo "drift_check skipped/failed (non-fatal)"
 
 echo "==> single_record santosh decision packet"
-python -m src.single_record --user santosh --out artifacts/santosh_decision_packet.json
+python -m retention_radar.cli.single_record --user santosh --out artifacts/santosh_decision_packet.json
 
 echo "==> done (Santosh decision packet written)"

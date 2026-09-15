@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-from src.retention_radar import config
+from retention_radar import config
 
 
 def encode_plan_tier(df: pd.DataFrame) -> pd.DataFrame:

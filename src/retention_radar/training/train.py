@@ -1,7 +1,7 @@
 """Train honest baselines (incl. RF + LightGBM + CatBoost) + Optuna XGBoost + calibrator.
 
 Run:
-    python -m src.train
+    python -m retention_radar.cli.train
 """
 
 from __future__ import annotations
@@ -15,14 +15,14 @@ import optuna
 from optuna.samplers import TPESampler
 from xgboost import XGBClassifier
 
-from src.retention_radar import config
-from src.retention_radar.data.ingest import load_users
-from src.retention_radar.docs_gen import write_data_dictionary, write_model_card
-from src.retention_radar.evaluation.metrics import classification_metrics
-from src.retention_radar.features.transform import prepare_xy
-from src.retention_radar.training.baselines import run_baselines
-from src.retention_radar.training.calibrate import brier, fit_calibrator, save_calibrator
-from src.retention_radar.training.split import stratified_train_val_test
+from retention_radar import config
+from retention_radar.data.ingest import load_users
+from retention_radar.docs_gen import write_data_dictionary, write_model_card
+from retention_radar.evaluation.metrics import classification_metrics
+from retention_radar.features.transform import prepare_xy
+from retention_radar.training.baselines import run_baselines
+from retention_radar.training.calibrate import brier, fit_calibrator, save_calibrator
+from retention_radar.training.split import stratified_train_val_test
 
 warnings.filterwarnings("ignore", category=UserWarning)
 optuna.logging.set_verbosity(optuna.logging.WARNING)

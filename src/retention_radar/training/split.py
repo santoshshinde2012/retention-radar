@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from sklearn.model_selection import train_test_split
 
-from src.retention_radar import config
+from retention_radar import config
 
 
 def stratified_train_val_test(X, y):

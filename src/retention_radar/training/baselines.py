@@ -18,8 +18,8 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
-from src.retention_radar import config
-from src.retention_radar.evaluation.metrics import classification_metrics
+from retention_radar import config
+from retention_radar.evaluation.metrics import classification_metrics
 
 
 def train_dummy(X_train, y_train) -> DummyClassifier:

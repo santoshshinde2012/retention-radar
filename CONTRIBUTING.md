@@ -14,7 +14,7 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 # Optional informational pins: requirements.lock (CI still uses requirements.txt)
-export PYTHONPATH="$(pwd)"
+export PYTHONPATH="$(pwd)/src"
 ```
 
 ## Run the full pipeline
@@ -31,15 +31,15 @@ Faster smoke: `N_USERS=800 N_OPTUNA_TRIALS=5 ./scripts/run_all.sh`
 ## Refresh model card & data dictionary
 
 ```bash
-python -m src.docs_gen
+python -m retention_radar.cli.docs_gen
 ```
 
-Writes `docs/MODEL_CARD.md` and `docs/data-dictionary.md`.
+Writes `docs/MODEL_CARD.md` and `docs/data/data-dictionary.md`.
 
 ## Tests
 
 ```bash
-export PYTHONPATH="$(pwd)"
+export PYTHONPATH="$(pwd)/src"
 export CHURN_DATA_SOURCE=synthetic
 pytest -q
 ```
@@ -51,14 +51,14 @@ Lakehouse E2E (optional, overwrites `models/`):
 
 ```bash
 ./scripts/run_lakehouse_e2e.sh /path/to/local-data-lakehouse
-git checkout -- models/ docs/MODEL_CARD.md docs/data-dictionary.md
+git checkout -- models/ docs/MODEL_CARD.md docs/data/data-dictionary.md
 ```
 
 ## Style notes
 
-- FOSS only — no paid SaaS in the core path. See [docs/e2e-free-platforms.md](docs/e2e-free-platforms.md).
+- FOSS only — no paid SaaS in the core path. See [docs/guides/e2e-free-platforms.md](docs/guides/e2e-free-platforms.md).
 - Synthetic data disclaimer stays visible; HITL only (`auto_action: none`) in `src/retention_radar/serving/policy.py`.
-- New logic goes in `src/retention_radar/`; keep `src/*.py` shims so `python -m src.*` stays stable.
+- New logic goes in `src/retention_radar/`; CLI entrypoints live under `src/retention_radar/cli/` (`python -m retention_radar.cli.*`).
 - Do not claim production ROI or fairness audits from this teaching repo.
 - Prefer editing generated docs via `docs_gen` so they stay in sync with `models/metrics.json`.
 

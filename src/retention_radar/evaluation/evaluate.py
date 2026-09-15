@@ -24,15 +24,15 @@ from sklearn.metrics import (
     roc_auc_score,
 )
 
-from src.retention_radar import config
-from src.retention_radar.data.ingest import load_users
-from src.retention_radar.evaluation.slices import (
+from retention_radar import config
+from retention_radar.data.ingest import load_users
+from retention_radar.evaluation.slices import (
     print_slice_report,
     slice_metrics_by_plan_tier,
 )
-from src.retention_radar.features.transform import prepare_xy
-from src.retention_radar.training.calibrate import load_calibrator
-from src.retention_radar.training.split import stratified_train_val_test
+from retention_radar.features.transform import prepare_xy
+from retention_radar.training.calibrate import load_calibrator
+from retention_radar.training.split import stratified_train_val_test
 
 
 def load_model(path: Path | None = None):
@@ -205,7 +205,7 @@ def main() -> None:
 
     # Refresh model card *after* evaluate_test / τ land in metrics
     # (train writes the card earlier, before these keys exist).
-    from src.retention_radar.docs_gen import write_model_card
+    from retention_radar.docs_gen import write_model_card
 
     write_model_card(out)
     print(f"Refreshed model card → {config.MODEL_CARD_PATH}")

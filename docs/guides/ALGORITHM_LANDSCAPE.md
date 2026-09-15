@@ -48,6 +48,6 @@ This study ships an **honest bake-off ladder** on a synthetic AI-platform churn 
 
 ## Related
 
-- [`MODEL_CARD.md`](MODEL_CARD.md) — metrics table from `models/metrics.json`
+- [`MODEL_CARD.md`](../MODEL_CARD.md) — metrics table from `models/metrics.json`
 - [`BEST_PRACTICES.md`](BEST_PRACTICES.md) — dual-world synthetic vs lakehouse
-- [`ARCHITECTURE.md`](ARCHITECTURE.md) — train ≠ serve
+- [`ARCHITECTURE.md`](../ARCHITECTURE.md) — train ≠ serve

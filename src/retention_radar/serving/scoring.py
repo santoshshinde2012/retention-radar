@@ -6,7 +6,7 @@ from typing import Any
 
 import numpy as np
 
-from src.retention_radar.protocols import Calibrator, ProbabilisticClassifier
+from retention_radar.protocols import Calibrator, ProbabilisticClassifier
 
 
 class CalibratedScorer:

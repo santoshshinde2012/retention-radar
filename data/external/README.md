@@ -16,9 +16,9 @@ make churn-gold-local   # or: make up && make wait && make churn-e2e
 ./scripts/sync_lakehouse_exports.sh /path/to/local-data-lakehouse/data/export
 
 # Train / infer prefer these automatically (CHURN_DATA_SOURCE=auto):
-python -m src.ingest
-python -m src.train
-python -m src.infer --user santosh
+python -m retention_radar.cli.ingest
+python -m retention_radar.cli.train
+python -m retention_radar.cli.infer --user santosh
 ```
 
 Force synthetic: `CHURN_DATA_SOURCE=synthetic`.  

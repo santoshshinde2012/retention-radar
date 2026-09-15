@@ -1,7 +1,7 @@
 """Single-record decision packet: validate → score → explain → cohort → HITL.
 
 Examples:
-    python -m src.single_record --user santosh \\
+    python -m retention_radar.cli.single_record --user santosh \\
         --out artifacts/santosh_decision_packet.json
 """
 
@@ -15,12 +15,12 @@ from typing import Any
 import joblib
 import pandas as pd
 
-from src.retention_radar import config
-from src.retention_radar.data.ingest import resolve_users_csv
-from src.retention_radar.features.transform import row_to_feature_frame
-from src.retention_radar.serving.infer import predict_user, resolve_user_json
-from src.retention_radar.serving.policy import HitlDecisionPolicy
-from src.retention_radar.training.calibrate import load_calibrator
+from retention_radar import config
+from retention_radar.data.ingest import resolve_users_csv
+from retention_radar.features.transform import row_to_feature_frame
+from retention_radar.serving.infer import predict_user, resolve_user_json
+from retention_radar.serving.policy import HitlDecisionPolicy
+from retention_radar.training.calibrate import load_calibrator
 
 
 def load_metrics(path: Path | None = None) -> dict:
