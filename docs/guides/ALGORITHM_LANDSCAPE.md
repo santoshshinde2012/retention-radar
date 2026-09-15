@@ -1,6 +1,6 @@
 # Algorithm landscape — what is on the ladder vs deferred
 
-Teaching decision for Retention Radar (2025–26). **Cite:** [`../models/metrics.json`](../models/metrics.json) · **Benchmarks:** [`../results/BENCHMARKS.md`](../results/BENCHMARKS.md)
+Teaching decision for Retention Radar (2025–26). **Cite:** [`../models/metrics.json`](../../models/metrics.json) · **Benchmarks:** [`../results/BENCHMARKS.md`](../../results/BENCHMARKS.md)
 
 This study ships an **honest bake-off ladder** on a synthetic AI-platform churn table (seed **42**, N=5000, 22 numeric features after plan encoding). The **serving / Santosh / SHAP hero stays Optuna-tuned XGBoost + isotonic calibration**, even when a peer edges AUC.
 
@@ -44,7 +44,7 @@ This study ships an **honest bake-off ladder** on a synthetic AI-platform churn 
 
 - Erickson et al., *TabArena: A Living Benchmark for Machine Learning on Tabular Data* (NeurIPS 2025 D&B; [arXiv:2506.16791](https://arxiv.org/abs/2506.16791)) — living Elo-style tabular board; CatBoost / LightGBM / XGBoost as conventional trees; neural and foundation models after ensembling.
 - Prokhorenkova et al., CatBoost (arXiv:1706.09516); Ke et al., LightGBM; Chen & Guestrin, XGBoost — the GBDT trilogy peers on this ladder.
-- Churn teaching practice: always publish Dummy + linear + tree peers before claiming booster success (see [`../results/BENCHMARKS.md`](../results/BENCHMARKS.md)).
+- Churn teaching practice: always publish Dummy + linear + tree peers before claiming booster success (see [`../results/BENCHMARKS.md`](../../results/BENCHMARKS.md)).
 
 ## Related
 

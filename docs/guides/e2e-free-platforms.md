@@ -55,13 +55,13 @@ You should see:
 - pytest green
 - Streamlit **Decision** tab: Santosh band + HITL action, `auto_action: none`
 
-Cite **`models/metrics.json`** after a run. Narrative reference: [../results/BENCHMARKS.md](../results/BENCHMARKS.md) (seed-42 ladder) — not a substitute for your file.
+Cite **`models/metrics.json`** after a run. Narrative reference: [../results/BENCHMARKS.md](../../results/BENCHMARKS.md) (seed-42 ladder) — not a substitute for your file.
 
 ---
 
 ## 2. GitHub Actions (free for public repos)
 
-Workflow: [`.github/workflows/ci.yml`](../.github/workflows/ci.yml).
+Workflow: [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml).
 
 ### What CI proves
 
@@ -209,8 +209,8 @@ When [`local-data-lakehouse`](https://github.com/santoshshinde2012/local-data-la
 That runs sample → gold CSV/JSON → sync into `data/external/` → train/eval/infer with `CHURN_DATA_SOURCE=lakehouse`.
 
 - **CI / Medium numbers** stay on synthetic seed 42 (`CHURN_DATA_SOURCE=synthetic` in GitHub Actions).
-- Lakehouse retrain overwrites local `models/` — any full metrics/model dump under the ignored `artifacts/lakehouse_run/` is runtime-only; restore `models/` with `git checkout -- models/` before publishing docs. The committed lakehouse source of truth is [the E2E summary](results/lakehouse-e2e-summary.json).
-- Contract + dual-world notes: [data-foundation-lakehouse.md](data-foundation-lakehouse.md).
+- Lakehouse retrain overwrites local `models/` — any full metrics/model dump under the ignored `artifacts/lakehouse_run/` is runtime-only; restore `models/` with `git checkout -- models/` before publishing docs. The committed lakehouse source of truth is [the E2E summary](../../results/lakehouse-e2e-summary.json).
+- Contract + dual-world notes: [data-foundation-lakehouse.md](../data/data-foundation-lakehouse.md).
 
 ## 6. Checklist (print / tick)
 
@@ -230,7 +230,7 @@ Use this once locally **or** via CI + Cloud.
 - [ ] GitHub Actions run green (fork: enable Actions)
 - [ ] (Demo host) Streamlit Cloud or HF Space using **committed** `models/` — no Optuna in the cloud
 
-Notes: data is **synthetic**. Do not treat Santosh’s probability as real risk. Published [results/BENCHMARKS.md](../results/BENCHMARKS.md) numbers are a reference full run; CI/Cloud may use a smaller bundle.
+Notes: data is **synthetic**. Do not treat Santosh’s probability as real risk. Published [results/BENCHMARKS.md](../../results/BENCHMARKS.md) numbers are a reference full run; CI/Cloud may use a smaller bundle.
 
 ---
 

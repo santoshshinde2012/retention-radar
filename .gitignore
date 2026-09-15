@@ -41,7 +41,6 @@ data/raw/*.json
 # Models: commit the serve bundle so Streamlit Community Cloud / HF Spaces
 # can load artifacts without running Optuna. Other dumps stay local.
 models/*
-!models/.gitkeep
 !models/README.md
 !models/churn_xgb.joblib
 !models/calibrator.joblib
