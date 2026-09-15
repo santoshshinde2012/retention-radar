@@ -2,8 +2,9 @@
 
 Human-in-the-loop churn ranking for a fictional AI platform. Synthetic data only (seed **42**). No real PII. Scores go to a human (`auto_action: none`).
 
-**This repo** = source code + benchmarks + results analysis.  
-**Articles:** [xgboost-ai-churn](https://github.com/santoshshinde2012/xgboost-ai-churn) · **Data SoR:** [local-data-lakehouse](https://github.com/santoshshinde2012/local-data-lakehouse)
+**This repo** = public source code + benchmarks + results analysis.  
+Articles are authored separately (**internal**); this repo is the public code home.  
+**Data SoR / foundation:** [local-data-lakehouse](https://github.com/santoshshinde2012/local-data-lakehouse)
 
 ## 1. Clone and install
 

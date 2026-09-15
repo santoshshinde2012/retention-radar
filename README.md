@@ -19,8 +19,8 @@ Human-in-the-loop churn ranking for a fictional AI platform. Ranks quiet fade-ou
 
 | Repo | Role |
 |------|------|
-| **This repo (`retention-radar`)** | Final use-case **source code + benchmarks + results analysis** |
-| [xgboost-ai-churn](https://github.com/santoshshinde2012/xgboost-ai-churn) | **Articles** (+ research supporting Medium) — not the code home |
+| **This repo (`retention-radar`)** | **Public** use-case **source code + benchmarks + results analysis** |
+| Articles (authored separately) | Medium series is written in an **internal** workspace — not a public reader destination; **this repo is the public code home** |
 | [local-data-lakehouse](https://github.com/santoshshinde2012/local-data-lakehouse) | **Data foundation / SoR** (SILO · N=5000 gold) → sync into `data/external/` |
 
 Dual-world notes: [docs/data-foundation-lakehouse.md](docs/data-foundation-lakehouse.md). Published ladder stays on the synthetic generator.
@@ -133,8 +133,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). Keep PRs on the synthetic path so CI met
 
 ## Related projects
 
-- [xgboost-ai-churn](https://github.com/santoshshinde2012/xgboost-ai-churn) — articles
-- [local-data-lakehouse](https://github.com/santoshshinde2012/local-data-lakehouse) — SILO gold / data SoR
+- Articles are authored separately (**internal**); this repo is the public code home for Medium readers
+- [local-data-lakehouse](https://github.com/santoshshinde2012/local-data-lakehouse) — SILO gold / data SoR (foundation)
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — SOLID train/serve boundary
 - [docs/BEST_PRACTICES.md](docs/BEST_PRACTICES.md)
 - [docs/e2e-free-platforms.md](docs/e2e-free-platforms.md)

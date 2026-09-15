@@ -14,5 +14,5 @@ This folder is the **analysis home** for Retention Radar (seed **42** synthetic 
 **Runtime dumps** (gitignored): `artifacts/` after `./scripts/run_all.sh`.  
 Refresh committed plots: `make docs-results` (copies from `artifacts/` → `results/plots/`).
 
-**Articles** (Medium series): [xgboost-ai-churn](https://github.com/santoshshinde2012/xgboost-ai-churn)  
+**Articles** (Medium series): authored separately (**internal**); this repo is the public code / results home.  
 **Data foundation / SoR:** [local-data-lakehouse](https://github.com/santoshshinde2012/local-data-lakehouse)

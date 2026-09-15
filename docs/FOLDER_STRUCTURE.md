@@ -1,8 +1,8 @@
 # Folder structure — Retention Radar
 
-Teaching / ML use-case layout. **Code + benchmarks + results analysis** live here.  
-Articles → [xgboost-ai-churn](https://github.com/santoshshinde2012/xgboost-ai-churn).  
-Data foundation → [local-data-lakehouse](https://github.com/santoshshinde2012/local-data-lakehouse).
+Teaching / ML use-case layout. **Code + benchmarks + results analysis** live here (public code home).  
+Articles are authored separately (**internal**); readers should not be pointed at an articles GitHub repo.  
+Data foundation / SoR → [local-data-lakehouse](https://github.com/santoshshinde2012/local-data-lakehouse).
 
 ```text
 retention-radar/
