@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 from datetime import datetime, timezone
 from functools import lru_cache
-from typing import Any
+from typing import Any, Dict, List, Optional
 
 import joblib
 from fastapi import FastAPI, HTTPException, Query
@@ -68,14 +68,14 @@ class ChurnScoreRequest(BaseModel):
 
 
 class ChurnScoreResponse(BaseModel):
-    user_id: str | None = None
+    user_id: Optional[str] = None
     p_raw: float
     p_cal: float
     band: str
     hitl_action: str
     model_version: str
     auto_action: str = Field(default="none")
-    shap_top: list[dict[str, Any]] | None = None
+    shap_top: Optional[List[Dict[str, Any]]] = None
 
 
 @lru_cache(maxsize=1)
