@@ -157,7 +157,7 @@ Positive → toward churn; negative → toward retain (this run is protective-do
 **`monitor`** — calibrated P(churn) ≪ 0.5 × best-F1 threshold.  
 `auto_action = none` · human-in-the-loop only · **no auto-cancel**.
 
-Action ladder used by `src/single_record.py`:
+Action ladder used by `python -m retention_radar.cli.single_record`:
 
 | Condition | Action |
 |-----------|--------|
@@ -173,16 +173,20 @@ Action ladder used by `src/single_record.py`:
 | Model | Test AUC | Notes |
 |-------|----------|-------|
 | Dummy (prior) | **0.500** | Never predicts churn |
-| Logistic regression | **0.872** | Strong on additive synthetic label — celebrate the near-win |
+| Logistic regression | **0.872** | Strong on additive synthetic label (ties CatBoost at 3dp) |
+| Random Forest | **0.868** | Mid-tier ensemble peer |
 | XGBoost default | **0.869** | Sane hyperparameters |
 | XGBoost Optuna (raw) | **0.870** | Teaching + SHAP vehicle |
+| LightGBM (default) | **0.865** | FOSS peer booster |
+| CatBoost (default) | **0.872** | GBDT trilogy peer |
+| XGBoost calibrated | **0.866** | Serving / Santosh hero |
 
 | Calibration | Value |
 |-------------|------:|
 | Brier raw (test) | **0.138** |
 | Brier calibrated (test) | **0.106** |
 | Method | isotonic on validation |
-| Latency p50 | **~2.0 ms** (see `metrics.json` → `latency`) |
+| Latency p50 | **~2.01 ms** (see `metrics.json` → `latency`) |
 | Features | **22** |
 
 Full dump: `models/metrics.json`. Always prefer a fresh run over prose.
