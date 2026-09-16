@@ -192,7 +192,7 @@ If the Space UI asks for a Gradio SDK, pick Streamlit instead — this repo’s 
 - Amazon SageMaker, Azure ML, Google Vertex
 - Paid MLflow / W&B / Neptune hosting
 - Feature stores, Kafka, Kubernetes
-- Production FastAPI + auth (article 07 talks about that *later*; not needed to test E2E)
+- Production FastAPI + auth (not needed to test E2E). A **thin local** FastAPI (`serving/api.py`, no auth) is an optional teaching serve path — not a Cloud deploy target.
 
 Those are fine **after** this teaching repo. They are not part of the FOSS checklist.
 

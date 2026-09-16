@@ -76,3 +76,14 @@ git checkout -- models/ docs/MODEL_CARD.md docs/data/data-dictionary.md
 Sync only: `./scripts/sync_lakehouse_exports.sh /path/to/local-data-lakehouse/data/export`
 
 More: [FOLDER_STRUCTURE.md](FOLDER_STRUCTURE.md) · [ARCHITECTURE.md](ARCHITECTURE.md) · [e2e-free-platforms.md](guides/e2e-free-platforms.md) · [../README.md](../README.md)
+
+## FOSS production-shaped extras (optional)
+
+| Piece | Command |
+|-------|---------|
+| Batch gold scores | `python -m retention_radar.cli.batch_score --csv data/external/churn_user_features.csv` |
+| HITL review log | `python -m retention_radar.cli.hitl_log --from-packet artifacts/santosh_decision_packet.json --reviewer you --action-taken monitor` |
+| Thin local API | `uvicorn retention_radar.serving.api:app --app-dir src` → `POST /v1/churn/score` |
+
+These start a **predict → act → outcome** loop: scores and human review rows are first-class. **Outcome write-back** (joining actions to later labels) is deferred. `auto_action` stays `none`. Live Streamlit demo URL: **TBD**.
+

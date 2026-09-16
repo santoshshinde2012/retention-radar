@@ -54,6 +54,8 @@ Short checklist for contributors and readers adapting this teaching repo.
 - [ ] Serve path loads joblib + feature names; does not fit encoders or call Optuna.
 - [ ] Shared contract: 22 features, bands/thresholds, model version metadata.
 - [ ] Never retrain inside Streamlit on page load.
+- [ ] Optional thin FastAPI (`serving/api.py`) is teaching-only — **no auth**; `auto_action` stays `none`.
+- [ ] Batch scores + HITL review log start predict→act; **outcome write-back is deferred**.
 
 ## Articles (authored elsewhere)
 

@@ -89,6 +89,8 @@ Then:
 | Cite metrics | [`models/metrics.json`](models/metrics.json) |
 | Read benchmarks | [results/BENCHMARKS.md](results/BENCHMARKS.md) |
 | Score Santosh | `make infer` |
+| Batch gold scores | `python -m retention_radar.cli.batch_score --csv data/external/churn_user_features.csv` |
+| Thin local API | `uvicorn retention_radar.serving.api:app --app-dir src` → `POST /v1/churn/score` |
 | Open UI | `make ui` (committed models only — no fit on load) |
 | Live demo | TBD — Streamlit Community Cloud / HF Space |
 | Run tests | `make test` |
@@ -108,6 +110,7 @@ N_USERS=800 N_OPTUNA_TRIALS=5 CHURN_DATA_SOURCE=synthetic ./scripts/run_all.sh
 | `make test` | Pytest (synthetic) |
 | `make infer` | Santosh decision packet |
 | `make ui` | Streamlit UI |
+| `make api` | Thin local FastAPI (teaching; no auth) |
 | `make run-lakehouse` | Lakehouse E2E (needs lakehouse checkout) |
 
 CLI (after install):
@@ -115,6 +118,8 @@ CLI (after install):
 ```bash
 python -m retention_radar.cli.train
 python -m retention_radar.cli.infer --user santosh
+python -m retention_radar.cli.batch_score --csv data/external/churn_user_features.csv
+uvicorn retention_radar.serving.api:app --app-dir src   # POST /v1/churn/score
 ```
 
 ---
@@ -140,7 +145,7 @@ retention-radar/
 ├── src/retention_radar/     # Package + CLI
 ├── app/                     # Streamlit UI
 ├── scripts/                 # run_all, lakehouse sync
-├── configs/schemas/         # Serve payload schema
+├── configs/                 # Schemas + HITL review-log template
 ├── data/                    # raw · interim · processed · external
 ├── models/                  # Seed-42 serve bundle + metrics
 ├── results/                 # Benchmarks, Santosh analysis, plots

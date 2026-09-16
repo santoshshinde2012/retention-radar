@@ -72,6 +72,8 @@ flowchart TB
     EVA["evaluation/"]
     INF2["serving/infer.py"]
     SR["serving/packet.py"]
+    BS["serving/batch_score.py"]
+    API["serving/api.py"]
     POL["serving/policy.py"]
     EXP["serving/explain.py"]
   end
@@ -80,10 +82,15 @@ flowchart TB
   EVA --> MOD
   MOD --> INF2
   MOD --> SR
+  MOD --> BS
+  MOD --> API
   EXP --> SR
   POL --> SR
+  POL --> BS
+  POL --> API
   SR --> APP["app/streamlit_app.py"]
   INF2 --> APP
+  INF2 --> API
 ```
 
 ```text
@@ -115,6 +122,9 @@ retention-radar/
 | Evaluate | AUC, PR, F1, Brier, τ, latency | `metrics.json`, plots |
 | Infer | Load bundle, score one row | Probability + band + drivers |
 | UI | Presets, forms, Decision tab | Streamlit HITL |
+| Batch score | Gold CSV → scores.csv / JSONL | `cli.batch_score` |
+| Thin API | Local `POST /v1/churn/score` | `serving/api.py` (no auth) |
+| HITL log | Append review decisions | `cli.hitl_log` + configs/templates |
 | Ops-lite | Drift, retrain, when not to ship | guides/BEST_PRACTICES.md |
 
 ## Key artifacts contract
@@ -132,7 +142,9 @@ retention-radar/
 ## Runtime views
 
 **Batch / offline:** `./scripts/run_all.sh` → compare metrics → update model card.  
+**Batch gold scores:** `python -m retention_radar.cli.batch_score` → `artifacts/predictions/scores.csv`.  
 **Interactive:** Streamlit → load Santosh → edit → score + SHAP.  
+**Thin API:** `uvicorn retention_radar.serving.api:app --app-dir src` → `POST /v1/churn/score`.  
 **Canary:** freeze Santosh JSON; diff `P(churn)` after retrain (reference **0.043 / 0.017** · monitor).
 
 ## Non-goals
@@ -141,6 +153,8 @@ retention-radar/
 - Multi-tenant auth  
 - GPU serving  
 - Paid feature stores or AutoML  
+
+**In scope (optional teaching serve):** a thin local FastAPI app (`serving/api.py`) with `POST /v1/churn/score` (conceptual alias `POST /v1/churn:score`). No auth — localhost teaching only. Streamlit remains the interactive HITL UI.
 
 ## SOLID map (packages → principles)
 
@@ -165,6 +179,9 @@ The layout is a **teaching** SOLID sketch, not a claim that every file is a text
 | `serving/explain.py` | Top drivers only | Swap SHAP vs gain without packet rewrite | — | Explain ≠ decide | Packet depends on explain helper |
 | `serving/policy.py` | Risk band + HITL action; `auto_action: none` | New bands without retraining | `HitlDecisionPolicy` honours `DecisionPolicy` | Policy is not a model | Packet/UI depend on policy Protocol |
 | `serving/packet.py` | Assemble validate → score → HITL JSON | Extra packet fields without trainer changes | — | Packet ≠ Streamlit | App depends on `build_decision_packet` |
+| `serving/batch_score.py` | Gold CSV → compact score rows | New output cols without UI changes | — | Batch ≠ packet | CLI depends on scorer + policy |
+| `serving/hitl_log.py` | Append HITL review CSV | New log fields via schema | — | Log ≠ outcome write-back | CLI appends only |
+| `serving/api.py` | Thin FastAPI score endpoint | Query flags (shap/log) without retraining | — | No auth / no CRM | Uses infer + policy |
 | `serving/drift.py` | Lite distribution check | — | — | Not a trainer | CLI only |
 | `app/streamlit_app.py` | Serve-only adapter | UI can change without retraining | — | Forms ≠ Optuna | Calls serving helpers only |
 | `docs_gen.py` | Model card + dictionary from JSON/schema | New columns appear when config/schema grow | — | Docs ≠ train | Reads metrics + schema |

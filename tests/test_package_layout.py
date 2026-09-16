@@ -30,6 +30,8 @@ def test_compat_entrypoints_importable():
     import retention_radar.cli.ingest  # noqa: F401
     import retention_radar.cli.explain  # noqa: F401
     import retention_radar.cli.slice_metrics  # noqa: F401
+    import retention_radar.cli.batch_score  # noqa: F401
+    import retention_radar.cli.hitl_log  # noqa: F401
     from retention_radar import config as rr_config
     from retention_radar.evaluation.slices import main as slice_main
     from retention_radar.serving.explain import main as explain_main
