@@ -19,7 +19,7 @@ Teaching trilogy hub (public FOSS only):
 1. Clone **[retention-radar](https://github.com/santoshshinde2012/retention-radar)** + **[local-data-lakehouse](https://github.com/santoshshinde2012/local-data-lakehouse)**
 2. One synthetic command: `CHURN_DATA_SOURCE=synthetic ./scripts/run_all.sh`
 3. Optional lakehouse: `./scripts/run_lakehouse_e2e.sh ../local-data-lakehouse` (writes under `artifacts/lakehouse_run/` only — committed `models/` untouched)
-4. **Live demo:** TBD — Streamlit Community Cloud / HF Space
+4. **Live demo:** TBD — Streamlit Community Cloud / HF Space ([deploy later](docs/guides/DEPLOY_LATER.md))
 
 Full map: [docs/guides/START_HERE.md](docs/guides/START_HERE.md). Do **not** clone any private article workspace.
 
@@ -92,7 +92,7 @@ Then:
 | Batch gold scores | `python -m retention_radar.cli.batch_score --csv data/external/churn_user_features.csv` |
 | Thin local API | `uvicorn retention_radar.serving.api:app --app-dir src` → `POST /v1/churn/score` |
 | Open UI | `make ui` (committed models only — no fit on load) |
-| Live demo | TBD — Streamlit Community Cloud / HF Space |
+| Live demo | TBD — Streamlit Community Cloud / HF Space ([DEPLOY_LATER.md](docs/guides/DEPLOY_LATER.md)) |
 | Run tests | `make test` |
 
 Faster smoke:

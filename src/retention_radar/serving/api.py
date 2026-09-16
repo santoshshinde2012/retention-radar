@@ -20,7 +20,6 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from retention_radar import config
 from retention_radar.serving.batch_score import load_metrics, resolve_model_version
-from retention_radar.serving.explain import top_contributing_features
 from retention_radar.serving.infer import predict_user
 from retention_radar.serving.policy import HitlDecisionPolicy
 from retention_radar.training.calibrate import load_calibrator

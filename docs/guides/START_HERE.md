@@ -69,7 +69,7 @@ make ui   # streamlit run app/streamlit_app.py — loads committed models only (
 ```
 
 **Live demo:** TBD — Streamlit Community Cloud / HF Space  
-(Howto: [e2e-free-platforms.md](e2e-free-platforms.md))
+(Exact deploy steps when ready: [DEPLOY_LATER.md](DEPLOY_LATER.md); full free-platform map: [e2e-free-platforms.md](e2e-free-platforms.md))
 
 ## 5. Articles
 
