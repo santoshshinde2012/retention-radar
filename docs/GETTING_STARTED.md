@@ -67,11 +67,7 @@ CHURN_DATA_SOURCE=synthetic PYTHONPATH=src pytest -q
 | Synthetic (default / CI) | `CHURN_DATA_SOURCE=synthetic ./scripts/run_all.sh` |
 | Lakehouse gold | `./scripts/run_lakehouse_e2e.sh /path/to/local-data-lakehouse` |
 
-**Warning:** Lakehouse E2E overwrites committed `models/`. Restore before committing:
-
-```bash
-git checkout -- models/ docs/MODEL_CARD.md docs/data/data-dictionary.md
-```
+Lakehouse E2E sets `RETENTION_RADAR_ARTIFACT_DIR=artifacts/lakehouse_run` so committed `models/` and `docs/MODEL_CARD.md` stay untouched. Dual-world cite: [`results/lakehouse-e2e-summary.json`](../results/lakehouse-e2e-summary.json).
 
 Sync only: `./scripts/sync_lakehouse_exports.sh /path/to/local-data-lakehouse/data/export`
 
