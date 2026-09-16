@@ -55,16 +55,15 @@ Short checklist for contributors and readers adapting this teaching repo.
 - [ ] Shared contract: 22 features, bands/thresholds, model version metadata.
 - [ ] Never retrain inside Streamlit on page load.
 
-## Articles (Medium / Data Engineer Things)
+## Articles (authored elsewhere)
 
-- [ ] H1 + italic deck; no em-dash in title/subtitle; no `Part N of N`.
-- [ ] One unique sketch under every `##`; italic credit under every embed.
-- [ ] One lakehouse CTA per part. No private-repo clone pointers in article bodies.
-- [ ] Seed-42 numbers in prose match `models/metrics.json`. Do not “improve” them.
+Articles for Medium / Data Engineer Things live in a separate **internal** workspace.
+This repo stays the public code / benchmarks / results home — do not add article drafts here.
+Seed-42 numbers in public docs must match `models/metrics.json`. Do not invent metrics.
 
 ## CI & docs
 
-- [ ] `pytest -q` green before PR (`tests/test_articles_medium.py` is part of that).
+- [ ] `pytest -q` green before PR (synthetic pipeline tests under `tests/`).
 - [ ] After metric-changing PRs, refresh guides via `python -m retention_radar.cli.docs_gen` — but not after a lakehouse smoke if you still publish the synthetic ladder.
 - [ ] Keep engineering docs under `docs/` (`ARCHITECTURE.md`, `MODEL_CARD.md`); analysis under `results/`.
 - [ ] Free E2E path stays documented in [e2e-free-platforms.md](e2e-free-platforms.md).
