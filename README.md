@@ -6,10 +6,22 @@ It ranks quiet fade-out risk and returns a checklist for a human. It does **not*
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](runtime.txt)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Live demo](https://img.shields.io/badge/live%20demo-TBD-lightgrey.svg)](docs/guides/e2e-free-platforms.md)
 
 **Repo:** [santoshshinde2012/retention-radar](https://github.com/santoshshinde2012/retention-radar)
 
 ---
+
+## Start here
+
+Teaching trilogy hub (public FOSS only):
+
+1. Clone **[retention-radar](https://github.com/santoshshinde2012/retention-radar)** + **[local-data-lakehouse](https://github.com/santoshshinde2012/local-data-lakehouse)**
+2. One synthetic command: `CHURN_DATA_SOURCE=synthetic ./scripts/run_all.sh`
+3. Optional lakehouse: `./scripts/run_lakehouse_e2e.sh ../local-data-lakehouse` (writes under `artifacts/lakehouse_run/` only — committed `models/` untouched)
+4. **Live demo:** TBD — Streamlit Community Cloud / HF Space
+
+Full map: [docs/guides/START_HERE.md](docs/guides/START_HERE.md). Do **not** clone any private article workspace.
 
 ## What this is
 
@@ -32,7 +44,9 @@ It ranks quiet fade-out risk and returns a checklist for a human. It does **not*
 |------|------|
 | **This repo** | Public code, benchmarks, and results |
 | [local-data-lakehouse](https://github.com/santoshshinde2012/local-data-lakehouse) | Data foundation (SILO · N=5000 gold) |
-| Articles | Written in a separate **internal** workspace |
+| Articles | Written in a separate **internal** workspace (not a public clone target) |
+| [medallion-write-back-loop](https://github.com/santoshshinde2012/medallion-write-back-loop) | See also — teaching write-back loop (not wired here) |
+| [churn-vs-risk-poc](https://github.com/santoshshinde2012/churn-vs-risk-poc) | See also — churn vs risk POC (not wired here) |
 
 ---
 
@@ -75,7 +89,8 @@ Then:
 | Cite metrics | [`models/metrics.json`](models/metrics.json) |
 | Read benchmarks | [results/BENCHMARKS.md](results/BENCHMARKS.md) |
 | Score Santosh | `make infer` |
-| Open UI | `make ui` |
+| Open UI | `make ui` (committed models only — no fit on load) |
+| Live demo | TBD — Streamlit Community Cloud / HF Space |
 | Run tests | `make test` |
 
 Faster smoke:
@@ -109,11 +124,10 @@ python -m retention_radar.cli.infer --user santosh
 | Path | How | Notes |
 |------|-----|-------|
 | **Synthetic** (CI / published numbers) | `CHURN_DATA_SOURCE=synthetic` | Seed-42 ladder; committed `models/` |
-| **Lakehouse gold** | `./scripts/run_lakehouse_e2e.sh /path/to/local-data-lakehouse` | **Overwrites** `models/` |
+| **Lakehouse gold** | `./scripts/run_lakehouse_e2e.sh /path/to/local-data-lakehouse` | Writes under `artifacts/lakehouse_run/` only (`RETENTION_RADAR_ARTIFACT_DIR`) |
 | **Sync only** | `./scripts/sync_lakehouse_exports.sh …/data/export` | No retrain |
 
-> **Warning:** Lakehouse E2E overwrites published seed-42 artifacts. Restore with:
-> `git checkout -- models/ docs/MODEL_CARD.md docs/data/data-dictionary.md`
+> **Isolation:** Lakehouse E2E sets `RETENTION_RADAR_ARTIFACT_DIR=artifacts/lakehouse_run` so train/eval/docs_gen never dirty committed `models/` or published `docs/MODEL_CARD.md`. Dual-world cite: [`results/lakehouse-e2e-summary.json`](results/lakehouse-e2e-summary.json).
 
 Details: [docs/data/data-foundation-lakehouse.md](docs/data/data-foundation-lakehouse.md)
 
@@ -147,6 +161,7 @@ Full map: [docs/FOLDER_STRUCTURE.md](docs/FOLDER_STRUCTURE.md)
 | [results/BENCHMARKS.md](results/BENCHMARKS.md) | Ladder, calibration, latency |
 | [results/SANTOSH_ANALYSIS.md](results/SANTOSH_ANALYSIS.md) | Single-record outcome |
 | [docs/MODEL_CARD.md](docs/MODEL_CARD.md) | Intended use + metrics |
+| [docs/guides/START_HERE.md](docs/guides/START_HERE.md) | Trilogy hub: clone two repos → one command |
 | [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) | Short walkthrough |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Train ≠ serve design |
 | [docs/guides/ALGORITHM_LANDSCAPE.md](docs/guides/ALGORITHM_LANDSCAPE.md) | What we use vs defer |

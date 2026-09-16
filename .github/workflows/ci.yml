@@ -14,6 +14,8 @@ jobs:
       PYTHONPATH: ${{ github.workspace }}/src
       N_USERS: "800"
       N_OPTUNA_TRIALS: "5"
+      # Frozen seed-42 bundle for canary (snapshotted before smoke retrain)
+      RETENTION_RADAR_CANARY_DIR: ${{ github.workspace }}/.ci_seed42_fixtures
     steps:
       - uses: actions/checkout@v4
 
@@ -27,6 +29,20 @@ jobs:
         run: |
           pip install -r requirements.txt
           pip install -e .
+          pip install ruff
+
+      - name: Snapshot seed-42 serve bundle for canary
+        run: |
+          mkdir -p "$RETENTION_RADAR_CANARY_DIR"
+          cp models/churn_xgb.joblib models/calibrator.joblib \
+            models/metrics.json models/feature_names.json models/feature_stats.json \
+            "$RETENTION_RADAR_CANARY_DIR/"
+
+      - name: Seed-42 canary (committed artifacts, before retrain)
+        run: pytest -q tests/test_seed42_canary.py tests/test_artifact_dir_isolation.py
+
+      - name: Ruff (src/)
+        run: ruff check src/
 
       - name: End-to-end pipeline (synthetic)
         run: ./scripts/run_all.sh

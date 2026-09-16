@@ -25,6 +25,8 @@ Or one shot (synthetic, published ladder): `CHURN_DATA_SOURCE=synthetic ./script
 
 **Serve never fits.** Streamlit / `infer` / `single_record` only **load** `models/*.joblib`. No Optuna on page load.
 
+**Live demo URL:** TBD — Streamlit Community Cloud / HF Space (paste here after deploy). Deploy tip: point the app at `app/streamlit_app.py`; `runtime.txt` + `packages.txt` (libgomp1) are repo-root ready.
+
 ---
 
 ## 1. Local (laptop / codespace) — required path
@@ -209,7 +211,7 @@ When [`local-data-lakehouse`](https://github.com/santoshshinde2012/local-data-la
 That runs sample → gold CSV/JSON → sync into `data/external/` → train/eval/infer with `CHURN_DATA_SOURCE=lakehouse`.
 
 - **CI / Medium numbers** stay on synthetic seed 42 (`CHURN_DATA_SOURCE=synthetic` in GitHub Actions).
-- Lakehouse retrain overwrites local `models/` — any full metrics/model dump under the ignored `artifacts/lakehouse_run/` is runtime-only; restore `models/` with `git checkout -- models/` before publishing docs. The committed lakehouse source of truth is [the E2E summary](../../results/lakehouse-e2e-summary.json).
+- Lakehouse retrain sets `RETENTION_RADAR_ARTIFACT_DIR=artifacts/lakehouse_run` so committed `models/` and `docs/MODEL_CARD.md` stay untouched. The committed lakehouse source of truth is [the E2E summary](../../results/lakehouse-e2e-summary.json).
 - Contract + dual-world notes: [data-foundation-lakehouse.md](../data/data-foundation-lakehouse.md).
 
 ## 6. Checklist (print / tick)
