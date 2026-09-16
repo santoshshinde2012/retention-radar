@@ -32,6 +32,36 @@ Needs the lakehouse checkout beside this repo (or pass the path):
 
 Lakehouse train/eval writes **only** under `artifacts/lakehouse_run/` (`RETENTION_RADAR_ARTIFACT_DIR`). Committed `models/` and `docs/MODEL_CARD.md` stay the published synthetic serve bundle. Dual-world cite: [`results/lakehouse-e2e-summary.json`](../../results/lakehouse-e2e-summary.json).
 
+
+## 3b. Optional FOSS production-shaped path (local)
+
+Batch-score gold features with the committed seed-42 serve bundle (HITL only — `auto_action: none`):
+
+```bash
+python -m retention_radar.cli.batch_score \
+  --csv data/external/churn_user_features.csv \
+  --out artifacts/predictions/scores.csv
+```
+
+Tiny fixture (tests): `tests/fixtures/batch/tiny_features.csv`.
+
+Append a HITL review-log row (predict → act; outcome write-back deferred):
+
+```bash
+python -m retention_radar.cli.hitl_log \
+  --from-packet artifacts/santosh_decision_packet.json \
+  --reviewer you --action-taken monitor --notes "ok"
+```
+
+Template + schema: [`configs/templates/hitl_review_log.csv`](../../configs/templates/hitl_review_log.csv) · [`configs/hitl_review_log.schema.json`](../../configs/hitl_review_log.schema.json).
+
+Thin local FastAPI (teaching-only, **no auth**). Preferred route `POST /v1/churn/score` (conceptual alias `POST /v1/churn:score`):
+
+```bash
+uvicorn retention_radar.serving.api:app --app-dir src --port 8000
+# curl -s localhost:8000/v1/churn/score -H 'content-type: application/json' -d @data/raw/santosh_shinde.json
+```
+
 ## 4. UI / live demo
 
 ```bash

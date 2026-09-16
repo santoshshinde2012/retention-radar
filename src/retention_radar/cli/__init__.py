@@ -12,4 +12,6 @@ __all__ = [
     "explain",
     "slice_metrics",
     "docs_gen",
+    "batch_score",
+    "hitl_log",
 ]

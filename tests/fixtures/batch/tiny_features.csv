@@ -1,0 +1,4 @@
+user_id,user_name,days_since_signup,sessions_last_7d,sessions_last_30d,avg_session_minutes,models_used_count,api_calls_last_30d,tokens_consumed_last_30d,tools_used_count,failed_requests_rate,support_tickets_last_90d,plan_tier,payment_failures_last_90d,feature_adoption_score,nps_score,last_active_days_ago,weekend_usage_ratio,engagement_trend,spend_usd_last_30d,days_until_renewal,agent_runs_last_30d,ide_plugin_sessions_last_30d,seat_utilization
+u-0001,Santosh Shinde,275,8.0,29,12.249655172413794,12,2557,900569,11,0.0078216660148611,2.0,pro,1.0,1.0,7.0,0,0.2068965517241379,1.103448275862069,12.54,25,75,69,0.55
+u-0002,Marcus Kim,144,6.0,24,10.699583333333337,12,2148,708470,11,0.0116387337057728,5.0,starter,0.0,0.9422222222222222,6.4,1,0.2083333333333333,1.0,16.93,6,68,39,0.35
+u-0003,Avery Ramirez,516,10.0,39,12.334615384615384,12,3989,1777656,11,0.0050137879167711,2.0,free,0.0,1.0,6.0,0,0.4102564102564102,1.0256410256410255,0.0,24,119,80,0.15

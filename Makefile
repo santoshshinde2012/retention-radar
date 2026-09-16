@@ -1,4 +1,4 @@
-.PHONY: setup run run-lakehouse test infer ui docs-results
+.PHONY: setup run run-lakehouse test infer ui api docs-results
 
 setup:
 	python3 -m venv .venv
@@ -18,6 +18,9 @@ infer:
 
 ui:
 	PYTHONPATH=src streamlit run app/streamlit_app.py
+
+api:
+	PYTHONPATH=src uvicorn retention_radar.serving.api:app --host 127.0.0.1 --port 8000
 
 docs-results:
 	mkdir -p results/plots
