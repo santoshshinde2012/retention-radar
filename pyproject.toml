@@ -7,7 +7,7 @@ name = "retention-radar"
 version = "0.1.0"
 description = "FOSS Retention Radar: XGBoost AI-platform churn teaching case (synthetic data, HITL)."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [{ name = "Santosh Shinde" }]
 

@@ -19,7 +19,7 @@ pip install -e .
 # export PYTHONPATH="$(pwd)/src"
 ```
 
-Requires **Python 3.11+**. Or run `make setup` (venv + requirements + editable install).
+Requires **Python 3.11+**. The committed `models/calibrator.joblib` was trained with scikit-learn **1.9.1**, so use this runtime to install dependencies and load the serving bundle. Or run `make setup` (venv + requirements + editable install).
 
 **macOS note:** XGBoost / LightGBM need OpenMP (CatBoost is usually fine via pip). If `pip install` or import fails with `libomp`, install once:
 
