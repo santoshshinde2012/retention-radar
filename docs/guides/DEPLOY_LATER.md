@@ -14,7 +14,8 @@ Related: longer free-platform map in [e2e-free-platforms.md](e2e-free-platforms.
   - `models/feature_names.json`
   - `models/feature_stats.json`
   - `models/metrics.json`
-- Repo root already has `runtime.txt` (Python 3.11) and `packages.txt` (`libgomp1` for LightGBM/XGBoost)
+- Repo root already has `runtime.txt` (`python-3.11`) and `packages.txt` (`libgomp1` for LightGBM/XGBoost)
+- Python **3.11** is required: the committed `models/calibrator.joblib` was trained with scikit-learn **1.9.1**.
 
 ## Steps (Streamlit Community Cloud)
 

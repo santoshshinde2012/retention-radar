@@ -53,6 +53,7 @@ Full map: [docs/guides/START_HERE.md](docs/guides/START_HERE.md). Do **not** clo
 ## Requirements
 
 - Python **3.11+**
+- The committed `models/calibrator.joblib` was trained with scikit-learn **1.9.1**, so this runtime is required to install and load the serving bundle.
 - Linux, macOS, or Windows (WSL on Windows)
 - CPU only
 - **macOS:** `brew install libomp` if XGBoost or LightGBM fail to load
