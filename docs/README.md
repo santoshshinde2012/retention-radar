@@ -15,6 +15,7 @@
 |-----|---------|
 | [guides/BEST_PRACTICES.md](guides/BEST_PRACTICES.md) | Ops-lite checklist |
 | [guides/ALGORITHM_LANDSCAPE.md](guides/ALGORITHM_LANDSCAPE.md) | Ladder IN vs deferred |
+| [guides/DEPLOY_LATER.md](guides/DEPLOY_LATER.md) | Streamlit Community Cloud steps (URL still TBD) |
 | [guides/e2e-free-platforms.md](guides/e2e-free-platforms.md) | Free CI / Cloud deploy |
 
 ## Data
