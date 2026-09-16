@@ -22,31 +22,86 @@ RAW_DIR = DATA_DIR / "raw"
 EXTERNAL_DIR = DATA_DIR / "external"  # lakehouse gold exports
 INTERIM_DIR = DATA_DIR / "interim"  # CDS parity (empty in teaching path)
 PROCESSED_DIR = DATA_DIR / "processed"  # CDS parity (features usually in-memory)
-MODELS_DIR = PROJECT_ROOT / "models"
-ARTIFACTS_DIR = PROJECT_ROOT / "artifacts"
+# Committed seed-42 serve bundle (never overwrite via lakehouse E2E).
+SEED_MODELS_DIR = PROJECT_ROOT / "models"
 DOCS_DIR = PROJECT_ROOT / "docs"
 RESEARCH_DIR = DOCS_DIR  # compat alias (teaching docs live under docs/)
 ARTICLES_DIR = PROJECT_ROOT / "articles"  # unused in this teaching repo
 SCHEMAS_DIR = PROJECT_ROOT / "configs" / "schemas"
+RESULTS_DIR = PROJECT_ROOT / "results"
+RESULTS_PLOTS_DIR = RESULTS_DIR / "plots"
 
-# Key files
+# Key files (data paths are not redirected by artifact override)
 USERS_CSV = RAW_DIR / "users.csv"
 SANTOSH_JSON = RAW_DIR / "santosh_shinde.json"
 LAKEHOUSE_FEATURES_CSV = EXTERNAL_DIR / "churn_user_features.csv"
 LAKEHOUSE_SANTOSH_JSON = EXTERNAL_DIR / "santosh_inference_record.json"
 # auto | synthetic | lakehouse — auto prefers external lakehouse exports when present
 CHURN_DATA_SOURCE = os.environ.get("CHURN_DATA_SOURCE", "auto")
+USER_RECORD_SCHEMA_PATH = SCHEMAS_DIR / "user_record.schema.json"
+GUIDES_DIR = DOCS_DIR  # docs root; nested guides/data/case-study below
+
+
+def _resolve_artifact_root(raw: str | None = None) -> Path | None:
+    """Return absolute artifact root from env/arg, or None for default seed paths."""
+    value = (raw if raw is not None else os.environ.get("RETENTION_RADAR_ARTIFACT_DIR", "")).strip()
+    if not value:
+        return None
+    path = Path(value)
+    return path if path.is_absolute() else (PROJECT_ROOT / path)
+
+
+def apply_artifact_dir(artifact_dir: str | Path | None = None) -> Path | None:
+    """Rebind model / docs / runtime artifact paths.
+
+    When ``RETENTION_RADAR_ARTIFACT_DIR`` (or ``artifact_dir``) is set, train /
+    evaluate / docs_gen write under that directory instead of committed
+    ``models/`` and published ``docs/MODEL_CARD.md`` / data-dictionary.
+    Pass ``None`` with env unset (or empty string) to restore seed defaults.
+
+    Returns the resolved artifact root, or ``None`` when using seed paths.
+    """
+    global MODELS_DIR, ARTIFACTS_DIR, MODEL_PATH, CALIBRATOR_PATH, METRICS_PATH
+    global FEATURE_NAMES_PATH, FEATURE_STATS_PATH, MODEL_CARD_PATH, DATA_DICTIONARY_PATH
+
+    if artifact_dir is None:
+        root = _resolve_artifact_root()
+    elif str(artifact_dir).strip() == "":
+        root = None
+    else:
+        root = _resolve_artifact_root(str(artifact_dir))
+
+    if root is None:
+        MODELS_DIR = SEED_MODELS_DIR
+        ARTIFACTS_DIR = PROJECT_ROOT / "artifacts"
+        MODEL_CARD_PATH = DOCS_DIR / "MODEL_CARD.md"
+        DATA_DICTIONARY_PATH = DOCS_DIR / "data" / "data-dictionary.md"
+    else:
+        root.mkdir(parents=True, exist_ok=True)
+        MODELS_DIR = root
+        ARTIFACTS_DIR = root
+        MODEL_CARD_PATH = root / "MODEL_CARD.md"
+        DATA_DICTIONARY_PATH = root / "data-dictionary.md"
+
+    MODEL_PATH = MODELS_DIR / "churn_xgb.joblib"
+    CALIBRATOR_PATH = MODELS_DIR / "calibrator.joblib"
+    METRICS_PATH = MODELS_DIR / "metrics.json"
+    FEATURE_NAMES_PATH = MODELS_DIR / "feature_names.json"
+    FEATURE_STATS_PATH = MODELS_DIR / "feature_stats.json"
+    return root
+
+
+# Initialize from env at import time (lakehouse E2E exports the override before Python).
+MODELS_DIR = SEED_MODELS_DIR
+ARTIFACTS_DIR = PROJECT_ROOT / "artifacts"
 MODEL_PATH = MODELS_DIR / "churn_xgb.joblib"
 CALIBRATOR_PATH = MODELS_DIR / "calibrator.joblib"
 METRICS_PATH = MODELS_DIR / "metrics.json"
 FEATURE_NAMES_PATH = MODELS_DIR / "feature_names.json"
 FEATURE_STATS_PATH = MODELS_DIR / "feature_stats.json"
-USER_RECORD_SCHEMA_PATH = SCHEMAS_DIR / "user_record.schema.json"
-GUIDES_DIR = DOCS_DIR  # docs root; nested guides/data/case-study below
 MODEL_CARD_PATH = DOCS_DIR / "MODEL_CARD.md"
-RESULTS_DIR = PROJECT_ROOT / "results"
-RESULTS_PLOTS_DIR = RESULTS_DIR / "plots"
 DATA_DICTIONARY_PATH = DOCS_DIR / "data" / "data-dictionary.md"
+apply_artifact_dir()
 
 # ---------------------------------------------------------------------------
 # Reproducibility

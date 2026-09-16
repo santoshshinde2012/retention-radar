@@ -19,7 +19,6 @@ from sklearn.metrics import (
     roc_auc_score,
 )
 
-
 MIN_SAMPLES_FOR_AUC = 20
 MIN_POSITIVES_FOR_AUC = 2
 

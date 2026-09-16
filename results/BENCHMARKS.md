@@ -129,7 +129,7 @@ Same seed + same package versions should match within float noise. Changing the 
 
 **Cite the JSON**, not this markdown alone: every Table A–D cell is a rounded view of [`../models/metrics.json`](../models/metrics.json).
 
-**Dual world:** lakehouse gold E2E overwrites `models/` and is **not** the published ladder. See [`lakehouse-e2e-summary.json`](lakehouse-e2e-summary.json) and [docs/data/data-foundation-lakehouse.md](../docs/data/data-foundation-lakehouse.md). Restore: `git checkout -- models/ docs/MODEL_CARD.md docs/data/data-dictionary.md`.
+**Dual world:** lakehouse gold E2E writes under `artifacts/lakehouse_run/` via `RETENTION_RADAR_ARTIFACT_DIR` and is **not** the published ladder. See [`lakehouse-e2e-summary.json`](lakehouse-e2e-summary.json) and [docs/data/data-foundation-lakehouse.md](../docs/data/data-foundation-lakehouse.md). Committed `models/` stay seed-42.
 
 ---
 

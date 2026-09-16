@@ -85,5 +85,5 @@ One-command path used: `./scripts/run_lakehouse_e2e.sh /path/to/local-data-lakeh
 
 CI pins `CHURN_DATA_SOURCE=synthetic` so PRs stay deterministic.
 
-Machine-readable summary and committed source of truth: [`results/lakehouse-e2e-summary.json`](../../results/lakehouse-e2e-summary.json). A full lakehouse `metrics.json` may exist in the ignored runtime archive after a local E2E run, but it is not a published artifact here.
+Machine-readable summary and committed source of truth: [`results/lakehouse-e2e-summary.json`](../../results/lakehouse-e2e-summary.json). Full lakehouse `metrics.json` / joblibs land under ignored `artifacts/lakehouse_run/` (`RETENTION_RADAR_ARTIFACT_DIR`); they are not published and do not replace committed `models/`.
 

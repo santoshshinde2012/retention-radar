@@ -15,5 +15,6 @@
     "risk": "low",
     "hitl": "nurture / check-in"
   },
-  "note": "This committed summary is the lakehouse E2E source of truth; the full runtime metrics.json is not committed and must not replace the published synthetic models."
+  "note": "Lakehouse E2E writes only under artifacts/lakehouse_run/ via RETENTION_RADAR_ARTIFACT_DIR. This committed summary is the lakehouse dual-world cite; full runtime metrics.json is not committed and must not replace the published synthetic models.",
+  "artifact_dir": "artifacts/lakehouse_run"
 }
