@@ -170,7 +170,7 @@ The layout is a **teaching** SOLID sketch, not a claim that every file is a text
 |------------------|-----|-----|-----|-----|-----|
 | `config.py` | One place for paths, seed, 22-column contract | Extend features via config, not scattered lists | — | Does not expose train/serve APIs | Downstream depends on config values, not ad-hoc paths |
 | `data/generate.py` | Synthetic table + Santosh inject only | New generator knobs without touching serve | — | No scoring interface | Train scripts depend on CSV contract |
-| `data/use_cases.py` | Build / check the serving use-case pack from the seed-42 holdout | New scenario = one `Scenario` entry | — | Pack ≠ training data | Checks against the committed bundle |
+| `data/use_cases.py` | Build / check the serving use-case pack (seed-42 test split + Santosh hero) | New scenario = one `Scenario` entry | — | Pack ≠ training data (Santosh aside: validation split) | Checks against the committed bundle |
 | `data/ingest.py` | Load + validate; fail loud on NaNs / bad plans | Extra checks can be added without changing transform | — | Validation is not mixed with Optuna | Train/eval depend on `load_users` |
 | `features/transform.py` | Encode `plan_tier`, build X/y | New columns via `MODEL_FEATURE_COLUMNS` | `DefaultFeatureTransformer` honours `FeatureTransformer` | Transform-only API | Train/serve call the transformer, not pandas ad-hoc |
 | `training/split.py` | Stratified split only | — | Same split helper for train/eval | No model API | Train/eval depend on split, not sklearn calls inline |

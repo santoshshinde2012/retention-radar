@@ -1,8 +1,10 @@
 user_id,reviewer,action_taken,notes,timestamp
+user_04584,cs-demo (simulated),escalate,accepted suggested action,2026-09-29T15:00:00Z
+user_01527,cs-demo (simulated),escalate,escalated to account owner,2026-09-29T15:00:00Z
 user_04265,cs-demo (simulated),escalate,accepted suggested action,2026-09-29T15:00:00Z
-user_00783,cs-demo (simulated),escalate,escalated to account owner,2026-09-29T15:00:00Z
 user_04869,cs-demo (simulated),escalate,accepted suggested action,2026-09-29T15:00:00Z
 user_02471,cs-demo (simulated),escalate,accepted suggested action,2026-09-29T15:00:00Z
+user_04514,cs-demo (simulated),escalate,accepted suggested action,2026-09-29T15:00:00Z
 user_03122,cs-demo (simulated),escalate,accepted suggested action,2026-09-29T15:00:00Z
 user_03207,cs-demo (simulated),escalate,accepted suggested action,2026-09-29T15:00:00Z
 user_01113,cs-demo (simulated),escalate,accepted suggested action,2026-09-29T15:00:00Z
@@ -28,12 +30,11 @@ user_04821,cs-demo (simulated),escalate,accepted suggested action,2026-09-29T15:
 user_03982,cs-demo (simulated),escalate,accepted suggested action,2026-09-29T15:00:00Z
 user_02309,cs-demo (simulated),escalate,accepted suggested action,2026-09-29T15:00:00Z
 user_01343,cs-demo (simulated),escalate,accepted suggested action,2026-09-29T15:00:00Z
-user_01766,cs-demo (simulated),escalate,accepted suggested action,2026-09-29T15:00:00Z
 user_04906,cs-demo (simulated),escalate,accepted suggested action,2026-09-29T15:00:00Z
+user_04970,cs-demo (simulated),escalate,accepted suggested action,2026-09-29T15:00:00Z
 user_00436,cs-demo (simulated),retention outreach (human review),accepted suggested action,2026-09-29T15:00:00Z
 user_00937,cs-demo (simulated),retention outreach (human review),accepted suggested action,2026-09-29T15:00:00Z
 user_03576,cs-demo (simulated),retention outreach (human review),accepted suggested action,2026-09-29T15:00:00Z
-user_02238,cs-demo (simulated),retention outreach (human review),accepted suggested action,2026-09-29T15:00:00Z
 user_02708,cs-demo (simulated),retention outreach (human review),accepted suggested action,2026-09-29T15:00:00Z
 user_00962,cs-demo (simulated),retention outreach (human review),accepted suggested action,2026-09-29T15:00:00Z
 user_01368,cs-demo (simulated),retention outreach (human review),accepted suggested action,2026-09-29T15:00:00Z
@@ -48,7 +49,7 @@ user_04157,cs-demo (simulated),retention outreach (human review),accepted sugges
 user_04475,cs-demo (simulated),nurture / check-in,accepted suggested action,2026-09-29T15:00:00Z
 user_02994,cs-demo (simulated),nurture / check-in,accepted suggested action,2026-09-29T15:00:00Z
 user_03681,cs-demo (simulated),nurture / check-in,accepted suggested action,2026-09-29T15:00:00Z
-user_00480,cs-demo (simulated),retention outreach (human review),3 tickets on the same bug; call instead of email,2026-09-29T15:00:00Z
+user_00480,cs-demo (simulated),retention outreach (human review),4 tickets on the same bug; call instead of email,2026-09-29T15:00:00Z
 user_00903,cs-demo (simulated),nurture / check-in,accepted suggested action,2026-09-29T15:00:00Z
 user_00738,cs-demo (simulated),nurture / check-in,accepted suggested action,2026-09-29T15:00:00Z
 user_04212,cs-demo (simulated),nurture / check-in,accepted suggested action,2026-09-29T15:00:00Z
@@ -56,12 +57,12 @@ user_01495,cs-demo (simulated),nurture / check-in,accepted suggested action,2026
 user_02842,cs-demo (simulated),nurture / check-in,accepted suggested action,2026-09-29T15:00:00Z
 user_03993,cs-demo (simulated),nurture / check-in,accepted suggested action,2026-09-29T15:00:00Z
 user_00548,cs-demo (simulated),nurture / check-in,accepted suggested action,2026-09-29T15:00:00Z
-user_01960,cs-demo (simulated),nurture / check-in,accepted suggested action,2026-09-29T15:00:00Z
 user_01186,cs-demo (simulated),nurture / check-in,accepted suggested action,2026-09-29T15:00:00Z
 user_04890,cs-demo (simulated),nurture / check-in,offered an onboarding session,2026-09-29T15:00:00Z
 user_04892,cs-demo (simulated),nurture / check-in,accepted suggested action,2026-09-29T15:00:00Z
 user_01967,cs-demo (simulated),nurture / check-in,accepted suggested action,2026-09-29T15:00:00Z
 user_00568,cs-demo (simulated),nurture / check-in,accepted suggested action,2026-09-29T15:00:00Z
 user_03604,cs-demo (simulated),nurture / check-in,accepted suggested action,2026-09-29T15:00:00Z
+user_03440,cs-demo (simulated),nurture / check-in,accepted suggested action,2026-09-29T15:00:00Z
 user_00205,cs-demo (simulated),monitor,seasonal dip; no action,2026-09-29T15:00:00Z
 santosh_shinde,cs-demo (simulated),monitor,healthy; no action,2026-09-29T15:00:00Z

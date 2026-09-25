@@ -116,8 +116,9 @@ BIN_DIR="$(dirname "$(command -v "$PY")")"
 console() { if [[ -x "$BIN_DIR/$1" ]]; then echo "$BIN_DIR/$1"; else echo "$PY -m $1"; fi; }
 
 step 7 "live thin API (uvicorn console script :$API_PORT)"
-$(console uvicorn) retention_radar.serving.api:app --app-dir src --host 127.0.0.1 --port "$API_PORT" \
-  > "$OUT/api.log" 2>&1 &
+# Runtime logs (predictions, the test review) go to $OUT/api, never the operator's artifacts/.
+RETENTION_RADAR_LOG_DIR="$OUT/api" $(console uvicorn) retention_radar.serving.api:app --app-dir src \
+  --host 127.0.0.1 --port "$API_PORT" > "$OUT/api.log" 2>&1 &
 PIDS+=($!)
 wait_http "http://127.0.0.1:$API_PORT/healthz" 60 || { cat "$OUT/api.log"; exit 1; }
 "$PY" - "$API_PORT" <<'PY'

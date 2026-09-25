@@ -92,7 +92,7 @@ Then:
 | Score Santosh | `make infer` |
 | Walk every use case | `make use-cases` — [data/use_cases/](data/use_cases/README.md): weekly batch → ranked queue (+ rejects) → packets → held records → reviews → day-30 outcomes |
 | Batch scores | `python -m retention_radar.cli.batch_score --csv data/raw/users.csv` → ranked queue + `*_rejected.csv` (lakehouse gold after a sync: `--csv data/external/churn_user_features.csv`) |
-| HITL outcomes | `python -m retention_radar.cli.hitl_outcomes --labels data/use_cases/labels_day30.csv` |
+| HITL outcomes | after `make use-cases`: `python -m retention_radar.cli.hitl_outcomes --log artifacts/use_cases/hitl_review_log.csv --labels data/use_cases/labels_day30.csv` |
 | Thin local API | `uvicorn retention_radar.serving.api:app --app-dir src` → `POST /v1/churn/score`, `/v1/churn/batch`, `/v1/churn/reviews` |
 | Open UI | `make ui` (committed models only — no fit on load) |
 | Live demo | TBD — Streamlit Community Cloud / HF Space ([DEPLOY_LATER.md](docs/guides/DEPLOY_LATER.md)) |

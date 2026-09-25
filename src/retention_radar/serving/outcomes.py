@@ -33,7 +33,8 @@ DEFAULT_OUTCOMES_CSV = config.ARTIFACTS_DIR / "hitl_outcomes.csv"
 
 
 def _to_utc(series: pd.Series) -> pd.Series:
-    return pd.to_datetime(series, utc=True, errors="coerce")
+    """Parse ISO-8601 (dates or datetimes, mixed forms); unparseable → NaT."""
+    return pd.to_datetime(series, utc=True, errors="coerce", format="ISO8601")
 
 
 def join_outcomes(log_df: pd.DataFrame, labels_df: pd.DataFrame) -> pd.DataFrame:
@@ -46,23 +47,28 @@ def join_outcomes(log_df: pd.DataFrame, labels_df: pd.DataFrame) -> pd.DataFrame
             raise ValueError(f"Labels CSV missing column: {col}")
 
     log_df = log_df[HITL_LOG_COLUMNS].copy()
-    log_df["user_id"] = log_df["user_id"].astype(str)
+    log_df["user_id"] = log_df["user_id"].astype(str).str.strip()
     labels = labels_df[["user_id", "churned"]].copy()
-    labels["user_id"] = labels["user_id"].astype(str)
+    labels["user_id"] = labels["user_id"].astype(str).str.strip()
     labels["observed_at"] = (
         labels_df["observed_at"].fillna("").astype(str)
         if "observed_at" in labels_df.columns
         else ""
     )
-    # One label per user: the latest observation wins.
+    # One label per user: the latest dated observation wins (undated sort first).
     if "observed_at" in labels_df.columns:
-        labels = labels.assign(_obs=_to_utc(labels["observed_at"])).sort_values("_obs")
+        labels = labels.assign(_obs=_to_utc(labels["observed_at"])).sort_values(
+            "_obs", na_position="first", kind="mergesort"
+        )
         labels = labels.drop(columns="_obs")
     labels = labels.drop_duplicates("user_id", keep="last")
 
     joined = log_df.merge(labels, on="user_id", how="left")
     if "observed_at" in labels_df.columns:
-        too_early = _to_utc(joined["observed_at"]) < _to_utc(joined["timestamp"])
+        # Leak guard: a label counts only if it is dated at/after a dated review.
+        # Anything unparseable on either side is treated as not yet observed.
+        obs, rev = _to_utc(joined["observed_at"]), _to_utc(joined["timestamp"])
+        too_early = obs.isna() | rev.isna() | (obs < rev)
     joined["churned"] = pd.to_numeric(joined["churned"], errors="coerce")
     if "observed_at" in labels_df.columns:
         joined.loc[too_early, "churned"] = float("nan")
@@ -166,7 +172,7 @@ def main(argv: list[str] | None = None) -> None:
 
     from retention_radar.data.ingest import resolve_users_csv
 
-    log_path = Path(args.log) if args.log else DEFAULT_LOG_PATH
+    log_path = Path(args.log) if args.log else config.runtime_log_dir() / DEFAULT_LOG_PATH.name
     labels_path = Path(args.labels) if args.labels else resolve_users_csv()
     try:
         summary = write_outcomes(log_path, labels_path, args.out, args.json)

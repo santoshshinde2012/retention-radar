@@ -99,6 +99,16 @@ CALIBRATOR_PATH = MODELS_DIR / "calibrator.joblib"
 METRICS_PATH = MODELS_DIR / "metrics.json"
 FEATURE_NAMES_PATH = MODELS_DIR / "feature_names.json"
 FEATURE_STATS_PATH = MODELS_DIR / "feature_stats.json"
+
+
+def runtime_log_dir() -> Path:
+    """Where the API / HITL tools append runtime logs (prediction log, review log).
+
+    ``RETENTION_RADAR_LOG_DIR`` overrides it without moving the model bundle
+    (``RETENTION_RADAR_ARTIFACT_DIR`` moves both); default is ``ARTIFACTS_DIR``.
+    """
+    override = os.environ.get("RETENTION_RADAR_LOG_DIR", "").strip()
+    return Path(override).expanduser().resolve() if override else ARTIFACTS_DIR
 MODEL_CARD_PATH = DOCS_DIR / "MODEL_CARD.md"
 DATA_DICTIONARY_PATH = DOCS_DIR / "data" / "data-dictionary.md"
 apply_artifact_dir()

@@ -27,7 +27,7 @@ import pandas as pd
 
 from retention_radar import config
 from retention_radar.features.transform import encode_plan_tier
-from retention_radar.serving.packet import validate_payload
+from retention_radar.serving.packet import normalize_record, validate_payload
 from retention_radar.serving.policy import HitlDecisionPolicy, risk_band
 from retention_radar.serving.scoring import CalibratedScorer
 from retention_radar.training.calibrate import load_calibrator
@@ -69,60 +69,42 @@ def _native(v: Any) -> Any:
 
 
 def _row_dict(row: pd.Series) -> dict[str, Any]:
-    """Row → plain-Python inference payload (the 24 contract fields only).
-
-    Label / lake-metadata columns (``churned``, ``city``, …) are ignored so gold
-    and training CSVs can be scored as-is; empty or NaN cells are dropped and then
-    reported by validation as missing keys.
-    """
+    """CSV row → plain-Python dict; NaN / empty cells dropped (→ reported as missing)."""
     out = {}
-    for k in config.INFERENCE_REQUIRED_KEYS:
-        if k not in row.index:
-            continue
+    for k in row.index:
         v = row[k]
-        if pd.isna(v) or (isinstance(v, str) and not v.strip()):
+        if not isinstance(v, str) and pd.isna(v):
             continue
         out[k] = _native(v)
     return out
 
 
-def _coerce_numeric(payload: dict[str, Any]) -> dict[str, Any]:
-    """CSV cells arrive as strings when a column has any text; parse numbers back."""
-    out = dict(payload)
-    for key in config.FEATURE_RANGES:
-        v = out.get(key)
-        if isinstance(v, str):
-            try:
-                out[key] = float(v)
-            except ValueError:
-                pass  # left as text → validate_payload reports "must be numeric"
-    for key in ("user_id", "user_name", "plan_tier"):
-        if key in out and not isinstance(out[key], str):
-            out[key] = str(out[key])
-    return out
-
-
 def split_valid_payloads(
-    records: list[dict[str, Any]],
+    records: list[Any],
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-    """Validate raw records → (valid 24-field payloads, rejects with reasons)."""
+    """Validate raw records → (valid 24-field payloads, rejects with reasons).
+
+    Uses the shared ``normalize_record`` + ``validate_payload`` contract. A record
+    that is not an object, fails validation, or repeats a ``user_id`` already seen
+    in this batch is rejected (never scored), so one bad row cannot sink the job
+    and a review can never be attached to the wrong duplicate.
+    """
     valid: list[dict[str, Any]] = []
     rejects: list[dict[str, Any]] = []
+    first_seen: dict[str, int] = {}
     for i, raw in enumerate(records, start=1):
-        payload = _coerce_numeric(
-            {
-                k: raw[k]
-                for k in config.INFERENCE_REQUIRED_KEYS
-                if k in raw and raw[k] is not None and not (isinstance(raw[k], str) and not raw[k].strip())
-            }
-        )
+        payload, _notes = normalize_record(raw)
         v = validate_payload(payload)
-        if v["ok"]:
-            valid.append(payload)
+        uid = str(payload.get("user_id", "")) if isinstance(payload, dict) else ""
+        errors = list(v["errors"])
+        if uid and uid in first_seen:
+            errors.append(f"duplicate user_id in batch (first seen at row {first_seen[uid]})")
+        elif uid:
+            first_seen[uid] = i
+        if errors:
+            rejects.append({"row_number": i, "user_id": uid, "errors": " | ".join(errors)})
         else:
-            rejects.append(
-                {"row_number": i, "user_id": str(payload.get("user_id", "")), "errors": " | ".join(v["errors"])}
-            )
+            valid.append(payload)
     return valid, rejects
 
 
@@ -219,23 +201,27 @@ def score_csv(
     bundle = joblib.load(model_path)
     calibrator = load_calibrator(calibrator_path)
     metrics = load_metrics(metrics_path)
-    # dtype=str for identity columns keeps ids like "007" intact.
-    df = pd.read_csv(csv_path, dtype={"user_id": str, "user_name": str, "plan_tier": str})
-    scores = score_feature_frame(df, bundle, calibrator=calibrator, metrics=metrics, scored_at=scored_at)
-    rejects = scores.attrs["rejected"]
-
     if out_csv is None and out_jsonl is None:
         out_csv = config.ARTIFACTS_DIR / "predictions" / "scores.csv"
+    # Clear this run's outputs first so a failed run never leaves last week's
+    # queue looking current.
+    for stale in [out_csv, out_jsonl] + ([rejects_path_for(Path(out_csv))] if out_csv else []):
+        if stale is not None and Path(stale).exists():
+            Path(stale).unlink()
+    # dtype=str for identity columns keeps ids like "007" intact.
+    try:
+        df = pd.read_csv(csv_path, dtype={"user_id": str, "user_name": str, "plan_tier": str})
+    except pd.errors.EmptyDataError as exc:
+        raise ValueError(f"Feature CSV is empty: {csv_path}") from exc
+    scores = score_feature_frame(df, bundle, calibrator=calibrator, metrics=metrics, scored_at=scored_at)
+    rejects = scores.attrs["rejected"]
 
     if out_csv is not None:
         out_csv = Path(out_csv)
         out_csv.parent.mkdir(parents=True, exist_ok=True)
         scores.to_csv(out_csv, index=False)
-        rej_path = rejects_path_for(out_csv)
         if len(rejects):
-            rejects.to_csv(rej_path, index=False)
-        elif rej_path.exists():
-            rej_path.unlink()  # stale rejects from an earlier run would mislead
+            rejects.to_csv(rejects_path_for(out_csv), index=False)
 
     if out_jsonl is not None:
         out_jsonl = Path(out_jsonl)
@@ -292,14 +278,17 @@ def main(argv: list[str] | None = None) -> int:
     model_path = Path(args.model) if args.model else config.MODEL_PATH
     calibrator_path = Path(args.calibrator) if args.calibrator else config.CALIBRATOR_PATH
 
-    scores = score_csv(
-        csv_path,
-        out_csv=out_csv,
-        out_jsonl=out_jsonl,
-        model_path=model_path,
-        calibrator_path=calibrator_path,
-        scored_at=args.scored_at,
-    )
+    try:
+        scores = score_csv(
+            csv_path,
+            out_csv=out_csv,
+            out_jsonl=out_jsonl,
+            model_path=model_path,
+            calibrator_path=calibrator_path,
+            scored_at=args.scored_at,
+        )
+    except (ValueError, FileNotFoundError) as exc:
+        raise SystemExit(f"batch_score: {exc}") from exc
     rejects = scores.attrs["rejected"]
     print(f"Scored {len(scores)} rows → {out_csv} (queue order: rank 1 = highest risk)")
     if out_jsonl:

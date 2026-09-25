@@ -24,7 +24,6 @@ from retention_radar import config as rr_config  # noqa: E402
 from retention_radar.config import (  # noqa: E402
     ARTIFACTS_DIR,
     CALIBRATOR_PATH,
-    GUIDES_DIR,
     METRICS_PATH,
     MODEL_PATH,
     PLAN_TIER_ORDER,
@@ -33,9 +32,7 @@ from retention_radar.data.ingest import (  # noqa: E402
     resolve_santosh_json,
     resolve_users_csv,
 )
-from retention_radar.serving.infer import predict_user  # noqa: E402
 from retention_radar.serving.packet import build_decision_packet  # noqa: E402
-from retention_radar.serving.policy import risk_band  # noqa: E402
 from retention_radar.training.calibrate import load_calibrator  # noqa: E402
 
 
@@ -245,15 +242,12 @@ def collect_user_inputs(defaults: dict, preset_id: str = "santosh_default") -> d
     }
 
 
-def score_user(bundle, calibrator, user_dict):
-    """Thin adapter: scoring + HITL bands live in serving, not in the UI."""
-    result = predict_user(user_dict, bundle, calibrator=calibrator, top_k=8)
-    return (
-        result["churn_probability_raw"],
-        result["churn_probability_calibrated"],
-        result["churn_probability"],
-        result["top_features"],
-    )
+def show_hold(packet: dict) -> None:
+    """Invalid input: show why, never a score (same contract as API / batch)."""
+    st.error("Input failed validation, so it is not scored or queued.")
+    for err in packet["validation"].get("errors") or []:
+        st.markdown(f"- {err}")
+    st.markdown(f"**HITL action:** `{packet['hitl']['action']}`")
 
 
 def tab_predict(raw, cal, display, band, user_dict):
@@ -293,19 +287,12 @@ def tab_explain(top):
     st.bar_chart(explain_df.set_index("feature")["contribution"])
 
 
-def tab_decision(bundle, calibrator, user_dict, top):
+def tab_decision(packet: dict, user_dict: dict, top):
     st.markdown(f"### Decision packet — {user_dict.get('user_name') or user_dict.get('user_id')}")
     st.write(
         "End-to-end single-record path: **validate → score (raw+cal) → explain → "
         "cohort compare → HITL action**. No auto-cancel."
     )
-    try:
-        packet = build_decision_packet(
-            user_dict, model_bundle=bundle, calibrator=calibrator
-        )
-    except Exception as exc:  # noqa: BLE001
-        st.error(f"Could not build decision packet: {exc}")
-        return
 
     v = packet["validation"]
     s = packet["scoring"]
@@ -367,11 +354,10 @@ def tab_decision(bundle, calibrator, user_dict, top):
         st.warning(f"Outliers vs train p01–p99: {len(packet['outliers'])}")
         st.json(packet["outliers"])
 
-    checklist = GUIDES_DIR / "single-record-checklist.md"
-    case_study = GUIDES_DIR / "santosh-case-study.md"
     st.markdown(
-        f"Docs: [single-record checklist]({checklist.as_posix()}) · "
-        f"[Santosh case study]({case_study.as_posix()})"
+        "Docs: [single-record checklist](../docs/case-study/single-record-checklist.md) · "
+        "[Santosh case study](../docs/case-study/santosh-case-study.md) · "
+        "[use cases](../data/use_cases/README.md)"
     )
     with st.expander("Full decision packet JSON"):
         st.json(packet)
@@ -477,18 +463,39 @@ def main() -> None:
     metrics = load_metrics()
     calibrator = load_cal()
     user_dict = collect_user_inputs(preset["record"], preset["id"])
-    raw, cal, display, top = score_user(bundle, calibrator, user_dict)
-    band = risk_band(display)
+    # One packet drives every tab: validate first, so invalid what-if input is
+    # held everywhere instead of being scored on Predict / Explain.
+    try:
+        packet = build_decision_packet(user_dict, model_bundle=bundle, calibrator=calibrator, top_k=8)
+    except Exception as exc:  # noqa: BLE001
+        st.error(f"Could not build decision packet: {exc}")
+        return
 
     t1, t2, t3, t4, t5 = st.tabs(
         ["Predict", "Explain", "Decision", "Methodology", "Benchmarks"]
     )
+    s = packet["scoring"]
+    top = [
+        (d["feature"], d["contribution"]) for d in (packet.get("explanation") or {}).get("top_features", [])
+    ]
     with t1:
-        tab_predict(raw, cal, display, band, user_dict)
+        if s is None:
+            show_hold(packet)
+        else:
+            tab_predict(
+                s["churn_probability_raw"],
+                s["churn_probability_calibrated"],
+                s["churn_probability"],
+                s["risk_band"],
+                user_dict,
+            )
     with t2:
-        tab_explain(top)
+        if s is None:
+            show_hold(packet)
+        else:
+            tab_explain(top)
     with t3:
-        tab_decision(bundle, calibrator, user_dict, top)
+        tab_decision(packet, user_dict, top)
     with t4:
         tab_methodology(metrics)
     with t5:

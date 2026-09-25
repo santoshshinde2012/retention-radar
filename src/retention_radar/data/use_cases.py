@@ -1,7 +1,9 @@
 """Use-case data pack for the serving layer (``data/use_cases/``).
 
-Builds a small, reproducible set of **real seed-42 holdout records** that walk the
-whole service: one named scenario per HITL path (monitor / nurture in both bands /
+Builds a small, reproducible set of **real seed-42 records** that walk the whole
+service. Every scenario row except the Santosh hero comes from the test split
+(never used for training, early stopping, calibration or τ); Santosh is the injected
+hero and sits in the validation split. The pack covers: one named scenario per HITL path (monitor / nurture in both bands /
 outreach / escalate), records that must be *held* by validation, a weekly batch to
 turn into a review queue, reviewer decisions, and churn labels observed 30 days
 later for the outcome report.
@@ -63,14 +65,17 @@ class Scenario:
     select: Callable[[pd.DataFrame], pd.Series] | None  # None → Santosh hero
     reviewer_action: str | None = None  # override of the suggested action
     reviewer_note: str = "accepted suggested action"
+    # ``story`` / ``reviewer_note`` are str.format templates over the selected record,
+    # so every number quoted in them is true of that record by construction.
 
 
 SCENARIOS: list[Scenario] = [
     Scenario(
         "steady_power_user",
         "Steady power user (Santosh)",
-        "Pro user 14 months in, high adoption, renewing in 3 weeks. A little request "
-        "friction, nothing the model worries about.",
+        "On the {plan_tier} plan {days_since_signup:.0f} days, adoption {feature_adoption_score:.2f}, "
+        "renewing in {days_until_renewal:.0f} days. {failed_requests_rate:.0%} failed requests and "
+        "{support_tickets_last_90d:.0f} tickets in 90 days: friction the model does not worry about.",
         "low",
         "monitor",
         None,
@@ -79,8 +84,9 @@ SCENARIOS: list[Scenario] = [
     Scenario(
         "dip_but_healthy",
         "Usage dip, still healthy",
-        "Sessions this week are well below the 30-day pace, but adoption, NPS and "
-        "billing are fine. One quiet week is not churn risk; the queue stays calm.",
+        "Session(s) this week: {sessions_last_7d:.0f}, against {sessions_last_30d:.0f} in 30 days "
+        "(engagement_trend {engagement_trend:.2f}), but adoption {feature_adoption_score:.2f}, NPS "
+        "{nps_score:.1f} and no failed payments. One quiet week is not churn risk; the queue stays calm.",
         "low",
         "monitor",
         lambda t: (t.engagement_trend < 0.6)
@@ -91,8 +97,8 @@ SCENARIOS: list[Scenario] = [
     Scenario(
         "new_trial_friction",
         "New free trial hitting friction",
-        "Free plan, under three months old, already opening support tickets. Low band, "
-        "but above half of τ: a light check-in, not a sales call.",
+        "Free plan, {days_since_signup:.0f} days old, already {support_tickets_last_90d:.0f} support "
+        "tickets. Low band, but above half of τ: a light check-in, not a sales call.",
         "low",
         NURTURE,
         lambda t: (t.days_since_signup <= 90)
@@ -103,20 +109,22 @@ SCENARIOS: list[Scenario] = [
     Scenario(
         "borderline_friction",
         "Borderline: friction just under τ",
-        "Medium band but still below the best-F1 threshold. The policy says nurture; "
-        "the reviewer escalates to outreach because the tickets are about one bug. "
-        "This is the human override the log exists for.",
+        "{support_tickets_last_90d:.0f} tickets and {failed_requests_rate:.0%} failed requests: medium "
+        "band but still below the best-F1 threshold. The policy says nurture; the reviewer "
+        "upgrades to outreach because the tickets are about one bug. This is the human override "
+        "the log exists for.",
         "medium",
         NURTURE,
         lambda t: (t.support_tickets_last_90d >= 3) | (t.failed_requests_rate >= 0.25),
         reviewer_action=OUTREACH,
-        reviewer_note="3 tickets on the same bug; call instead of email",
+        reviewer_note="{support_tickets_last_90d:.0f} tickets on the same bug; call instead of email",
     ),
     Scenario(
         "payment_friction",
         "Payment failures plus support load",
-        "Two or more failed payments and a stack of tickets in 90 days. Above τ, so a "
-        "human owns the outreach; nothing is sent automatically.",
+        "{payment_failures_last_90d:.0f} failed payments and {support_tickets_last_90d:.0f} support "
+        "tickets in 90 days on the {plan_tier} plan. Above τ, so a human owns the outreach; nothing "
+        "is sent automatically.",
         "medium",
         OUTREACH,
         lambda t: (t.payment_failures_last_90d >= 2) & (t.support_tickets_last_90d >= 3),
@@ -125,18 +133,26 @@ SCENARIOS: list[Scenario] = [
     Scenario(
         "gone_dark",
         "Gone dark",
-        "No sessions this week and a month since last activity, with failing requests. "
-        "High band: escalate to the retention owner today.",
+        "Nothing in the last 30 days (no sessions, API calls, tokens or agent runs); last seen "
+        "{last_active_days_ago:.0f} days ago, with {support_tickets_last_90d:.0f} tickets and "
+        "{payment_failures_last_90d:.0f} failed payments in 90 days. High band: escalate to the "
+        "retention owner today.",
         "high",
         "escalate",
-        lambda t: (t.last_active_days_ago >= 30) & (t.sessions_last_7d == 0),
+        lambda t: (t.last_active_days_ago >= 30)
+        & (t.sessions_last_7d == 0)
+        & (t.sessions_last_30d == 0)
+        & (t.api_calls_last_30d == 0)
+        & (t.tokens_consumed_last_30d == 0)
+        & (t.agent_runs_last_30d == 0),
         reviewer_note="escalated to account owner",
     ),
     Scenario(
         "enterprise_renewal_risk",
         "Enterprise renewal at risk",
-        "Enterprise account renewing within 30 days with most seats idle. High band; "
-        "the reviewer books an executive-sponsor call.",
+        "Enterprise account renewing in {days_until_renewal:.0f} days with seat utilisation "
+        "{seat_utilization:.0%}, last active {last_active_days_ago:.0f} days ago. High band; the "
+        "reviewer books an executive-sponsor call.",
         "high",
         "escalate",
         lambda t: (t.plan_tier == "enterprise")
@@ -240,13 +256,13 @@ def build_use_cases(out_dir: Path = USE_CASE_DIR) -> dict[str, Any]:
             {
                 "id": sc.id,
                 "title": sc.title,
-                "story": sc.story,
+                "story": sc.story.format(**record),
                 "source": source,
                 "expected": {k: result[k] for k in ("p_raw", "p_cal", "band", "hitl_action")},
                 "top_drivers": result["top_drivers"],
                 "reviewer": {
                     "action_taken": sc.reviewer_action or sc.action,
-                    "notes": sc.reviewer_note,
+                    "notes": sc.reviewer_note.format(**record),
                 },
                 "record": record,
             }
@@ -350,23 +366,48 @@ def load_manifest(path: Path | None = None) -> dict[str, Any]:
 
 
 def check_use_cases(out_dir: Path = USE_CASE_DIR) -> list[str]:
-    """Re-score the committed pack with the current bundle → list of mismatches."""
+    """Re-verify every committed file of the pack against the current bundle.
+
+    Checks: scenario records (manifest and ``records/*.json``) still score to the
+    recorded p_raw / p_cal / band / action / top drivers; invalid records (manifest
+    and ``invalid/*.json``) are still rejected for the recorded reason; the weekly
+    batch still yields the recorded queue and rejects; decisions cover exactly the
+    non-monitor queue plus every scenario, overriding only where a scenario says so;
+    labels cover exactly the valid batch users.
+    """
+    from retention_radar.serving.packet import normalize_record, validate_payload
+
     manifest = load_manifest(out_dir / "personas.json")
     bundle, calibrator, metrics = _load_bundle()
     problems = []
+
+    def _read_json(path: Path):
+        try:
+            return json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            return f"<unreadable: {exc}>"
+
     for p in manifest["personas"]:
+        on_disk = _read_json(out_dir / "records" / f"{p['id']}.json")
+        if on_disk != p["record"]:
+            problems.append(f"records/{p['id']}.json differs from personas.json")
         got = _score_one(p["record"], bundle, calibrator, metrics)
         exp = p["expected"]
-        if (got["band"], got["hitl_action"]) != (exp["band"], exp["hitl_action"]) or abs(
-            got["p_cal"] - exp["p_cal"]
-        ) > 1e-4:
-            problems.append(f"{p['id']}: expected {exp}, got {got}")
-    from retention_radar.serving.packet import validate_payload
-
+        drivers = [d["feature"] for d in p["top_drivers"]]
+        if (
+            (got["band"], got["hitl_action"]) != (exp["band"], exp["hitl_action"])
+            or abs(got["p_cal"] - exp["p_cal"]) > 1e-6
+            or abs(got["p_raw"] - exp["p_raw"]) > 1e-6
+            or [d["feature"] for d in got["top_drivers"]] != drivers
+        ):
+            problems.append(f"{p['id']}: expected {exp} drivers {drivers}, got {got}")
     for i in manifest["invalid_records"]:
-        v = validate_payload(i["record"])
+        if _read_json(out_dir / "invalid" / f"{i['id']}.json") != i["record"]:
+            problems.append(f"invalid/{i['id']}.json differs from personas.json")
+        v = validate_payload(normalize_record(i["record"])[0])
         if v["ok"] or not any(i["error_contains"] in e for e in v["errors"]):
             problems.append(f"invalid/{i['id']}: validation did not reject it as expected: {v}")
+
     batch = pd.read_csv(
         out_dir / "weekly_batch.csv", dtype={"user_id": str, "user_name": str, "plan_tier": str}
     )
@@ -378,6 +419,24 @@ def check_use_cases(out_dir: Path = USE_CASE_DIR) -> list[str]:
             f"weekly_batch: expected {wb['expected_actions']} + {wb['invalid_rows']} rejects, "
             f"got {got_actions} + {len(scores.attrs['rejected'])} rejects"
         )
+
+    suggested = dict(zip(scores["user_id"], scores["hitl_action"]))
+    personas = {p["record"]["user_id"]: p for p in manifest["personas"]}
+    decisions = pd.read_csv(out_dir / "review_decisions.csv", dtype=str).fillna("")
+    expect_ids = {u for u, a in suggested.items() if a != "monitor"} | set(personas)
+    if set(decisions["user_id"]) != expect_ids or decisions["user_id"].duplicated().any():
+        problems.append("review_decisions.csv does not cover exactly the non-monitor queue + scenarios")
+    for d in decisions.to_dict(orient="records"):
+        persona = personas.get(d["user_id"])
+        want = persona["reviewer"]["action_taken"] if persona else suggested.get(d["user_id"])
+        if d["action_taken"] != want:
+            problems.append(f"review_decisions: {d['user_id']} took {d['action_taken']!r}, expected {want!r}")
+
+    labels = pd.read_csv(out_dir / "labels_day30.csv", dtype={"user_id": str})
+    if set(labels["user_id"]) != set(suggested) or labels["user_id"].duplicated().any():
+        problems.append("labels_day30.csv does not cover exactly the valid batch users")
+    if not set(labels["churned"].unique()) <= {0, 1}:
+        problems.append("labels_day30.csv churned must be 0/1")
     return problems
 
 
@@ -388,8 +447,11 @@ def _readme(manifest: dict[str, Any], n_decisions: int) -> str:
         "",
         "_Generated by `python -m retention_radar.cli.build_use_cases` — do not edit by hand._",
         "",
-        "Real rows from the seed-42 synthetic **holdout** (test split, never trained on), "
-        "one per HITL path, plus records the service must refuse. Expected results are "
+        "Real rows from the seed-42 synthetic data, one per HITL path, plus records the "
+        "service must refuse. Every scenario except Santosh is a **test-split** row (never "
+        "used for training, early stopping, calibration or τ); Santosh is the injected hero "
+        "and sits in the **validation** split, which fits the calibrator and chooses τ. "
+        "Expected results are "
         f"what the committed `models/` bundle returns (τ = {tau}); "
         "`python -m retention_radar.cli.build_use_cases --check` re-verifies them. "
         "Synthetic data only, no real PII.",
@@ -428,8 +490,8 @@ def _readme(manifest: dict[str, Any], n_decisions: int) -> str:
         "",
         "| File | Use |",
         "|------|-----|",
-        f"| `weekly_batch.csv` | {wb['rows']} rows = {wb['valid_rows']} holdout users "
-        f"(a seeded sample + every scenario) + {wb['invalid_rows']} invalid rows. "
+        f"| `weekly_batch.csv` | {wb['rows']} rows = {wb['valid_rows'] - 1} test-split users "
+        f"(a seeded sample + every scenario) + Santosh + {wb['invalid_rows']} invalid rows. "
         f"Expected queue: {acts}. No label column, like production input. |",
         f"| `review_decisions.csv` | {n_decisions} reviewer decisions (everything not on "
         "*monitor*, plus every scenario) at "
@@ -443,7 +505,8 @@ def _readme(manifest: dict[str, Any], n_decisions: int) -> str:
         "",
         "```bash",
         "make use-cases            # queue → packets → reviews → day-30 outcome report",
-        "# or step by step:",
+        "# or step by step (fresh output dir; the review import skips already-logged rows):",
+        "rm -rf artifacts/use_cases && mkdir -p artifacts/use_cases",
         "python -m retention_radar.cli.batch_score --csv data/use_cases/weekly_batch.csv \\",
         f"  --out artifacts/use_cases/queue.csv --scored-at {cal['scored_at']}",
         "python -m retention_radar.cli.single_record --dir data/use_cases/records \\",

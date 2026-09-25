@@ -23,8 +23,11 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import joblib
-from fastapi import FastAPI, HTTPException, Query
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from fastapi import Body, FastAPI, HTTPException, Query, Request
+from fastapi.exception_handlers import request_validation_exception_handler
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel, ConfigDict, Field
 
 from retention_radar import config
 from retention_radar.serving.batch_score import (
@@ -39,7 +42,7 @@ from retention_radar.serving.hitl_log import (
     row_from_score_record,
 )
 from retention_radar.serving.infer import predict_user
-from retention_radar.serving.packet import validate_payload
+from retention_radar.serving.packet import normalize_record, validate_payload
 from retention_radar.serving.policy import HitlDecisionPolicy, validation_hold
 from retention_radar.training.calibrate import load_calibrator
 
@@ -56,12 +59,17 @@ app = FastAPI(
 
 
 class ChurnScoreRequest(BaseModel):
-    """24-field inference contract (Santosh-shaped record OK)."""
+    """24-field inference contract — OpenAPI documentation only.
+
+    The route validates the raw JSON object with the shared ``normalize_record`` +
+    ``validate_payload`` contract (the same one batch / CLI / UI use), so every
+    surface accepts and refuses exactly the same records. Extra fields are ignored.
+    """
 
     model_config = ConfigDict(extra="allow")
 
-    user_id: str
-    user_name: str = ""
+    user_id: str = Field(..., min_length=1)
+    user_name: str = Field(..., min_length=1)
     days_since_signup: float
     sessions_last_7d: float
     sessions_last_30d: float
@@ -85,14 +93,6 @@ class ChurnScoreRequest(BaseModel):
     ide_plugin_sessions_last_30d: float
     seat_utilization: float
 
-    @field_validator("plan_tier")
-    @classmethod
-    def _known_plan_tier(cls, v: str) -> str:
-        tier = v.strip().lower()
-        if tier not in config.PLAN_TIER_MAP:
-            raise ValueError(f"plan_tier must be one of {config.PLAN_TIER_ORDER}")
-        return tier
-
 
 class ChurnScoreResponse(BaseModel):
     user_id: Optional[str] = None
@@ -110,7 +110,9 @@ class ChurnScoreResponse(BaseModel):
 
 
 class BatchRequest(BaseModel):
-    records: List[Dict[str, Any]] = Field(..., description="24-field records; invalid ones are rejected, not scored")
+    records: List[Any] = Field(
+        ..., description="24-field records; invalid or non-object items are rejected, not scored"
+    )
 
 
 class BatchResponse(BaseModel):
@@ -122,6 +124,8 @@ class BatchResponse(BaseModel):
 
 
 class ReviewRequest(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
     user_id: str = Field(..., min_length=1)
     reviewer: str = Field(..., min_length=1)
     action_taken: str = Field(..., min_length=1)
@@ -143,7 +147,7 @@ def _now() -> str:
 
 
 def _prediction_log_dir() -> Path:
-    return config.ARTIFACTS_DIR / "prediction_log"
+    return config.runtime_log_dir() / "prediction_log"
 
 
 def _append_prediction_log(record: dict[str, Any]) -> None:
@@ -164,17 +168,34 @@ def _latest_logged_score(user_id: str) -> dict[str, Any] | None:
         latest = None
         with open(path, encoding="utf-8") as f:
             for line in f:
-                rec = json.loads(line)
-                if rec.get("user_id") == user_id:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    rec = json.loads(line)
+                except json.JSONDecodeError:
+                    continue  # a truncated line (crash / full disk) must not block reviews
+                if isinstance(rec, dict) and rec.get("user_id") == user_id:
                     latest = rec
         if latest is not None:
             return latest
     return None
 
 
-def _contract_payload(payload: dict[str, Any]) -> dict[str, Any]:
-    """Keep the 24 contract fields (extra client fields are accepted but ignored)."""
-    return {k: payload[k] for k in config.INFERENCE_REQUIRED_KEYS if k in payload}
+def _hold_422(errors: list[str]) -> HTTPException:
+    return HTTPException(status_code=422, detail={"errors": errors, "hitl": validation_hold(errors)})
+
+
+@app.exception_handler(RequestValidationError)
+async def _request_validation_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
+    """On the scoring route, body-level 422s (not JSON, not an object) carry the hold block too."""
+    if request.url.path != "/v1/churn/score":
+        return await request_validation_exception_handler(request, exc)
+    errors = [
+        f"{'.'.join(str(p) for p in e.get('loc', [])[1:]) or 'body'}: {e.get('msg')}"
+        for e in exc.errors()
+    ]
+    return JSONResponse(status_code=422, content={"detail": {"errors": errors, "hitl": validation_hold(errors)}})
 
 
 def score_payload(
@@ -189,13 +210,10 @@ def score_payload(
     except FileNotFoundError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
-    record = _contract_payload(payload)
+    record, notes = normalize_record(payload)
     validation = validate_payload(record)
     if not validation["ok"]:
-        raise HTTPException(
-            status_code=422,
-            detail={"errors": validation["errors"], "hitl": validation_hold(validation["errors"])},
-        )
+        raise _hold_422(validation["errors"])
 
     result = predict_user(record, bundle, calibrator=calibrator, explain=include_shap)
     threshold = float(metrics.get("best_f1_threshold", 0.5))
@@ -219,7 +237,7 @@ def score_payload(
         "model_version": resolve_model_version(metrics),
         "scored_at": _now(),
         "auto_action": "none",
-        "validation_warnings": validation["warnings"],
+        "validation_warnings": notes + validation["warnings"],
         "shap_top": None,
     }
     if include_shap:
@@ -236,14 +254,23 @@ def healthz() -> dict[str, str]:
     return {"status": "ok"}
 
 
-@app.post("/v1/churn/score", response_model=ChurnScoreResponse)
+@app.post(
+    "/v1/churn/score",
+    response_model=ChurnScoreResponse,
+    openapi_extra={
+        "requestBody": {
+            "required": True,
+            "content": {"application/json": {"schema": ChurnScoreRequest.model_json_schema()}},
+        }
+    },
+)
 def churn_score(
-    body: ChurnScoreRequest,
+    body: Dict[str, Any] = Body(..., description="24-field record (see ChurnScoreRequest)"),
     shap: bool = Query(False, description="Include top SHAP / driver features"),
-    log: bool = Query(True, description="Append JSONL under artifacts/prediction_log/"),
+    log: bool = Query(True, description="Append JSONL under <log dir>/prediction_log/"),
 ) -> dict[str, Any]:
     """Score one user. Alias concept: ``POST /v1/churn:score`` (same body)."""
-    return score_payload(body.model_dump(), include_shap=shap, log_prediction=log)
+    return score_payload(body, include_shap=shap, log_prediction=log)
 
 
 @app.post("/v1/churn/batch", response_model=BatchResponse)
@@ -289,7 +316,7 @@ def churn_review(body: ReviewRequest) -> dict[str, Any]:
         action_taken=body.action_taken.strip(),
         notes=body.notes.strip(),
     )
-    path = append_hitl_row(config.ARTIFACTS_DIR / DEFAULT_LOG_PATH.name, row)
+    path = append_hitl_row(config.runtime_log_dir() / DEFAULT_LOG_PATH.name, row)
     return {"logged": row, "log_path": str(path), "auto_action": "none"}
 
 

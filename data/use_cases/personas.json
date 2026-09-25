@@ -11,7 +11,7 @@
     {
       "id": "steady_power_user",
       "title": "Steady power user (Santosh)",
-      "story": "Pro user 14 months in, high adoption, renewing in 3 weeks. A little request friction, nothing the model worries about.",
+      "story": "On the pro plan 420 days, adoption 0.78, renewing in 21 days. 12% failed requests and 2 tickets in 90 days: friction the model does not worry about.",
       "source": {
         "dataset": "data/raw/santosh_shinde.json",
         "split": "hero (injected)"
@@ -70,7 +70,7 @@
     {
       "id": "dip_but_healthy",
       "title": "Usage dip, still healthy",
-      "story": "Sessions this week are well below the 30-day pace, but adoption, NPS and billing are fine. One quiet week is not churn risk; the queue stays calm.",
+      "story": "Session(s) this week: 1, against 7 in 30 days (engagement_trend 0.59), but adoption 0.51, NPS 9.7 and no failed payments. One quiet week is not churn risk; the queue stays calm.",
       "source": {
         "dataset": "seed-42 synthetic users.csv",
         "split": "test (holdout)",
@@ -130,7 +130,7 @@
     {
       "id": "new_trial_friction",
       "title": "New free trial hitting friction",
-      "story": "Free plan, under three months old, already opening support tickets. Low band, but above half of \u03c4: a light check-in, not a sales call.",
+      "story": "Free plan, 28 days old, already 4 support tickets. Low band, but above half of \u03c4: a light check-in, not a sales call.",
       "source": {
         "dataset": "seed-42 synthetic users.csv",
         "split": "test (holdout)",
@@ -190,7 +190,7 @@
     {
       "id": "borderline_friction",
       "title": "Borderline: friction just under \u03c4",
-      "story": "Medium band but still below the best-F1 threshold. The policy says nurture; the reviewer escalates to outreach because the tickets are about one bug. This is the human override the log exists for.",
+      "story": "4 tickets and 24% failed requests: medium band but still below the best-F1 threshold. The policy says nurture; the reviewer upgrades to outreach because the tickets are about one bug. This is the human override the log exists for.",
       "source": {
         "dataset": "seed-42 synthetic users.csv",
         "split": "test (holdout)",
@@ -218,7 +218,7 @@
       ],
       "reviewer": {
         "action_taken": "retention outreach (human review)",
-        "notes": "3 tickets on the same bug; call instead of email"
+        "notes": "4 tickets on the same bug; call instead of email"
       },
       "record": {
         "user_id": "user_00480",
@@ -250,7 +250,7 @@
     {
       "id": "payment_friction",
       "title": "Payment failures plus support load",
-      "story": "Two or more failed payments and a stack of tickets in 90 days. Above \u03c4, so a human owns the outreach; nothing is sent automatically.",
+      "story": "2 failed payments and 5 support tickets in 90 days on the enterprise plan. Above \u03c4, so a human owns the outreach; nothing is sent automatically.",
       "source": {
         "dataset": "seed-42 synthetic users.csv",
         "split": "test (holdout)",
@@ -310,30 +310,30 @@
     {
       "id": "gone_dark",
       "title": "Gone dark",
-      "story": "No sessions this week and a month since last activity, with failing requests. High band: escalate to the retention owner today.",
+      "story": "Nothing in the last 30 days (no sessions, API calls, tokens or agent runs); last seen 40 days ago, with 5 tickets and 2 failed payments in 90 days. High band: escalate to the retention owner today.",
       "source": {
         "dataset": "seed-42 synthetic users.csv",
         "split": "test (holdout)",
-        "candidates_matching_filter": 45
+        "candidates_matching_filter": 6
       },
       "expected": {
-        "p_raw": 0.920532,
-        "p_cal": 0.894737,
+        "p_raw": 0.933141,
+        "p_cal": 1.0,
         "band": "high",
         "hitl_action": "escalate"
       },
       "top_drivers": [
         {
           "feature": "feature_adoption_score",
-          "contribution": 0.667
+          "contribution": 0.682
         },
         {
           "feature": "last_active_days_ago",
-          "contribution": 0.538
+          "contribution": 0.525
         },
         {
           "feature": "engagement_trend",
-          "contribution": 0.33
+          "contribution": 0.314
         }
       ],
       "reviewer": {
@@ -341,36 +341,36 @@
         "notes": "escalated to account owner"
       },
       "record": {
-        "user_id": "user_00783",
-        "user_name": "Sam Nguyen",
-        "days_since_signup": 438,
+        "user_id": "user_01527",
+        "user_name": "Taylor Lee",
+        "days_since_signup": 847,
         "sessions_last_7d": 0,
-        "sessions_last_30d": 3,
-        "avg_session_minutes": 7.9,
-        "models_used_count": 0,
-        "api_calls_last_30d": 31,
-        "tokens_consumed_last_30d": 9857,
-        "tools_used_count": 3,
-        "failed_requests_rate": 0.3346,
-        "support_tickets_last_90d": 4,
-        "plan_tier": "starter",
+        "sessions_last_30d": 0,
+        "avg_session_minutes": 12.9,
+        "models_used_count": 2,
+        "api_calls_last_30d": 0,
+        "tokens_consumed_last_30d": 0,
+        "tools_used_count": 0,
+        "failed_requests_rate": 0.3078,
+        "support_tickets_last_90d": 5,
+        "plan_tier": "free",
         "payment_failures_last_90d": 2,
-        "feature_adoption_score": 0.1882,
-        "nps_score": 4.3,
-        "last_active_days_ago": 38,
-        "weekend_usage_ratio": 0.3321,
+        "feature_adoption_score": 0.0888,
+        "nps_score": 4.8,
+        "last_active_days_ago": 40,
+        "weekend_usage_ratio": 0.4686,
         "engagement_trend": 0.0,
-        "spend_usd_last_30d": 43.24,
-        "days_until_renewal": 248,
-        "agent_runs_last_30d": 20,
-        "ide_plugin_sessions_last_30d": 15,
-        "seat_utilization": 0.3844
+        "spend_usd_last_30d": 0.0,
+        "days_until_renewal": 118,
+        "agent_runs_last_30d": 0,
+        "ide_plugin_sessions_last_30d": 0,
+        "seat_utilization": 0.3415
       }
     },
     {
       "id": "enterprise_renewal_risk",
       "title": "Enterprise renewal at risk",
-      "story": "Enterprise account renewing within 30 days with most seats idle. High band; the reviewer books an executive-sponsor call.",
+      "story": "Enterprise account renewing in 24 days with seat utilisation 18%, last active 40 days ago. High band; the reviewer books an executive-sponsor call.",
       "source": {
         "dataset": "seed-42 synthetic users.csv",
         "split": "test (holdout)",
@@ -560,10 +560,10 @@
     "valid_rows": 207,
     "invalid_rows": 4,
     "expected_actions": {
-      "escalate": 31,
-      "monitor": 143,
+      "escalate": 33,
+      "monitor": 142,
       "nurture / check-in": 18,
-      "retention outreach (human review)": 15
+      "retention outreach (human review)": 14
     }
   }
 }
