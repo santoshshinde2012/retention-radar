@@ -27,7 +27,7 @@ CHURN_DATA_SOURCE=synthetic ./scripts/run_all.sh
 
 Primary citation file: **`models/metrics.json`**.
 
-Faster smoke: `N_USERS=800 N_OPTUNA_TRIALS=5 ./scripts/run_all.sh`
+Faster smoke (committed `models/` untouched): `RETENTION_RADAR_ARTIFACT_DIR=artifacts/smoke N_USERS=800 N_OPTUNA_TRIALS=5 ./scripts/run_all.sh`. Without `RETENTION_RADAR_ARTIFACT_DIR`, `run_all.sh` retrains **into** `models/` and replaces the published bundle.
 
 ## Refresh model card & data dictionary
 
@@ -48,11 +48,11 @@ pytest -q
 **PRs should keep pytest green.** Pin `CHURN_DATA_SOURCE=synthetic` so a local
 `data/external/` lakehouse export cannot change what CI measures.
 
-Lakehouse E2E (optional, overwrites `models/`):
+Lakehouse E2E (optional; trains under `artifacts/lakehouse_run/`, but refreshes the committed `results/lakehouse-e2e-summary.json`):
 
 ```bash
 ./scripts/run_lakehouse_e2e.sh /path/to/local-data-lakehouse
-git checkout -- models/ docs/MODEL_CARD.md docs/data/data-dictionary.md
+git checkout -- results/lakehouse-e2e-summary.json   # unless you mean to publish it
 ```
 
 ## Style notes

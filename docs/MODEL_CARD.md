@@ -59,7 +59,7 @@ Method: `isotonic`.
 | F1 at τ (validation) | `0.6987` |
 | F1 at τ (test, reported once) | `0.6015` |
 | F1 @ 0.5 | `0.6006` |
-| Warm latency p50 / p95 (ms) | `24.03` / `32.09` |
+| Warm latency p50 / p95 (ms) | `2.01` / `2.15` |
 
 ## Result plots
 

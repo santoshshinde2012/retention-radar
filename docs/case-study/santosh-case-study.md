@@ -35,7 +35,7 @@ stateDiagram-v2
   Validate --> Halt: "schema / range fail"
   Score --> Explain: "raw + calibrated p"
   Explain --> Decide
-  Decide --> Monitor: "p ≪ 0.5 × τ"
+  Decide --> Monitor: "p < 0.5 × τ"
   Decide --> Nurture: "p < τ"
   Decide --> Outreach: "p ≥ τ"
   Decide --> Escalate: "band = high"
@@ -154,17 +154,18 @@ Positive → toward churn; negative → toward retain (this run is protective-do
 
 ### HITL action
 
-**`monitor`** — calibrated P(churn) ≪ 0.5 × best-F1 threshold.  
+**`monitor`** — calibrated P(churn) < 0.5 × best-F1 threshold.  
 `auto_action = none` · human-in-the-loop only · **no auto-cancel**.
 
 Action ladder used by `python -m retention_radar.cli.single_record`:
 
 | Condition | Action |
 |-----------|--------|
+| risk band = high (P ≥ 0.60, checked first) | escalate (still HITL) |
 | P &lt; 0.5 × τ | monitor |
 | P &lt; τ | nurture / check-in |
-| P ≥ τ | retention outreach (human review) |
-| risk band = high | escalate (still HITL) |
+| otherwise (P ≥ τ) | retention outreach (human review) |
+| input fails validation | hold: fix input data (not scored) |
 
 ---
 

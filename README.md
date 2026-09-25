@@ -18,7 +18,7 @@ Teaching trilogy hub (public FOSS only):
 
 1. Clone **[retention-radar](https://github.com/santoshshinde2012/retention-radar)** + **[local-data-lakehouse](https://github.com/santoshshinde2012/local-data-lakehouse)**
 2. One synthetic command: `CHURN_DATA_SOURCE=synthetic ./scripts/run_all.sh`
-3. Optional lakehouse: `./scripts/run_lakehouse_e2e.sh ../local-data-lakehouse` (writes under `artifacts/lakehouse_run/` only — committed `models/` untouched)
+3. Optional lakehouse: `./scripts/run_lakehouse_e2e.sh ../local-data-lakehouse` (trains under `artifacts/lakehouse_run/` — committed `models/` untouched; refreshes `results/lakehouse-e2e-summary.json`)
 4. **Live demo:** TBD — Streamlit Community Cloud / HF Space ([deploy later](docs/guides/DEPLOY_LATER.md))
 
 Full map: [docs/guides/START_HERE.md](docs/guides/START_HERE.md). Do **not** clone any private article workspace.
@@ -52,8 +52,8 @@ Full map: [docs/guides/START_HERE.md](docs/guides/START_HERE.md). Do **not** clo
 
 ## Requirements
 
-- Python **3.12+** (tested on 3.12). The committed seed-42 bundle was trained with XGBoost **3.4.1** and scikit-learn **1.9.1**; XGBoost 3.3+ needs Python 3.12, so older Pythons silently get an older XGBoost and cannot reproduce the published numbers.
-- `requirements.txt` pins the model-affecting libraries (XGBoost, scikit-learn, Optuna, LightGBM, CatBoost) so `make run` re-creates `models/metrics.json` exactly. Full version snapshot: [`requirements.lock`](requirements.lock).
+- Python **3.12+** (tested on 3.12). The committed seed-42 bundle was trained with XGBoost **3.4.1** and scikit-learn **1.9.1**; XGBoost 3.3+ needs Python 3.12, so on older Pythons `pip install -r requirements.txt` stops with "No matching distribution found for xgboost==3.4.1" (an unpinned older XGBoost cannot reproduce the published numbers).
+- `requirements.txt` pins the model-affecting libraries (XGBoost, scikit-learn, Optuna, LightGBM, CatBoost) so `make run` re-creates every non-latency value in `models/metrics.json` exactly (latency is machine-dependent). Full version snapshot: [`requirements.lock`](requirements.lock).
 - Linux, macOS, or Windows (WSL on Windows)
 - CPU only
 - **macOS:** `brew install libomp` if XGBoost or LightGBM fail to load
@@ -91,7 +91,7 @@ Then:
 | Read benchmarks | [results/BENCHMARKS.md](results/BENCHMARKS.md) |
 | Score Santosh | `make infer` |
 | Walk every use case | `make use-cases` — [data/use_cases/](data/use_cases/README.md): weekly batch → ranked queue (+ rejects) → packets → held records → reviews → day-30 outcomes |
-| Batch gold scores | `python -m retention_radar.cli.batch_score --csv data/external/churn_user_features.csv` (ranked queue + `*_rejected.csv`) |
+| Batch scores | `python -m retention_radar.cli.batch_score --csv data/raw/users.csv` → ranked queue + `*_rejected.csv` (lakehouse gold after a sync: `--csv data/external/churn_user_features.csv`) |
 | HITL outcomes | `python -m retention_radar.cli.hitl_outcomes --labels data/use_cases/labels_day30.csv` |
 | Thin local API | `uvicorn retention_radar.serving.api:app --app-dir src` → `POST /v1/churn/score`, `/v1/churn/batch`, `/v1/churn/reviews` |
 | Open UI | `make ui` (committed models only — no fit on load) |
@@ -102,7 +102,8 @@ Then:
 Faster smoke:
 
 ```bash
-N_USERS=800 N_OPTUNA_TRIALS=5 CHURN_DATA_SOURCE=synthetic ./scripts/run_all.sh
+# isolated: committed models/ stay the published bundle (users.csv is regenerated at N=800)
+RETENTION_RADAR_ARTIFACT_DIR=artifacts/smoke N_USERS=800 N_OPTUNA_TRIALS=5 CHURN_DATA_SOURCE=synthetic ./scripts/run_all.sh
 ```
 
 ### Make targets
@@ -126,7 +127,7 @@ CLI (after install):
 ```bash
 python -m retention_radar.cli.train
 python -m retention_radar.cli.infer --user santosh
-python -m retention_radar.cli.batch_score --csv data/external/churn_user_features.csv
+python -m retention_radar.cli.batch_score --csv data/use_cases/weekly_batch.csv   # or data/raw/users.csv after make run
 uvicorn retention_radar.serving.api:app --app-dir src   # POST /v1/churn/score
 ```
 

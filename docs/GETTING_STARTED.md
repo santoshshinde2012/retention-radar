@@ -44,7 +44,7 @@ chmod +x scripts/run_all.sh
 CHURN_DATA_SOURCE=synthetic ./scripts/run_all.sh
 ```
 
-Faster smoke: `N_USERS=800 N_OPTUNA_TRIALS=5 ./scripts/run_all.sh`
+Faster smoke (committed `models/` untouched): `RETENTION_RADAR_ARTIFACT_DIR=artifacts/smoke N_USERS=800 N_OPTUNA_TRIALS=5 ./scripts/run_all.sh`. Without `RETENTION_RADAR_ARTIFACT_DIR`, `run_all.sh` retrains **into** `models/` and replaces the published bundle.
 
 Cite **`models/metrics.json`**. Narrative: [results/BENCHMARKS.md](../results/BENCHMARKS.md).
 

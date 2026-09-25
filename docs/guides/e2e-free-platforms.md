@@ -47,7 +47,7 @@ streamlit run app/streamlit_app.py
 Faster smoke (same knobs as GitHub Actions):
 
 ```bash
-N_USERS=800 N_OPTUNA_TRIALS=5 ./scripts/run_all.sh
+RETENTION_RADAR_ARTIFACT_DIR=artifacts/smoke N_USERS=800 N_OPTUNA_TRIALS=5 ./scripts/run_all.sh   # keeps committed models/
 ```
 
 You should see:

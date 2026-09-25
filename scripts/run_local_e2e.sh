@@ -109,8 +109,14 @@ USE_CASE_OUT="$OUT/use_cases" ./scripts/run_use_cases.sh
 "$PY" -m retention_radar.cli.drift_check --strict --z-threshold 3.0 --out "$OUT/drift_report.json"
 ok use-cases
 
-step 7 "live thin API (uvicorn :$API_PORT)"
-"$PY" -m uvicorn retention_radar.serving.api:app --host 127.0.0.1 --port "$API_PORT" \
+# Launch through the console scripts, like the README and Streamlit Cloud do: unlike
+# `python -m`, they do not put the repo root on sys.path, which is what exposes
+# bundles that only load from the repo root.
+BIN_DIR="$(dirname "$(command -v "$PY")")"
+console() { if [[ -x "$BIN_DIR/$1" ]]; then echo "$BIN_DIR/$1"; else echo "$PY -m $1"; fi; }
+
+step 7 "live thin API (uvicorn console script :$API_PORT)"
+$(console uvicorn) retention_radar.serving.api:app --app-dir src --host 127.0.0.1 --port "$API_PORT" \
   > "$OUT/api.log" 2>&1 &
 PIDS+=($!)
 wait_http "http://127.0.0.1:$API_PORT/healthz" 60 || { cat "$OUT/api.log"; exit 1; }
@@ -150,8 +156,8 @@ PY
 kill "${PIDS[-1]}" 2>/dev/null || true
 ok api
 
-step 8 "live Streamlit server (headless :$UI_PORT)"
-"$PY" -m streamlit run app/streamlit_app.py --server.headless true \
+step 8 "live Streamlit server (streamlit console script, headless :$UI_PORT)"
+$(console streamlit) run app/streamlit_app.py --server.headless true \
   --server.port "$UI_PORT" --browser.gatherUsageStats false > "$OUT/streamlit.log" 2>&1 &
 PIDS+=($!)
 wait_http "http://127.0.0.1:$UI_PORT/_stcore/health" 90 || { cat "$OUT/streamlit.log"; exit 1; }
