@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any
 
 import joblib
+import numpy as np
 import pandas as pd
 
 from retention_radar import config
@@ -138,29 +139,87 @@ def flag_outliers(payload: dict, feature_stats: dict) -> list[dict]:
     return flags
 
 
+_STATS_QUANTILES = [
+    ("min", 0.0),
+    ("p01", 1.0),
+    ("p05", 5.0),
+    ("p25", 25.0),
+    ("p50", 50.0),
+    ("p75", 75.0),
+    ("p95", 95.0),
+    ("p99", 99.0),
+    ("max", 100.0),
+]
+
+
+def _percentile_from_stats(val: float, block: dict) -> float | None:
+    """Approximate percentile rank by interpolating training-set quantiles."""
+    points = [(float(block[k]), pct) for k, pct in _STATS_QUANTILES if k in block]
+    if len(points) < 2:
+        return None
+    xs = np.array([x for x, _ in points])
+    ps = np.array([pc for _, pc in points])
+    if val < xs[0]:
+        return 0.0
+    if val >= xs[-1]:
+        return 100.0
+    # Ties (e.g. many zeros) → take the highest percentile at that value (≤ semantics).
+    idx = int(np.searchsorted(xs, val, side="right"))
+    x0, x1 = xs[idx - 1], xs[idx]
+    p0, p1 = ps[idx - 1], ps[idx]
+    if x1 == x0:
+        return float(p1)
+    return float(p0 + (p1 - p0) * (val - x0) / (x1 - x0))
+
+
 def cohort_percentiles(
     payload: dict,
     users_csv: Path | None = None,
     features: list[str] | None = None,
+    feature_stats: dict | None = None,
 ) -> dict[str, dict]:
-    """Percentile rank of each key feature vs population in users.csv."""
+    """Percentile rank of each key feature vs population in users.csv.
+
+    When users.csv is absent (e.g. Streamlit Community Cloud, which only ships the
+    committed ``models/`` bundle), fall back to an approximate rank interpolated
+    from ``feature_stats.json`` training quantiles. Each entry records its
+    ``source`` so the UI can label approximations.
+    """
     features = features or config.COHORT_COMPARE_FEATURES
     csv_path = users_csv or resolve_users_csv()
     out: dict[str, dict] = {}
-    if not csv_path.exists():
+    if csv_path.exists():
+        df = pd.read_csv(csv_path)
+        for feat in features:
+            if feat not in payload or feat not in df.columns:
+                continue
+            val = float(payload[feat])
+            col = df[feat].astype(float)
+            pct = float((col <= val).mean() * 100.0)
+            out[feat] = {
+                "value": val,
+                "percentile": round(pct, 2),
+                "population_median": float(col.median()),
+                "population_mean": float(col.mean()),
+                "source": "users_csv",
+            }
         return out
-    df = pd.read_csv(csv_path)
+
+    stats = feature_stats if feature_stats is not None else load_feature_stats()
     for feat in features:
-        if feat not in payload or feat not in df.columns:
+        block = stats.get(feat)
+        if feat not in payload or not block:
             continue
         val = float(payload[feat])
-        col = df[feat].astype(float)
-        pct = float((col <= val).mean() * 100.0)
+        pct = _percentile_from_stats(val, block)
+        if pct is None:
+            continue
         out[feat] = {
             "value": val,
             "percentile": round(pct, 2),
-            "population_median": float(col.median()),
-            "population_mean": float(col.mean()),
+            "population_median": float(block.get("p50", block.get("mean", 0.0))),
+            "population_mean": float(block.get("mean", 0.0)),
+            "source": "feature_stats",
         }
     return out
 

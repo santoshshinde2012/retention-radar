@@ -1,7 +1,8 @@
 """HITL review log — append reviewer decisions after scoring.
 
-This is the start of a predict → act → outcome loop. Outcome write-back
-(linking retention actions to later churn labels) is deferred.
+This is the act step of a predict → act → outcome loop. Outcome write-back
+(joining these rows to later churn labels) lives in ``serving/outcomes.py``
+(``python -m retention_radar.cli.hitl_outcomes``).
 
 Examples:
     python -m retention_radar.cli.hitl_log \\

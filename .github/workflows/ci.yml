@@ -41,8 +41,8 @@ jobs:
       - name: Seed-42 canary (committed artifacts, before retrain)
         run: pytest -q tests/test_seed42_canary.py tests/test_artifact_dir_isolation.py
 
-      - name: Ruff (src/)
-        run: ruff check src/
+      - name: Ruff (src/ tests/ app/)
+        run: ruff check src/ tests/ app/
 
       - name: End-to-end pipeline (synthetic)
         run: ./scripts/run_all.sh

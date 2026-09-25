@@ -31,7 +31,7 @@ Or one shot (synthetic, published ladder): `CHURN_DATA_SOURCE=synthetic ./script
 
 ## 1. Local (laptop / codespace) — required path
 
-Python **3.10–3.12** (CI and Streamlit Cloud: **3.11**). From the repo root:
+Python **3.11+** (CI and Streamlit Cloud: **3.11**). The committed `models/calibrator.joblib` was pickled with scikit-learn **1.9.1**, which needs Python 3.11 or newer. From the repo root:
 
 ```bash
 python3 -m venv .venv
@@ -69,15 +69,15 @@ Workflow: [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml).
 
 On every push/PR to `main`, ubuntu-latest + Python 3.11:
 
-1. `pip install -r requirements.txt`
-2. `python -m retention_radar.cli.generate_data --n-users 800`
-3. `python -m retention_radar.cli.train` with `N_OPTUNA_TRIALS=5`
-4. `python -m retention_radar.cli.evaluate`
-5. `pytest -q` (temp-dir smoke + package import tests)
-6. `python -m retention_radar.cli.single_record --user santosh`
-7. `python -m retention_radar.cli.drift_check`
+1. `pip install -r requirements.txt && pip install -e .` (+ `ruff`)
+2. Snapshot the committed seed-42 serve bundle (`models/*.joblib` + JSON) into `.ci_seed42_fixtures/`
+3. Seed-42 canary: `pytest tests/test_seed42_canary.py tests/test_artifact_dir_isolation.py` against the **committed** bundle (Santosh raw ≈ 0.043 → calibrated ≈ 0.017 → low → monitor)
+4. `ruff check src/ tests/ app/`
+5. `./scripts/run_all.sh` with `N_USERS=800`, `N_OPTUNA_TRIALS=5` (generate → ingest → train → evaluate → slices → explain → benchmark → infer → drift → Santosh packet)
+6. `pytest -q` (full suite on the freshly trained smoke bundle)
+7. `python -m retention_radar.cli.drift_check --strict --z-threshold 3.0`
 
-That is generate → train → metrics → packet → tests → drift. It does **not** start Streamlit (no GUI on Actions). Local or Community Cloud covers the UI.
+That is canary → lint → generate → train → metrics → packet → tests → drift. It does **not** start Streamlit (no GUI on Actions). Local or Community Cloud covers the UI.
 
 CI uses a **smaller** `N_USERS` / Optuna budget than a laptop default (`5000` / `20`). Do not treat CI `metrics.json` as the published seed-42 table.
 

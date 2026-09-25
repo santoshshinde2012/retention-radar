@@ -20,7 +20,7 @@ retention-radar/
 ├── src/retention_radar/             # ONLY Python package under src/
 │   ├── __init__.py
 │   ├── config.py, protocols.py, docs_gen.py
-│   ├── cli/                         # train, evaluate, infer, batch_score, hitl_log, …
+│   ├── cli/                         # train, evaluate, infer, batch_score, hitl_log, hitl_outcomes, …
 │   ├── data/, features/, training/, evaluation/, serving/  # + thin FastAPI
 ├── app/streamlit_app.py             # Streamlit serve-only
 ├── scripts/                         # shell orchestration only

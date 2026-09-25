@@ -91,6 +91,7 @@ Then:
 | Read benchmarks | [results/BENCHMARKS.md](results/BENCHMARKS.md) |
 | Score Santosh | `make infer` |
 | Batch gold scores | `python -m retention_radar.cli.batch_score --csv data/external/churn_user_features.csv` |
+| HITL outcomes | `python -m retention_radar.cli.hitl_outcomes --labels data/raw/users.csv` |
 | Thin local API | `uvicorn retention_radar.serving.api:app --app-dir src` → `POST /v1/churn/score` |
 | Open UI | `make ui` (committed models only — no fit on load) |
 | Live demo | TBD — Streamlit Community Cloud / HF Space ([DEPLOY_LATER.md](docs/guides/DEPLOY_LATER.md)) |

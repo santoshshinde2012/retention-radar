@@ -55,7 +55,7 @@ Short checklist for contributors and readers adapting this teaching repo.
 - [ ] Shared contract: 22 features, bands/thresholds, model version metadata.
 - [ ] Never retrain inside Streamlit on page load.
 - [ ] Optional thin FastAPI (`serving/api.py`) is teaching-only — **no auth**; `auto_action` stays `none`.
-- [ ] Batch scores + HITL review log start predict→act; **outcome write-back is deferred**.
+- [ ] Batch scores + HITL review log cover predict→act; `cli.hitl_outcomes` closes the loop by joining reviews to later labels (descriptive — not an uplift estimate).
 
 ## Articles (authored elsewhere)
 

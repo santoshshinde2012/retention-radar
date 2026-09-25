@@ -22,9 +22,13 @@ from retention_radar.serving.scoring import CalibratedScorer
 from retention_radar.training.calibrate import load_calibrator
 
 
-def load_payload(path: Path) -> dict:
+def load_model_bundle(path: Path) -> dict:
     """Load the joblib model bundle (estimator + feature names)."""
     return joblib.load(path)
+
+
+# Back-compat alias: older notebooks / articles import ``load_payload``.
+load_payload = load_model_bundle
 
 
 def resolve_user_json(user: str | None, json_path: str | None) -> Path:
@@ -82,7 +86,7 @@ def main(argv: list[str] | None = None) -> None:
             f"Model not found: {model_path}. Run python -m retention_radar.cli.train first."
         )
 
-    bundle = load_payload(model_path)
+    bundle = load_model_bundle(model_path)
     calibrator = load_calibrator(config.CALIBRATOR_PATH)
     result = predict_user(user_dict, bundle, calibrator=calibrator)
 

@@ -80,6 +80,7 @@ More: [FOLDER_STRUCTURE.md](FOLDER_STRUCTURE.md) · [ARCHITECTURE.md](ARCHITECTU
 | Batch gold scores | `python -m retention_radar.cli.batch_score --csv data/external/churn_user_features.csv` |
 | HITL review log | `python -m retention_radar.cli.hitl_log --from-packet artifacts/santosh_decision_packet.json --reviewer you --action-taken monitor` |
 | Thin local API | `uvicorn retention_radar.serving.api:app --app-dir src` → `POST /v1/churn/score` |
+| Outcome write-back | `python -m retention_radar.cli.hitl_outcomes --labels data/raw/users.csv` → `artifacts/hitl_outcomes.{csv,json}` |
 
-These start a **predict → act → outcome** loop: scores and human review rows are first-class. **Outcome write-back** (joining actions to later labels) is deferred. `auto_action` stays `none`. Live Streamlit demo URL: **TBD**.
+These start a **predict → act → outcome** loop: scores and human review rows are first-class. **Outcome write-back** joins review rows to labels observed after the review (`user_id, churned[, observed_at]`) and reports observed churn per band and per action taken. It is descriptive, not an uplift estimate. `auto_action` stays `none`. Live Streamlit demo URL: **TBD**.
 

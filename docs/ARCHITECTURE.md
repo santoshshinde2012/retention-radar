@@ -73,6 +73,8 @@ flowchart TB
     INF2["serving/infer.py"]
     SR["serving/packet.py"]
     BS["serving/batch_score.py"]
+    HL["serving/hitl_log.py"]
+    OUT["serving/outcomes.py"]
     API["serving/api.py"]
     POL["serving/policy.py"]
     EXP["serving/explain.py"]
@@ -91,6 +93,7 @@ flowchart TB
   SR --> APP["app/streamlit_app.py"]
   INF2 --> APP
   INF2 --> API
+  HL --> OUT
 ```
 
 ```text
@@ -125,6 +128,7 @@ retention-radar/
 | Batch score | Gold CSV → scores.csv / JSONL | `cli.batch_score` |
 | Thin API | Local `POST /v1/churn/score` | `serving/api.py` (no auth) |
 | HITL log | Append review decisions | `cli.hitl_log` + configs/templates |
+| Outcomes | Join reviews → later labels | `cli.hitl_outcomes` → `hitl_outcomes.{csv,json}` |
 | Ops-lite | Drift, retrain, when not to ship | guides/BEST_PRACTICES.md |
 
 ## Key artifacts contract
@@ -134,6 +138,7 @@ retention-radar/
 | `models/churn_xgb.joblib` | `infer`, Streamlit |
 | `models/calibrator.joblib` | calibrated `p` for bands |
 | `models/feature_names.json` | Transform order (22) for Santosh’s vector |
+| `models/feature_stats.json` | Outlier flags, drift reference, cohort-percentile fallback |
 | `models/metrics.json` | MODEL_CARD.md tables |
 | `artifacts/santosh_decision_packet.json` | Case study + CI canary |
 | Risk thresholds / bands | `infer.risk_band`, UI chips |
@@ -181,6 +186,7 @@ The layout is a **teaching** SOLID sketch, not a claim that every file is a text
 | `serving/packet.py` | Assemble validate → score → HITL JSON | Extra packet fields without trainer changes | — | Packet ≠ Streamlit | App depends on `build_decision_packet` |
 | `serving/batch_score.py` | Gold CSV → compact score rows | New output cols without UI changes | — | Batch ≠ packet | CLI depends on scorer + policy |
 | `serving/hitl_log.py` | Append HITL review CSV | New log fields via schema | — | Log ≠ outcome write-back | CLI appends only |
+| `serving/outcomes.py` | Join review log → later labels; per-band / per-action report | New summary cuts without touching the log | — | Report ≠ retrain trigger | CLI reads log + labels only |
 | `serving/api.py` | Thin FastAPI score endpoint | Query flags (shap/log) without retraining | — | No auth / no CRM | Uses infer + policy |
 | `serving/drift.py` | Lite distribution check | — | — | Not a trainer | CLI only |
 | `app/streamlit_app.py` | Serve-only adapter | UI can change without retraining | — | Forms ≠ Optuna | Calls serving helpers only |

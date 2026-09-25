@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import pytest
 
+from retention_radar.data.generate import santosh_profile
 from retention_radar.docs_gen import (
     load_user_record_schema,
     schema_field_meta,
@@ -11,7 +12,6 @@ from retention_radar.docs_gen import (
     write_model_card,
 )
 from retention_radar.features.transform import row_to_feature_frame
-from retention_radar.data.generate import santosh_profile
 
 
 def test_schema_meta_covers_required_fields():

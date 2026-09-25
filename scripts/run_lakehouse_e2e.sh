@@ -47,6 +47,10 @@ import json
 from datetime import date
 from pathlib import Path
 
+def _r4(x):
+    return None if x is None else round(float(x), 4)
+
+
 art = Path("artifacts/lakehouse_run")
 metrics_path = art / "metrics.json"
 packet_path = art / "santosh_decision_packet.json"
@@ -56,9 +60,12 @@ metrics = {}
 if metrics_path.exists():
     metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
 
-packet = {}
-if packet_path.exists():
-    packet = json.loads(packet_path.read_text(encoding="utf-8"))
+if not packet_path.exists():
+    raise SystemExit(
+        f"missing {packet_path}: run_all.sh must write the Santosh packet under "
+        "RETENTION_RADAR_ARTIFACT_DIR (refusing to write a summary with null Santosh fields)"
+    )
+packet = json.loads(packet_path.read_text(encoding="utf-8"))
 
 scoring = packet.get("scoring") or {}
 hitl = packet.get("hitl") or {}
@@ -86,9 +93,10 @@ summary = {
     "santosh": {
         "user_id": packet.get("user_id") or payload.get("user_id"),
         "name": packet.get("user_name") or payload.get("user_name"),
-        "p_churn_raw": scoring.get("churn_probability_raw"),
-        "p_churn_calibrated": scoring.get("churn_probability_calibrated")
-            or scoring.get("churn_probability"),
+        "p_churn_raw": _r4(scoring.get("churn_probability_raw")),
+        "p_churn_calibrated": _r4(
+            scoring.get("churn_probability_calibrated") or scoring.get("churn_probability")
+        ),
         "risk": scoring.get("risk_band"),
         "hitl": hitl.get("action"),
     },

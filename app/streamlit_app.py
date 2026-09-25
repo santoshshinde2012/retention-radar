@@ -20,7 +20,7 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from retention_radar.training.calibrate import load_calibrator  # noqa: E402
+from retention_radar import config as rr_config  # noqa: E402
 from retention_radar.config import (  # noqa: E402
     ARTIFACTS_DIR,
     CALIBRATOR_PATH,
@@ -29,14 +29,14 @@ from retention_radar.config import (  # noqa: E402
     MODEL_PATH,
     PLAN_TIER_ORDER,
 )
-from retention_radar.serving.infer import predict_user  # noqa: E402
-from retention_radar.serving.packet import build_decision_packet  # noqa: E402
 from retention_radar.data.ingest import (  # noqa: E402
     resolve_santosh_json,
     resolve_users_csv,
 )
+from retention_radar.serving.infer import predict_user  # noqa: E402
+from retention_radar.serving.packet import build_decision_packet  # noqa: E402
 from retention_radar.serving.policy import risk_band  # noqa: E402
-from retention_radar import config as rr_config  # noqa: E402
+from retention_radar.training.calibrate import load_calibrator  # noqa: E402
 
 
 @st.cache_resource
@@ -358,8 +358,13 @@ def tab_decision(bundle, calibrator, user_dict, top):
         )
         st.dataframe(cdf, use_container_width=True)
         st.bar_chart(cdf.set_index("feature")["percentile"])
+        if any(v.get("source") == "feature_stats" for v in cohort.values()):
+            st.caption(
+                "users.csv not present — percentiles approximated from training "
+                "quantiles in `feature_stats.json`."
+            )
     else:
-        st.caption("No cohort stats (missing users.csv?).")
+        st.caption("No cohort stats (missing users.csv and feature_stats.json?).")
 
     st.markdown("#### Top drivers")
     explain_df = pd.DataFrame(top, columns=["feature", "contribution"])

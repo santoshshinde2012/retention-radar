@@ -16,7 +16,7 @@ from typing import Any, Dict, List, Optional
 
 import joblib
 from fastapi import FastAPI, HTTPException, Query
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from retention_radar import config
 from retention_radar.serving.batch_score import load_metrics, resolve_model_version
@@ -64,6 +64,14 @@ class ChurnScoreRequest(BaseModel):
     agent_runs_last_30d: float
     ide_plugin_sessions_last_30d: float
     seat_utilization: float
+
+    @field_validator("plan_tier")
+    @classmethod
+    def _known_plan_tier(cls, v: str) -> str:
+        tier = v.strip().lower()
+        if tier not in config.PLAN_TIER_MAP:
+            raise ValueError(f"plan_tier must be one of {config.PLAN_TIER_ORDER}")
+        return tier
 
 
 class ChurnScoreResponse(BaseModel):

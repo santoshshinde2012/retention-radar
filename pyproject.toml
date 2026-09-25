@@ -25,6 +25,7 @@ rr-slice-metrics = "retention_radar.cli.slice_metrics:main"
 rr-docs-gen = "retention_radar.cli.docs_gen:main"
 rr-batch-score = "retention_radar.cli.batch_score:main"
 rr-hitl-log = "retention_radar.cli.hitl_log:main"
+rr-hitl-outcomes = "retention_radar.cli.hitl_outcomes:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -36,7 +37,7 @@ pythonpath = ["src"]
 
 [tool.ruff]
 line-length = 100
-target-version = "py39"
+target-version = "py311"
 src = ["src"]
 
 [tool.ruff.lint]

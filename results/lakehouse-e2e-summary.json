@@ -1,20 +1,20 @@
 {
-  "verified_at": "2026-09-14",
+  "verified_at": "2026-09-25",
   "source": "lakehouse gold N=5000 seed=42",
   "n_train": 3000,
   "n_test": 1000,
   "churn_rate_train": 0.17,
-  "best_optuna_auc_val": 0.7205740609496811,
-  "calibrated_test_roc_auc": 0.6940361445783132,
-  "best_f1_threshold": 0.17,
+  "best_optuna_auc_val": 0.7209355067328136,
+  "calibrated_test_roc_auc": 0.7024273564847626,
+  "best_f1_threshold": 0.2,
   "santosh": {
     "user_id": "u-0001",
     "name": "Santosh Shinde",
-    "p_churn_raw": 0.3991,
-    "p_churn_calibrated": 0.1696,
+    "p_churn_raw": 0.3964,
+    "p_churn_calibrated": 0.1779,
     "risk": "low",
     "hitl": "nurture / check-in"
   },
-  "note": "Lakehouse E2E writes only under artifacts/lakehouse_run/ via RETENTION_RADAR_ARTIFACT_DIR. This committed summary is the lakehouse dual-world cite; full runtime metrics.json is not committed and must not replace the published synthetic models.",
-  "artifact_dir": "artifacts/lakehouse_run"
+  "artifact_dir": "artifacts/lakehouse_run",
+  "note": "Lakehouse E2E writes only under artifacts/lakehouse_run/ via RETENTION_RADAR_ARTIFACT_DIR. Committed models/ + docs/MODEL_CARD.md are the published synthetic seed-42 ladder and must not be replaced."
 }

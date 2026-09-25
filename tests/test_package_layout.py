@@ -6,6 +6,7 @@ from pathlib import Path
 
 from sklearn.dummy import DummyClassifier
 
+from retention_radar.features.transform import DefaultFeatureTransformer
 from retention_radar.protocols import (
     Calibrator,
     DecisionPolicy,
@@ -14,24 +15,24 @@ from retention_radar.protocols import (
 )
 from retention_radar.serving.policy import HitlDecisionPolicy, hitl_action, risk_band
 from retention_radar.serving.scoring import CalibratedScorer
-from retention_radar.features.transform import DefaultFeatureTransformer
 from retention_radar.training.calibrate import ProbabilityCalibrator
 
 
 def test_compat_entrypoints_importable():
-    import retention_radar.cli.generate_data  # noqa: F401
-    import retention_radar.cli.train  # noqa: F401
-    import retention_radar.cli.infer  # noqa: F401
-    import retention_radar.cli.single_record  # noqa: F401
-    import retention_radar.cli.evaluate  # noqa: F401
-    import retention_radar.cli.benchmark  # noqa: F401
-    import retention_radar.cli.drift_check  # noqa: F401
-    import retention_radar.cli.docs_gen  # noqa: F401
-    import retention_radar.cli.ingest  # noqa: F401
-    import retention_radar.cli.explain  # noqa: F401
-    import retention_radar.cli.slice_metrics  # noqa: F401
     import retention_radar.cli.batch_score  # noqa: F401
+    import retention_radar.cli.benchmark  # noqa: F401
+    import retention_radar.cli.docs_gen  # noqa: F401
+    import retention_radar.cli.drift_check  # noqa: F401
+    import retention_radar.cli.evaluate  # noqa: F401
+    import retention_radar.cli.explain  # noqa: F401
+    import retention_radar.cli.generate_data  # noqa: F401
     import retention_radar.cli.hitl_log  # noqa: F401
+    import retention_radar.cli.hitl_outcomes  # noqa: F401
+    import retention_radar.cli.infer  # noqa: F401
+    import retention_radar.cli.ingest  # noqa: F401
+    import retention_radar.cli.single_record  # noqa: F401
+    import retention_radar.cli.slice_metrics  # noqa: F401
+    import retention_radar.cli.train  # noqa: F401
     from retention_radar import config as rr_config
     from retention_radar.evaluation.slices import main as slice_main
     from retention_radar.serving.explain import main as explain_main

@@ -45,7 +45,7 @@ python -m retention_radar.cli.batch_score \
 
 Tiny fixture (tests): `tests/fixtures/batch/tiny_features.csv`.
 
-Append a HITL review-log row (predict → act; outcome write-back deferred):
+Append a HITL review-log row (predict → act):
 
 ```bash
 python -m retention_radar.cli.hitl_log \
@@ -54,6 +54,13 @@ python -m retention_radar.cli.hitl_log \
 ```
 
 Template + schema: [`configs/templates/hitl_review_log.csv`](../../configs/templates/hitl_review_log.csv) · [`configs/hitl_review_log.schema.json`](../../configs/hitl_review_log.schema.json).
+
+Close the loop once labels arrive (outcome write-back — observed churn per band / action; descriptive only):
+
+```bash
+python -m retention_radar.cli.hitl_outcomes --labels data/raw/users.csv
+# → artifacts/hitl_outcomes.csv + artifacts/hitl_outcomes.json
+```
 
 Thin local FastAPI (teaching-only, **no auth**). Preferred route `POST /v1/churn/score` (conceptual alias `POST /v1/churn:score`):
 

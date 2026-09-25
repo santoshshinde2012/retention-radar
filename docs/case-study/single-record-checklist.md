@@ -139,7 +139,7 @@ Notes:
 **Ops subtotal:** 10 ✅ / 2 ⬜ → **83%**
 
 Notes:
-- **E9** — `.github/workflows/ci.yml`: push/PR to `main`, Python 3.11, `N_USERS=800`, `N_OPTUNA_TRIALS=5`, generate → train → evaluate → pytest → single_record → drift_check. Local defaults remain 5000 users / 20 trials when env unset.
+- **E9** — `.github/workflows/ci.yml`: push/PR to `main`, Python 3.11, `N_USERS=800`, `N_OPTUNA_TRIALS=5`, seed-42 canary on the committed bundle → ruff (`src/ tests/ app/`) → `run_all.sh` (generate → train → evaluate → single_record) → pytest → strict drift_check. Local defaults remain 5000 users / 20 trials when env unset.
 - **E11** — `python -m retention_radar.cli.drift_check` compares CSV means to `models/feature_stats.json` (abs mean z-score). Writes `artifacts/drift_report.json`. **Exits 0 by default** (demo); `--strict` exits 1 only on severe drift. Wired non-fatally in `run_all.sh` before the Santosh decision packet (E2: script still ends with the packet). Not a production Evidently / GE monitor (enterprise).
 
 Enterprise deferred (still ⬜): **A28–A30, B14–B16, C14, D8, E10, E12**.
