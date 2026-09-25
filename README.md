@@ -4,7 +4,7 @@ Human-in-the-loop churn ranking for a fictional AI platform.
 
 It ranks quiet fade-out risk and returns a checklist for a human. It does **not** auto-cancel anyone.
 
-[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](runtime.txt)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)](runtime.txt)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Live demo](https://img.shields.io/badge/live%20demo-TBD-lightgrey.svg)](docs/guides/e2e-free-platforms.md)
 
@@ -52,8 +52,8 @@ Full map: [docs/guides/START_HERE.md](docs/guides/START_HERE.md). Do **not** clo
 
 ## Requirements
 
-- Python **3.11+**
-- The committed `models/calibrator.joblib` was trained with scikit-learn **1.9.1**, so this runtime is required to install and load the serving bundle.
+- Python **3.12+** (tested on 3.12). The committed seed-42 bundle was trained with XGBoost **3.4.1** and scikit-learn **1.9.1**; XGBoost 3.3+ needs Python 3.12, so older Pythons silently get an older XGBoost and cannot reproduce the published numbers.
+- `requirements.txt` pins the model-affecting libraries (XGBoost, scikit-learn, Optuna, LightGBM, CatBoost) so `make run` re-creates `models/metrics.json` exactly. Full version snapshot: [`requirements.lock`](requirements.lock).
 - Linux, macOS, or Windows (WSL on Windows)
 - CPU only
 - **macOS:** `brew install libomp` if XGBoost or LightGBM fail to load
@@ -65,7 +65,7 @@ Full map: [docs/guides/START_HERE.md](docs/guides/START_HERE.md). Do **not** clo
 ```bash
 git clone https://github.com/santoshshinde2012/retention-radar.git
 cd retention-radar
-python3 -m venv .venv
+python3.12 -m venv .venv
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 pip install -e .
@@ -96,6 +96,7 @@ Then:
 | Open UI | `make ui` (committed models only — no fit on load) |
 | Live demo | TBD — Streamlit Community Cloud / HF Space ([DEPLOY_LATER.md](docs/guides/DEPLOY_LATER.md)) |
 | Run tests | `make test` |
+| Verify everything locally | `make e2e-local` (~3 min on a laptop CPU; add the lakehouse by cloning it beside this repo) |
 
 Faster smoke:
 
@@ -114,6 +115,9 @@ N_USERS=800 N_OPTUNA_TRIALS=5 CHURN_DATA_SOURCE=synthetic ./scripts/run_all.sh
 | `make ui` | Streamlit UI |
 | `make api` | Thin local FastAPI (teaching; no auth) |
 | `make run-lakehouse` | Lakehouse E2E (needs lakehouse checkout) |
+| `make reproduce` | Retrain into `artifacts/repro/` and diff against committed `models/metrics.json` (exact match expected) |
+| `make e2e-local` | **Everything end to end**: reproduce, tests, CLI + live API + live Streamlit, lakehouse (if cloned beside), isolation check |
+| `make lint` | Ruff on `src/ tests/ app/` |
 
 CLI (after install):
 

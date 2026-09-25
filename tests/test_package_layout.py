@@ -21,6 +21,7 @@ from retention_radar.training.calibrate import ProbabilityCalibrator
 def test_compat_entrypoints_importable():
     import retention_radar.cli.batch_score  # noqa: F401
     import retention_radar.cli.benchmark  # noqa: F401
+    import retention_radar.cli.check_reproduction  # noqa: F401
     import retention_radar.cli.docs_gen  # noqa: F401
     import retention_radar.cli.drift_check  # noqa: F401
     import retention_radar.cli.evaluate  # noqa: F401

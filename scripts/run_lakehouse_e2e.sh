@@ -9,6 +9,12 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+if [[ -f "$ROOT/.venv/bin/activate" ]]; then
+  # shellcheck disable=SC1091
+  source "$ROOT/.venv/bin/activate"
+fi
+PY="${PYTHON:-python3}"
+if [[ "$PY" == */* ]]; then PY="$(cd "$(dirname "$PY")" && pwd)/$(basename "$PY")"; fi
 LAKE="${1:-${LAKEHOUSE_ROOT:-}}"
 if [[ -z "${LAKE}" ]]; then
   for cand in "$ROOT/../local-data-lakehouse" /workspace/local-data-lakehouse; do
@@ -26,9 +32,9 @@ export RETENTION_RADAR_ARTIFACT_DIR="$LAKE_ART"
 
 cd "$LAKE"
 echo "==> [lakehouse] churn-sample (N_USERS=${N_USERS:-5000})"
-N_USERS="${N_USERS:-5000}" CHURN_SEED="${CHURN_SEED:-42}" python3 scripts/generate_churn_sample.py
+N_USERS="${N_USERS:-5000}" CHURN_SEED="${CHURN_SEED:-42}" "$PY" scripts/generate_churn_sample.py
 echo "==> [lakehouse] churn-gold-local"
-python3 scripts/build_churn_gold_local.py
+"$PY" scripts/build_churn_gold_local.py
 
 cd "$ROOT"
 echo "==> [radar] sync exports"
@@ -38,12 +44,14 @@ echo "==> [radar] full pipeline on lakehouse gold → ${RETENTION_RADAR_ARTIFACT
 echo "    (committed models/ + docs/MODEL_CARD.md left untouched)"
 CHURN_DATA_SOURCE=lakehouse ./scripts/run_all.sh
 
-# Dual-world cite: refresh committed summary from this isolated run (best-effort).
+# Dual-world cite: refresh committed summary from this isolated run.
+# LAKEHOUSE_SUMMARY_PATH redirects it (scripts/run_local_e2e.sh compares instead of overwriting).
 export PYTHONPATH="$ROOT/src${PYTHONPATH:+:$PYTHONPATH}"
-python3 - <<'PY'
+"$PY" - <<'PY'
 from __future__ import annotations
 
 import json
+import os
 from datetime import date
 from pathlib import Path
 
@@ -54,7 +62,7 @@ def _r4(x):
 art = Path("artifacts/lakehouse_run")
 metrics_path = art / "metrics.json"
 packet_path = art / "santosh_decision_packet.json"
-summary_path = Path("results/lakehouse-e2e-summary.json")
+summary_path = Path(os.environ.get("LAKEHOUSE_SUMMARY_PATH", "results/lakehouse-e2e-summary.json"))
 
 metrics = {}
 if metrics_path.exists():

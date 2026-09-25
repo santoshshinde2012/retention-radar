@@ -8,7 +8,7 @@ Public FOSS path for the Medium / DET series. **Clone two public repos, run one 
 git clone https://github.com/santoshshinde2012/retention-radar.git
 git clone https://github.com/santoshshinde2012/local-data-lakehouse.git
 cd retention-radar
-python3 -m venv .venv && source .venv/bin/activate
+python3.12 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt && pip install -e .
 ```
 
@@ -21,6 +21,12 @@ CHURN_DATA_SOURCE=synthetic ./scripts/run_all.sh
 Expect Santosh: raw ≈ **0.043** → calibrated ≈ **0.017** → band **low** → HITL **monitor** (`auto_action: none`).
 
 Cite [`models/metrics.json`](../../models/metrics.json) · [results/BENCHMARKS.md](../../results/BENCHMARKS.md).
+
+Verify the whole trilogy locally in one command (reproduce + tests + CLI/API/UI + lakehouse, committed files untouched):
+
+```bash
+make e2e-local   # picks up ../local-data-lakehouse automatically
+```
 
 ## 3. Optional lakehouse gold path
 

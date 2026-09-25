@@ -15,4 +15,5 @@ __all__ = [
     "batch_score",
     "hitl_log",
     "hitl_outcomes",
+    "check_reproduction",
 ]

@@ -110,7 +110,7 @@ Exact commands for the **published** seed-42 ladder (`N_USERS=5000`, `N_OPTUNA_T
 
 ```bash
 cd retention-radar
-python3 -m venv .venv && source .venv/bin/activate
+python3.12 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 pip install -e .
 # or: export PYTHONPATH="$(pwd)/src"
@@ -125,7 +125,9 @@ python -m retention_radar.cli.infer --user santosh
 make docs-results   # refresh results/plots/ from artifacts/
 ```
 
-Same seed + same package versions should match within float noise. Changing the generator breaks bit-identical AUC — update the model card and this narrative together.
+Or, without touching committed files: `make reproduce` retrains into `artifacts/repro/` and diffs every value against [`../models/metrics.json`](../models/metrics.json) (latency excluded — it is machine-dependent).
+
+**Reproducibility is exact, not approximate, on the pinned stack:** Python 3.12 + `requirements.txt` (XGBoost 3.4.1, scikit-learn 1.9.1, Optuna 5.0.0, LightGBM 4.7.0, CatBoost 1.2.10) re-creates all 178 non-latency values bit-for-bit and a byte-identical `churn_xgb.joblib` (verified 2026-09-25). On Python 3.11 pip can only install XGBoost ≤ 3.2, so every XGBoost-derived number drifts (e.g. best-F1 τ 0.34 → 0.42) while Dummy / LogReg / RF / LightGBM / CatBoost still match. Changing the generator also breaks bit-identical AUC — update the model card and this narrative together.
 
 **Cite the JSON**, not this markdown alone: every Table A–D cell is a rounded view of [`../models/metrics.json`](../models/metrics.json).
 

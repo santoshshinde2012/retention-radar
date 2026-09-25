@@ -11,7 +11,7 @@ Articles are authored separately (**internal**); this repo is the public code ho
 ```bash
 git clone https://github.com/santoshshinde2012/retention-radar.git
 cd retention-radar
-python3 -m venv .venv
+python3.12 -m venv .venv
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 pip install -e .
@@ -19,7 +19,7 @@ pip install -e .
 # export PYTHONPATH="$(pwd)/src"
 ```
 
-Requires **Python 3.11+**. The committed `models/calibrator.joblib` was trained with scikit-learn **1.9.1**, so use this runtime to install dependencies and load the serving bundle. Or run `make setup` (venv + requirements + editable install).
+Requires **Python 3.12+**. The committed seed-42 bundle was trained with XGBoost **3.4.1** (needs Python 3.12) and scikit-learn **1.9.1**; `requirements.txt` pins both so a local retrain reproduces `models/metrics.json` exactly (`make reproduce` checks it). Or run `make setup` (venv + requirements + editable install).
 
 **macOS note:** XGBoost / LightGBM need OpenMP (CatBoost is usually fine via pip). If `pip install` or import fails with `libomp`, install once:
 
@@ -28,6 +28,14 @@ brew install libomp
 ```
 
 Env template: [`.env.example`](../.env.example) (`CHURN_DATA_SOURCE`, `N_USERS`, `N_OPTUNA_TRIALS`).
+
+## 1b. Verify everything end to end (one command)
+
+```bash
+make e2e-local
+```
+
+Runs, in order: environment check (Python 3.12 + pinned libs) → ruff → seed-42 canary → **exact reproduction** of `models/metrics.json` in an isolated `artifacts/local_e2e/repro/` → full pytest (including headless Streamlit and the API) → every serve surface on the committed bundle (infer, decision packet, batch score, HITL log, HITL outcomes, strict drift, live `uvicorn`, live Streamlit) → lakehouse gold E2E compared with [`results/lakehouse-e2e-summary.json`](../results/lakehouse-e2e-summary.json) when [local-data-lakehouse](https://github.com/santoshshinde2012/local-data-lakehouse) is cloned beside this repo (or `LAKEHOUSE_ROOT=...`) → a check that committed `models/`, `docs/`, `results/`, `data/raw/` were not modified. About 3 minutes on a laptop CPU; the same target runs in CI.
 
 ## 2. Run the full pipeline
 

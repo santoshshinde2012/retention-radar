@@ -31,10 +31,10 @@ Or one shot (synthetic, published ladder): `CHURN_DATA_SOURCE=synthetic ./script
 
 ## 1. Local (laptop / codespace) — required path
 
-Python **3.11+** (CI and Streamlit Cloud: **3.11**). The committed `models/calibrator.joblib` was pickled with scikit-learn **1.9.1**, which needs Python 3.11 or newer. From the repo root:
+Python **3.12+** (CI and Streamlit Cloud: **3.12**). The committed bundle was trained with XGBoost **3.4.1** (Python 3.12+ only) and scikit-learn **1.9.1**; on older Pythons pip resolves an older XGBoost and the published numbers drift. From the repo root:
 
 ```bash
-python3 -m venv .venv
+python3.12 -m venv .venv
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 export PYTHONPATH="$(pwd)/src"
@@ -67,7 +67,7 @@ Workflow: [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml).
 
 ### What CI proves
 
-On every push/PR to `main`, ubuntu-latest + Python 3.11:
+On every push/PR to `main`, ubuntu-latest + Python 3.12:
 
 1. `pip install -r requirements.txt && pip install -e .` (+ `ruff`)
 2. Snapshot the committed seed-42 serve bundle (`models/*.joblib` + JSON) into `.ci_seed42_fixtures/`
@@ -77,7 +77,9 @@ On every push/PR to `main`, ubuntu-latest + Python 3.11:
 6. `pytest -q` (full suite on the freshly trained smoke bundle)
 7. `python -m retention_radar.cli.drift_check --strict --z-threshold 3.0`
 
-That is canary → lint → generate → train → metrics → packet → tests → drift. It does **not** start Streamlit (no GUI on Actions). Local or Community Cloud covers the UI.
+A second job, **`e2e-local`**, runs `make e2e-local` on Python 3.12 with local-data-lakehouse cloned beside it: exact reproduction of `models/metrics.json`, full pytest, live API + Streamlit, lakehouse gold E2E vs `results/lakehouse-e2e-summary.json`, and an isolation check.
+
+That is canary → lint → generate → train → metrics → packet → tests → drift (+ the reproduction / full-surface job). It does **not** start Streamlit (no GUI on Actions). Local or Community Cloud covers the UI.
 
 CI uses a **smaller** `N_USERS` / Optuna budget than a laptop default (`5000` / `20`). Do not treat CI `metrics.json` as the published seed-42 table.
 
@@ -139,7 +141,7 @@ git add models/churn_xgb.joblib models/calibrator.joblib \
 2. Sign in at [share.streamlit.io](https://share.streamlit.io/) with GitHub.
 3. **Create app** → this repo → branch `main` (or your PR branch).
 4. **Main file path:** `app/streamlit_app.py`
-5. **Python version:** `3.11` (matches CI; also listed in `runtime.txt`).
+5. **Python version:** `3.12` (matches CI; also listed in `runtime.txt`).
 6. Leave **Secrets** empty.
 7. Deploy. Wait for `pip install -r requirements.txt`.
 
@@ -152,7 +154,7 @@ The app adds `src/` to `sys.path`, so Cloud does not need a custom `PYTHONPATH` 
 | Model not found | Commit the five `models/` files above; redeploy |
 | `ModuleNotFoundError: src` | Confirm main file is `app/streamlit_app.py` at repo root layout; Cloud working directory should be the repo |
 | Deploy stuck on Optuna / OOM | Cloud must **not** train. You accidentally called `retention_radar.cli.train` from the app — do not |
-| Python 3.13 / package wheels fail | Set Python **3.11** in Advanced settings / `runtime.txt` |
+| Python 3.13 / package wheels fail | Set Python **3.12** in Advanced settings / `runtime.txt` |
 | SHAP slow first score | Expected on free CPU; fallback importance still works if SHAP errors |
 | Empty Benchmarks images | Plots live in `artifacts/` (gitignored). Tabs still show `metrics.json`. Optional: copy plots into the repo if you want Cloud charts |
 | Secrets / tokens prompted | Ignore; this app needs none |
@@ -175,7 +177,7 @@ title: Retention Radar
 sdk: streamlit
 sdk_version: 1.28.0
 app_file: app/streamlit_app.py
-python_version: 3.11
+python_version: 3.12
 ---
 ```
 
@@ -218,7 +220,7 @@ That runs sample → gold CSV/JSON → sync into `data/external/` → train/eval
 
 Use this once locally **or** via CI + Cloud.
 
-- [ ] `python3 -m venv .venv` and `pip install -r requirements.txt`
+- [ ] `python3.12 -m venv .venv` and `pip install -r requirements.txt`
 - [ ] `export PYTHONPATH="$(pwd)/src"`
 - [ ] **Generate** — `python -m retention_radar.cli.generate_data` (or `./scripts/run_all.sh`)
 - [ ] **Train** — `python -m retention_radar.cli.train` (seed 42; Optuna on val only)
