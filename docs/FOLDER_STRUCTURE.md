@@ -27,6 +27,7 @@ retention-radar/
 ├── data/
 │   ├── README.md                    # raw / interim / processed / external roles
 │   ├── raw/                         # Santosh JSON; users.csv (gitignored)
+│   ├── use_cases/                   # serving scenarios, invalid records, weekly batch, reviews, labels
 │   ├── interim/                     # CDS parity (empty teaching path)
 │   ├── processed/                   # CDS parity (features usually in-memory)
 │   └── external/                    # lakehouse gold sync
@@ -77,6 +78,7 @@ retention-radar/
 | `notebooks/` | Ad-hoc exploration; import the package |
 | `docs/` | Engineering docs + model card + nested guides |
 | `data/external/` | Lakehouse gold sync (CSVs gitignored) |
+| `data/use_cases/` | Committed serving use-case pack (`make use-cases`; rebuilt by `cli.build_use_cases`) |
 
 **Product vs scratch:** package + `app/` + committed `models/` + `results/` are product. `artifacts/`, generated `data/raw/users.csv`, Optuna DBs, and `__pycache__` are scratch.
 

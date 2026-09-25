@@ -16,4 +16,5 @@ __all__ = [
     "hitl_log",
     "hitl_outcomes",
     "check_reproduction",
+    "build_use_cases",
 ]

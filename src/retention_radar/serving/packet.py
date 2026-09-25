@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -20,7 +21,7 @@ from retention_radar import config
 from retention_radar.data.ingest import resolve_users_csv
 from retention_radar.features.transform import row_to_feature_frame
 from retention_radar.serving.infer import predict_user, resolve_user_json
-from retention_radar.serving.policy import HitlDecisionPolicy
+from retention_radar.serving.policy import HitlDecisionPolicy, validation_hold
 from retention_radar.training.calibrate import load_calibrator
 
 
@@ -38,6 +39,20 @@ def load_feature_stats(path: Path | None = None) -> dict:
         return {}
     with open(p, encoding="utf-8") as f:
         return json.load(f)
+
+
+@lru_cache(maxsize=1)
+def _record_validator():
+    """Compiled JSON-schema validator for the 24-field inference record (or None)."""
+    if not config.USER_RECORD_SCHEMA_PATH.exists():
+        return None
+    try:
+        import jsonschema  # type: ignore
+    except ImportError:
+        return None
+    with open(config.USER_RECORD_SCHEMA_PATH, encoding="utf-8") as f:
+        schema = json.load(f)
+    return jsonschema.Draft7Validator(schema)
 
 
 def validate_payload(payload: dict) -> dict[str, Any]:
@@ -60,13 +75,15 @@ def validate_payload(payload: dict) -> dict[str, Any]:
     if plan is not None and plan not in config.PLAN_TIER_ORDER:
         errors.append(f"plan_tier must be one of {config.PLAN_TIER_ORDER}, got {plan!r}")
 
+    bad_numeric: set[str] = set()
     for key, (lo, hi) in config.FEATURE_RANGES.items():
-        if key not in payload:
-            continue
+        if key not in payload or payload[key] is None:
+            continue  # already reported as missing
         try:
             val = float(payload[key])
         except (TypeError, ValueError):
             errors.append(f"{key} must be numeric, got {payload[key]!r}")
+            bad_numeric.add(key)
             continue
         if val < lo or val > hi:
             errors.append(f"{key}={val} outside allowed range [{lo}, {hi}]")
@@ -76,6 +93,7 @@ def validate_payload(payload: dict) -> dict[str, Any]:
         and "sessions_last_30d" in payload
         and "engagement_trend" in payload
         and not missing
+        and not bad_numeric & {"sessions_last_7d", "sessions_last_30d", "engagement_trend"}
     ):
         s7 = float(payload["sessions_last_7d"])
         s30 = float(payload["sessions_last_30d"])
@@ -88,19 +106,13 @@ def validate_payload(payload: dict) -> dict[str, Any]:
             )
 
     schema_ok = None
-    if config.USER_RECORD_SCHEMA_PATH.exists() and not missing:
-        try:
-            import jsonschema  # type: ignore
-
-            with open(config.USER_RECORD_SCHEMA_PATH, encoding="utf-8") as f:
-                schema = json.load(f)
-            jsonschema.validate(instance=payload, schema=schema)
-            schema_ok = True
-        except ImportError:
-            schema_ok = None
-        except Exception as exc:  # noqa: BLE001
-            schema_ok = False
-            errors.append(f"jsonschema: {exc}")
+    validator = _record_validator()
+    if validator is not None and not missing:
+        schema_errors = sorted(validator.iter_errors(payload), key=lambda e: list(e.path))
+        schema_ok = not schema_errors
+        for err in schema_errors:
+            where = ".".join(str(p) for p in err.path) or "record"
+            errors.append(f"jsonschema: {where}: {err.message}")
 
     return {
         "ok": len(errors) == 0,
@@ -238,6 +250,20 @@ def build_decision_packet(
     policy = policy or HitlDecisionPolicy()
 
     validation = validate_payload(payload)
+    if not validation["ok"]:
+        # Fail loud: an invalid record is never scored, ranked or queued for outreach.
+        return {
+            "user_id": payload.get("user_id"),
+            "user_name": payload.get("user_name"),
+            "validation": validation,
+            "payload": payload,
+            "scoring": None,
+            "explanation": None,
+            "outliers": [],
+            "cohort_compare": {},
+            "hitl": validation_hold(validation["errors"]),
+            "meta": {"data_source": config.CHURN_DATA_SOURCE},
+        }
     if model_bundle is None:
         if not config.MODEL_PATH.exists():
             raise FileNotFoundError(f"Model not found: {config.MODEL_PATH}")
@@ -296,6 +322,11 @@ def print_human_summary(packet: dict) -> None:
         f"Validation: {'OK' if v.get('ok') else 'FAILED'}  "
         f"errors={len(v.get('errors') or [])}"
     )
+    if s is None:
+        for err in v.get("errors") or []:
+            print(f"  error: {err}")
+        print(f"HITL action: {h.get('action')}  (auto={h.get('auto_action')})")
+        return
     raw = s.get("churn_probability_raw")
     cal = s.get("churn_probability_calibrated")
     print(
@@ -342,11 +373,13 @@ def batch_score_dir(
             fout.write(json.dumps(packet) + "\n")
             n_ok += 1
             action = packet.get("hitl", {}).get("action")
-            print(
-                f"  [{n_ok}/{len(files)}] {fp.name}: "
-                f"P={packet['scoring']['churn_probability']:.4f} "
-                f"band={packet['scoring']['risk_band']} action={action}"
+            scoring = packet.get("scoring")
+            score_txt = (
+                f"P={scoring['churn_probability']:.4f} band={scoring['risk_band']}"
+                if scoring
+                else "not scored (validation failed)"
             )
+            print(f"  [{n_ok}/{len(files)}] {fp.name}: {score_txt} action={action}")
     print(f"Wrote {n_ok} packets → {out_path}")
     return n_ok
 
@@ -410,6 +443,8 @@ def main(argv: list[str] | None = None) -> None:
         json.dump(packet, f, indent=2)
     print_human_summary(packet)
     print(f"\nWrote decision packet → {out_path}")
+    if not packet["validation"]["ok"]:
+        raise SystemExit(1)  # fail loud: record held for data fixes, not scored
 
 
 if __name__ == "__main__":

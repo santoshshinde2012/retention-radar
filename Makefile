@@ -1,4 +1,4 @@
-.PHONY: setup run run-lakehouse test lint infer ui api reproduce e2e-local docs-results
+.PHONY: setup run run-lakehouse test lint infer ui api use-cases build-use-cases reproduce e2e-local docs-results
 
 # Python 3.12+ is required (committed bundle trained with XGBoost 3.4.1).
 PYTHON ?= $(shell command -v python3.12 || command -v python3)
@@ -32,6 +32,15 @@ ui:
 
 api:
 	$(PY) -m uvicorn retention_radar.serving.api:app --host 127.0.0.1 --port 8000
+
+# Walk the service on data/use_cases/: queue → packets → held records → reviews → outcomes.
+use-cases:
+	PYTHON=$(PY) ./scripts/run_use_cases.sh
+
+# Rebuild data/use_cases/ from seed-42 data/raw/users.csv + the committed bundle.
+build-use-cases:
+	CHURN_DATA_SOURCE=synthetic $(PY) -m retention_radar.cli.generate_data
+	CHURN_DATA_SOURCE=synthetic $(PY) -m retention_radar.cli.build_use_cases
 
 # Retrain into artifacts/repro/ (committed models/ untouched) and diff against models/metrics.json.
 reproduce:

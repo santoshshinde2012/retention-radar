@@ -81,14 +81,30 @@ Sync only: `./scripts/sync_lakehouse_exports.sh /path/to/local-data-lakehouse/da
 
 More: [FOLDER_STRUCTURE.md](FOLDER_STRUCTURE.md) · [ARCHITECTURE.md](ARCHITECTURE.md) · [e2e-free-platforms.md](guides/e2e-free-platforms.md) · [../README.md](../README.md)
 
-## FOSS production-shaped extras (optional)
+## The service end to end, on real use-case data
+
+[`data/use_cases/`](../data/use_cases/README.md) holds seed-42 **holdout** records (never trained on) for every serving path, with the result the committed bundle gives each one:
+
+| Scenario | Band | Suggested action |
+|----------|------|------------------|
+| Steady power user (Santosh) · Usage dip, still healthy | low | monitor |
+| New free trial hitting friction | low | nurture / check-in |
+| Borderline: friction just under τ (reviewer overrides to outreach) | medium | nurture / check-in |
+| Payment failures plus support load | medium | retention outreach (human review) |
+| Gone dark · Enterprise renewal at risk | high | escalate |
+| 4 invalid records (unknown plan, missing NPS, rate > 1, text in a number) | — | **hold: fix input data** (never scored or queued) |
+
+```bash
+make use-cases   # weekly batch → ranked queue + rejects → packets → held records → reviews → day-30 outcomes
+```
 
 | Piece | Command |
 |-------|---------|
-| Batch gold scores | `python -m retention_radar.cli.batch_score --csv data/external/churn_user_features.csv` |
-| HITL review log | `python -m retention_radar.cli.hitl_log --from-packet artifacts/santosh_decision_packet.json --reviewer you --action-taken monitor` |
-| Thin local API | `uvicorn retention_radar.serving.api:app --app-dir src` → `POST /v1/churn/score` |
-| Outcome write-back | `python -m retention_radar.cli.hitl_outcomes --labels data/raw/users.csv` → `artifacts/hitl_outcomes.{csv,json}` |
+| Batch → review queue | `python -m retention_radar.cli.batch_score --csv data/use_cases/weekly_batch.csv --out artifacts/use_cases/queue.csv` → sorted by calibrated risk (`rank` 1 first), invalid rows in `queue_rejected.csv` |
+| One decision packet | `python -m retention_radar.cli.single_record --json data/use_cases/records/gone_dark.json` (exit 1 + `hold` for invalid input) |
+| HITL review log | one row: `python -m retention_radar.cli.hitl_log --from-packet artifacts/santosh_decision_packet.json --reviewer you --action-taken monitor` · bulk: `--from-scores artifacts/use_cases/queue.csv --decisions data/use_cases/review_decisions.csv` |
+| Outcome write-back | `python -m retention_radar.cli.hitl_outcomes --log artifacts/use_cases/hitl_review_log.csv --labels data/use_cases/labels_day30.csv` |
+| Thin local API | `uvicorn retention_radar.serving.api:app --app-dir src` → `POST /v1/churn/score` (422 + hold reason for invalid input), `POST /v1/churn/batch`, `POST /v1/churn/reviews` |
+| UI | `make ui` → sidebar **Use case** picker loads each scenario exactly as the API scores it |
 
-These start a **predict → act → outcome** loop: scores and human review rows are first-class. **Outcome write-back** joins review rows to labels observed after the review (`user_id, churned[, observed_at]`) and reports observed churn per band and per action taken. It is descriptive, not an uplift estimate. `auto_action` stays `none`. Live Streamlit demo URL: **TBD**.
-
+This is the **predict → act → outcome** loop: scores, human review rows and later labels are first-class. **Outcome write-back** joins review rows to labels observed after the review (`user_id, churned[, observed_at]`) and reports observed churn per band and per action taken. It is descriptive, not an uplift estimate. `auto_action` stays `none`. Live Streamlit demo URL: **TBD**.

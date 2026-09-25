@@ -90,9 +90,10 @@ Then:
 | Cite metrics | [`models/metrics.json`](models/metrics.json) |
 | Read benchmarks | [results/BENCHMARKS.md](results/BENCHMARKS.md) |
 | Score Santosh | `make infer` |
-| Batch gold scores | `python -m retention_radar.cli.batch_score --csv data/external/churn_user_features.csv` |
-| HITL outcomes | `python -m retention_radar.cli.hitl_outcomes --labels data/raw/users.csv` |
-| Thin local API | `uvicorn retention_radar.serving.api:app --app-dir src` → `POST /v1/churn/score` |
+| Walk every use case | `make use-cases` — [data/use_cases/](data/use_cases/README.md): weekly batch → ranked queue (+ rejects) → packets → held records → reviews → day-30 outcomes |
+| Batch gold scores | `python -m retention_radar.cli.batch_score --csv data/external/churn_user_features.csv` (ranked queue + `*_rejected.csv`) |
+| HITL outcomes | `python -m retention_radar.cli.hitl_outcomes --labels data/use_cases/labels_day30.csv` |
+| Thin local API | `uvicorn retention_radar.serving.api:app --app-dir src` → `POST /v1/churn/score`, `/v1/churn/batch`, `/v1/churn/reviews` |
 | Open UI | `make ui` (committed models only — no fit on load) |
 | Live demo | TBD — Streamlit Community Cloud / HF Space ([DEPLOY_LATER.md](docs/guides/DEPLOY_LATER.md)) |
 | Run tests | `make test` |
@@ -115,6 +116,7 @@ N_USERS=800 N_OPTUNA_TRIALS=5 CHURN_DATA_SOURCE=synthetic ./scripts/run_all.sh
 | `make ui` | Streamlit UI |
 | `make api` | Thin local FastAPI (teaching; no auth) |
 | `make run-lakehouse` | Lakehouse E2E (needs lakehouse checkout) |
+| `make use-cases` | Walk the service on `data/use_cases/` (queue, packets, held records, reviews, outcomes) |
 | `make reproduce` | Retrain into `artifacts/repro/` and diff against committed `models/metrics.json` (exact match expected) |
 | `make e2e-local` | **Everything end to end**: reproduce, tests, CLI + live API + live Streamlit, lakehouse (if cloned beside), isolation check |
 | `make lint` | Ruff on `src/ tests/ app/` |

@@ -8,6 +8,11 @@ Examples:
     python -m retention_radar.cli.hitl_log \\
         --from-packet artifacts/santosh_decision_packet.json \\
         --reviewer santosh --action-taken monitor --notes "looks fine"
+    # Bulk: import a reviewer-decisions CSV (user_id, reviewer, action_taken, notes,
+    # timestamp) against a batch_score queue — e.g. an export from the CRM task list.
+    python -m retention_radar.cli.hitl_log \\
+        --from-scores artifacts/use_cases/queue.csv \\
+        --decisions data/use_cases/review_decisions.csv
 """
 
 from __future__ import annotations
@@ -74,6 +79,11 @@ def row_from_packet(
     timestamp: str | None = None,
 ) -> dict[str, Any]:
     """Extract HITL log fields from a decision packet."""
+    if not packet.get("scoring"):
+        raise ValueError(
+            "packet was held by validation (no score); fix the input data and "
+            "re-score before logging a review"
+        )
     scoring = packet.get("scoring") or {}
     hitl = packet.get("hitl") or {}
     p_cal = scoring.get("churn_probability_calibrated")
@@ -141,6 +151,46 @@ def append_hitl_row(path: Path, row: dict[str, Any]) -> Path:
     return path
 
 
+DECISION_COLUMNS = ["user_id", "reviewer", "action_taken", "notes", "timestamp"]
+
+
+def rows_from_decisions(
+    scores: list[dict[str, Any]], decisions: list[dict[str, Any]]
+) -> tuple[list[dict[str, Any]], list[str]]:
+    """Join reviewer decisions to scored queue rows → (log rows, problems).
+
+    Score fields (p_cal, band, suggested action) always come from the queue, never
+    from the decisions file, so a reviewer export cannot rewrite what the model said.
+    """
+    by_user = {str(r["user_id"]): r for r in scores}
+    rows, problems = [], []
+    for i, d in enumerate(decisions, start=1):
+        missing = [c for c in ("user_id", "reviewer", "action_taken") if not str(d.get(c) or "").strip()]
+        if missing:
+            problems.append(f"decision row {i}: missing {missing}")
+            continue
+        uid = str(d["user_id"]).strip()
+        rec = by_user.get(uid)
+        if rec is None:
+            problems.append(f"decision row {i}: user_id {uid!r} is not in the scored queue")
+            continue
+        rows.append(
+            row_from_score_record(
+                rec,
+                reviewer=str(d["reviewer"]).strip(),
+                action_taken=str(d["action_taken"]).strip(),
+                notes=str(d.get("notes") or "").strip(),
+                timestamp=str(d.get("timestamp") or "").strip() or None,
+            )
+        )
+    return rows, problems
+
+
+def _read_csv_dicts(path: Path) -> list[dict[str, Any]]:
+    with open(path, encoding="utf-8", newline="") as f:
+        return list(csv.DictReader(f))
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(
         description="Append a HITL review-log row from a packet or score JSON"
@@ -158,6 +208,24 @@ def main(argv: list[str] | None = None) -> None:
         help="Path to a single score JSON (batch/API shaped)",
     )
     parser.add_argument(
+        "--from-scores",
+        type=str,
+        default=None,
+        help="batch_score queue CSV; use with --decisions for a bulk import",
+    )
+    parser.add_argument(
+        "--decisions",
+        type=str,
+        default=None,
+        help="Reviewer decisions CSV (user_id, reviewer, action_taken, notes, timestamp)",
+    )
+    parser.add_argument(
+        "--timestamp",
+        type=str,
+        default=None,
+        help="Review time (ISO-8601 UTC); default now",
+    )
+    parser.add_argument(
         "--log",
         type=str,
         default=None,
@@ -168,10 +236,27 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--notes", type=str, default="")
     args = parser.parse_args(argv)
 
-    if not args.from_packet and not args.from_score:
-        raise SystemExit("Provide --from-packet or --from-score")
-
     log_path = Path(args.log) if args.log else DEFAULT_LOG_PATH
+
+    if args.from_scores or args.decisions:
+        if not (args.from_scores and args.decisions):
+            raise SystemExit("Bulk import needs both --from-scores and --decisions")
+        rows, problems = rows_from_decisions(
+            _read_csv_dicts(Path(args.from_scores)), _read_csv_dicts(Path(args.decisions))
+        )
+        for r in rows:
+            append_hitl_row(log_path, r)
+        print(f"Appended {len(rows)} HITL review row(s) → {log_path}")
+        agreed = sum(r["action_taken"] == r["action_suggested"] for r in rows)
+        print(f"  reviewer agreed with the suggested action on {agreed}/{len(rows)}")
+        for msg in problems:
+            print(f"  skipped: {msg}")
+        if problems:
+            raise SystemExit(1)
+        return
+
+    if not args.from_packet and not args.from_score:
+        raise SystemExit("Provide --from-packet, --from-score, or --from-scores + --decisions")
 
     if args.from_packet:
         with open(args.from_packet, encoding="utf-8") as f:
@@ -181,6 +266,7 @@ def main(argv: list[str] | None = None) -> None:
             reviewer=args.reviewer,
             action_taken=args.action_taken,
             notes=args.notes,
+            timestamp=args.timestamp,
         )
     else:
         with open(args.from_score, encoding="utf-8") as f:
@@ -190,6 +276,7 @@ def main(argv: list[str] | None = None) -> None:
             reviewer=args.reviewer,
             action_taken=args.action_taken,
             notes=args.notes,
+            timestamp=args.timestamp,
         )
 
     append_hitl_row(log_path, row)

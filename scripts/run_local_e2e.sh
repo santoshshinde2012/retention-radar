@@ -30,7 +30,7 @@ UI_PORT="${UI_PORT:-8599}"
 rm -rf "$OUT"
 mkdir -p "$OUT"
 
-GUARDED=(models docs results data/raw)
+GUARDED=(models docs results data/raw data/use_cases)
 tree_state() { # content fingerprint of the committed-output paths (tracked diffs + untracked files)
   git -C "$ROOT" diff --no-ext-diff -- "${GUARDED[@]}"
   git -C "$ROOT" ls-files -o --exclude-standard -- "${GUARDED[@]}" | sort | while read -r f; do
@@ -103,17 +103,11 @@ step 5 "full test suite (pipeline smoke, API, headless Streamlit, contracts)"
 "$PY" -m pytest -q -p no:warnings
 ok pytest
 
-step 6 "serve surfaces on the committed bundle"
+step 6 "use cases through every CLI surface (queue → packets → held → reviews → outcomes)"
 "$PY" -m retention_radar.cli.infer --user santosh
-"$PY" -m retention_radar.cli.single_record --user santosh --out "$OUT/santosh_decision_packet.json" > /dev/null
-"$PY" -m retention_radar.cli.batch_score --csv data/raw/users.csv \
-  --out "$OUT/scores.csv" --jsonl "$OUT/scores.jsonl"
-"$PY" -m retention_radar.cli.hitl_log --from-packet "$OUT/santosh_decision_packet.json" \
-  --log "$OUT/hitl_review_log.csv" --reviewer local-e2e --action-taken monitor --notes "local e2e"
-"$PY" -m retention_radar.cli.hitl_outcomes --log "$OUT/hitl_review_log.csv" \
-  --labels data/raw/users.csv --out "$OUT/hitl_outcomes.csv"
+USE_CASE_OUT="$OUT/use_cases" ./scripts/run_use_cases.sh
 "$PY" -m retention_radar.cli.drift_check --strict --z-threshold 3.0 --out "$OUT/drift_report.json"
-ok serve-cli
+ok use-cases
 
 step 7 "live thin API (uvicorn :$API_PORT)"
 "$PY" -m uvicorn retention_radar.serving.api:app --host 127.0.0.1 --port "$API_PORT" \
@@ -121,14 +115,37 @@ step 7 "live thin API (uvicorn :$API_PORT)"
 PIDS+=($!)
 wait_http "http://127.0.0.1:$API_PORT/healthz" 60 || { cat "$OUT/api.log"; exit 1; }
 "$PY" - "$API_PORT" <<'PY'
-import json, sys, urllib.request
-port = sys.argv[1]
-body = open("data/raw/santosh_shinde.json", "rb").read()
-req = urllib.request.Request(f"http://127.0.0.1:{port}/v1/churn/score?log=false", data=body,
-                             headers={"content-type": "application/json"})
-out = json.load(urllib.request.urlopen(req, timeout=30))
-print("POST /v1/churn/score →", out)
-assert out["auto_action"] == "none" and out["band"] == "low" and out["hitl_action"] == "monitor", out
+import csv, json, sys, urllib.error, urllib.request
+base = f"http://127.0.0.1:{sys.argv[1]}"
+
+def post(path, payload):
+    req = urllib.request.Request(base + path, data=json.dumps(payload).encode(),
+                                 headers={"content-type": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=60) as r:
+            return r.status, json.load(r)
+    except urllib.error.HTTPError as e:
+        return e.code, json.load(e)
+
+manifest = json.load(open("data/use_cases/personas.json"))
+for p in manifest["personas"]:
+    code, out = post("/v1/churn/score", p["record"])
+    assert code == 200, (p["id"], out)
+    assert (out["band"], out["hitl_action"]) == (p["expected"]["band"], p["expected"]["hitl_action"]), (p["id"], out)
+    print(f"POST /v1/churn/score {p['id']:<24} → {out['band']:<6} {out['hitl_action']}")
+for case in manifest["invalid_records"]:
+    code, out = post("/v1/churn/score", case["record"])
+    assert code == 422, (case["id"], code, out)
+print(f"POST /v1/churn/score invalid records → 422 x{len(manifest['invalid_records'])}")
+rows = list(csv.DictReader(open("data/use_cases/weekly_batch.csv")))
+records = [{k: v for k, v in r.items() if v != ""} for r in rows]
+code, out = post("/v1/churn/batch", {"records": records})
+assert code == 200 and len(out["rejected"]) == manifest["weekly_batch"]["invalid_rows"], out
+print(f"POST /v1/churn/batch → queue {len(out['queue'])}, rejected {len(out['rejected'])}, top {out['queue'][0]['hitl_action']}")
+gone = next(p for p in manifest["personas"] if p["id"] == "gone_dark")["record"]["user_id"]
+code, out = post("/v1/churn/reviews", {"user_id": gone, "reviewer": "local-e2e", "action_taken": "escalate"})
+assert code == 200 and out["logged"]["action_suggested"] == "escalate", out
+print("POST /v1/churn/reviews → logged against the service's own score")
 PY
 kill "${PIDS[-1]}" 2>/dev/null || true
 ok api
@@ -176,10 +193,10 @@ step 10 "committed files untouched"
 if [[ "$HAS_GIT" == 1 ]]; then
   if [[ "$(tree_state | sha256sum)" != "$BEFORE" ]]; then
     git -C "$ROOT" status --short -- "${GUARDED[@]}"
-    echo "committed outputs changed during the run (models/ docs/ results/ data/raw/)"
+    echo "committed outputs changed during the run (models/ docs/ results/ data/raw/ data/use_cases/)"
     exit 1
   fi
-  echo "models/ docs/ results/ data/raw/ unchanged by the run"
+  echo "models/ docs/ results/ data/raw/ data/use_cases/ unchanged by the run"
   ok isolation
 else
   SKIPPED+=(isolation)

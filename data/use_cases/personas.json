@@ -1,0 +1,569 @@
+{
+  "about": "Seed-42 synthetic use cases for the serving layer; see README.md.",
+  "model_version": "seed42-churn_xgb",
+  "best_f1_threshold": 0.34,
+  "calendar": {
+    "scored_at": "2026-09-28T09:00:00Z",
+    "reviewed_at": "2026-09-29T15:00:00Z",
+    "labels_observed_at": "2026-10-28T00:00:00Z"
+  },
+  "personas": [
+    {
+      "id": "steady_power_user",
+      "title": "Steady power user (Santosh)",
+      "story": "Pro user 14 months in, high adoption, renewing in 3 weeks. A little request friction, nothing the model worries about.",
+      "source": {
+        "dataset": "data/raw/santosh_shinde.json",
+        "split": "hero (injected)"
+      },
+      "expected": {
+        "p_raw": 0.043368,
+        "p_cal": 0.016461,
+        "band": "low",
+        "hitl_action": "monitor"
+      },
+      "top_drivers": [
+        {
+          "feature": "feature_adoption_score",
+          "contribution": -1.084
+        },
+        {
+          "feature": "support_tickets_last_90d",
+          "contribution": -0.404
+        },
+        {
+          "feature": "last_active_days_ago",
+          "contribution": -0.401
+        }
+      ],
+      "reviewer": {
+        "action_taken": "monitor",
+        "notes": "healthy; no action"
+      },
+      "record": {
+        "user_id": "santosh_shinde",
+        "user_name": "Santosh Shinde",
+        "days_since_signup": 420,
+        "sessions_last_7d": 9,
+        "sessions_last_30d": 38,
+        "avg_session_minutes": 28.5,
+        "models_used_count": 7,
+        "api_calls_last_30d": 1850,
+        "tokens_consumed_last_30d": 420000,
+        "tools_used_count": 8,
+        "failed_requests_rate": 0.12,
+        "support_tickets_last_90d": 2,
+        "plan_tier": "pro",
+        "payment_failures_last_90d": 1,
+        "feature_adoption_score": 0.78,
+        "nps_score": 7.0,
+        "last_active_days_ago": 8,
+        "weekend_usage_ratio": 0.22,
+        "engagement_trend": 0.9474,
+        "spend_usd_last_30d": 189.0,
+        "days_until_renewal": 21,
+        "agent_runs_last_30d": 52,
+        "ide_plugin_sessions_last_30d": 28,
+        "seat_utilization": 0.72
+      }
+    },
+    {
+      "id": "dip_but_healthy",
+      "title": "Usage dip, still healthy",
+      "story": "Sessions this week are well below the 30-day pace, but adoption, NPS and billing are fine. One quiet week is not churn risk; the queue stays calm.",
+      "source": {
+        "dataset": "seed-42 synthetic users.csv",
+        "split": "test (holdout)",
+        "candidates_matching_filter": 44
+      },
+      "expected": {
+        "p_raw": 0.086336,
+        "p_cal": 0.016461,
+        "band": "low",
+        "hitl_action": "monitor"
+      },
+      "top_drivers": [
+        {
+          "feature": "feature_adoption_score",
+          "contribution": -0.558
+        },
+        {
+          "feature": "support_tickets_last_90d",
+          "contribution": -0.476
+        },
+        {
+          "feature": "last_active_days_ago",
+          "contribution": -0.394
+        }
+      ],
+      "reviewer": {
+        "action_taken": "monitor",
+        "notes": "seasonal dip; no action"
+      },
+      "record": {
+        "user_id": "user_00205",
+        "user_name": "Morgan Davis",
+        "days_since_signup": 578,
+        "sessions_last_7d": 1,
+        "sessions_last_30d": 7,
+        "avg_session_minutes": 32.5,
+        "models_used_count": 5,
+        "api_calls_last_30d": 280,
+        "tokens_consumed_last_30d": 85507,
+        "tools_used_count": 8,
+        "failed_requests_rate": 0.0926,
+        "support_tickets_last_90d": 1,
+        "plan_tier": "free",
+        "payment_failures_last_90d": 0,
+        "feature_adoption_score": 0.5068,
+        "nps_score": 9.7,
+        "last_active_days_ago": 10,
+        "weekend_usage_ratio": 0.1941,
+        "engagement_trend": 0.5927,
+        "spend_usd_last_30d": 0.0,
+        "days_until_renewal": 125,
+        "agent_runs_last_30d": 35,
+        "ide_plugin_sessions_last_30d": 17,
+        "seat_utilization": 0.6291
+      }
+    },
+    {
+      "id": "new_trial_friction",
+      "title": "New free trial hitting friction",
+      "story": "Free plan, under three months old, already opening support tickets. Low band, but above half of \u03c4: a light check-in, not a sales call.",
+      "source": {
+        "dataset": "seed-42 synthetic users.csv",
+        "split": "test (holdout)",
+        "candidates_matching_filter": 2
+      },
+      "expected": {
+        "p_raw": 0.544511,
+        "p_cal": 0.173913,
+        "band": "low",
+        "hitl_action": "nurture / check-in"
+      },
+      "top_drivers": [
+        {
+          "feature": "last_active_days_ago",
+          "contribution": -0.413
+        },
+        {
+          "feature": "feature_adoption_score",
+          "contribution": 0.273
+        },
+        {
+          "feature": "support_tickets_last_90d",
+          "contribution": 0.27
+        }
+      ],
+      "reviewer": {
+        "action_taken": "nurture / check-in",
+        "notes": "offered an onboarding session"
+      },
+      "record": {
+        "user_id": "user_04890",
+        "user_name": "Casey Wilson",
+        "days_since_signup": 28,
+        "sessions_last_7d": 2,
+        "sessions_last_30d": 10,
+        "avg_session_minutes": 23.8,
+        "models_used_count": 3,
+        "api_calls_last_30d": 90,
+        "tokens_consumed_last_30d": 12745,
+        "tools_used_count": 3,
+        "failed_requests_rate": 0.2157,
+        "support_tickets_last_90d": 4,
+        "plan_tier": "free",
+        "payment_failures_last_90d": 1,
+        "feature_adoption_score": 0.3346,
+        "nps_score": 7.0,
+        "last_active_days_ago": 25,
+        "weekend_usage_ratio": 0.1679,
+        "engagement_trend": 0.7698,
+        "spend_usd_last_30d": 0.0,
+        "days_until_renewal": 23,
+        "agent_runs_last_30d": 12,
+        "ide_plugin_sessions_last_30d": 13,
+        "seat_utilization": 0.5681
+      }
+    },
+    {
+      "id": "borderline_friction",
+      "title": "Borderline: friction just under \u03c4",
+      "story": "Medium band but still below the best-F1 threshold. The policy says nurture; the reviewer escalates to outreach because the tickets are about one bug. This is the human override the log exists for.",
+      "source": {
+        "dataset": "seed-42 synthetic users.csv",
+        "split": "test (holdout)",
+        "candidates_matching_filter": 45
+      },
+      "expected": {
+        "p_raw": 0.638557,
+        "p_cal": 0.3125,
+        "band": "medium",
+        "hitl_action": "nurture / check-in"
+      },
+      "top_drivers": [
+        {
+          "feature": "feature_adoption_score",
+          "contribution": 0.531
+        },
+        {
+          "feature": "last_active_days_ago",
+          "contribution": -0.261
+        },
+        {
+          "feature": "support_tickets_last_90d",
+          "contribution": 0.24
+        }
+      ],
+      "reviewer": {
+        "action_taken": "retention outreach (human review)",
+        "notes": "3 tickets on the same bug; call instead of email"
+      },
+      "record": {
+        "user_id": "user_00480",
+        "user_name": "Sam Patel",
+        "days_since_signup": 491,
+        "sessions_last_7d": 3,
+        "sessions_last_30d": 4,
+        "avg_session_minutes": 21.4,
+        "models_used_count": 2,
+        "api_calls_last_30d": 79,
+        "tokens_consumed_last_30d": 37636,
+        "tools_used_count": 4,
+        "failed_requests_rate": 0.2378,
+        "support_tickets_last_90d": 4,
+        "plan_tier": "free",
+        "payment_failures_last_90d": 1,
+        "feature_adoption_score": 0.2164,
+        "nps_score": 5.8,
+        "last_active_days_ago": 27,
+        "weekend_usage_ratio": 0.2326,
+        "engagement_trend": 3.035,
+        "spend_usd_last_30d": 0.0,
+        "days_until_renewal": 98,
+        "agent_runs_last_30d": 23,
+        "ide_plugin_sessions_last_30d": 5,
+        "seat_utilization": 0.5537
+      }
+    },
+    {
+      "id": "payment_friction",
+      "title": "Payment failures plus support load",
+      "story": "Two or more failed payments and a stack of tickets in 90 days. Above \u03c4, so a human owns the outreach; nothing is sent automatically.",
+      "source": {
+        "dataset": "seed-42 synthetic users.csv",
+        "split": "test (holdout)",
+        "candidates_matching_filter": 31
+      },
+      "expected": {
+        "p_raw": 0.681749,
+        "p_cal": 0.431818,
+        "band": "medium",
+        "hitl_action": "retention outreach (human review)"
+      },
+      "top_drivers": [
+        {
+          "feature": "last_active_days_ago",
+          "contribution": 0.52
+        },
+        {
+          "feature": "agent_runs_last_30d",
+          "contribution": -0.351
+        },
+        {
+          "feature": "support_tickets_last_90d",
+          "contribution": 0.328
+        }
+      ],
+      "reviewer": {
+        "action_taken": "retention outreach (human review)",
+        "notes": "billing fixed on call; outreach done"
+      },
+      "record": {
+        "user_id": "user_00144",
+        "user_name": "Taylor Wilson",
+        "days_since_signup": 696,
+        "sessions_last_7d": 5,
+        "sessions_last_30d": 23,
+        "avg_session_minutes": 10.8,
+        "models_used_count": 3,
+        "api_calls_last_30d": 431,
+        "tokens_consumed_last_30d": 63620,
+        "tools_used_count": 5,
+        "failed_requests_rate": 0.3147,
+        "support_tickets_last_90d": 5,
+        "plan_tier": "enterprise",
+        "payment_failures_last_90d": 2,
+        "feature_adoption_score": 0.2989,
+        "nps_score": 5.2,
+        "last_active_days_ago": 34,
+        "weekend_usage_ratio": 0.6455,
+        "engagement_trend": 0.9478,
+        "spend_usd_last_30d": 404.01,
+        "days_until_renewal": 38,
+        "agent_runs_last_30d": 38,
+        "ide_plugin_sessions_last_30d": 17,
+        "seat_utilization": 0.5292
+      }
+    },
+    {
+      "id": "gone_dark",
+      "title": "Gone dark",
+      "story": "No sessions this week and a month since last activity, with failing requests. High band: escalate to the retention owner today.",
+      "source": {
+        "dataset": "seed-42 synthetic users.csv",
+        "split": "test (holdout)",
+        "candidates_matching_filter": 45
+      },
+      "expected": {
+        "p_raw": 0.920532,
+        "p_cal": 0.894737,
+        "band": "high",
+        "hitl_action": "escalate"
+      },
+      "top_drivers": [
+        {
+          "feature": "feature_adoption_score",
+          "contribution": 0.667
+        },
+        {
+          "feature": "last_active_days_ago",
+          "contribution": 0.538
+        },
+        {
+          "feature": "engagement_trend",
+          "contribution": 0.33
+        }
+      ],
+      "reviewer": {
+        "action_taken": "escalate",
+        "notes": "escalated to account owner"
+      },
+      "record": {
+        "user_id": "user_00783",
+        "user_name": "Sam Nguyen",
+        "days_since_signup": 438,
+        "sessions_last_7d": 0,
+        "sessions_last_30d": 3,
+        "avg_session_minutes": 7.9,
+        "models_used_count": 0,
+        "api_calls_last_30d": 31,
+        "tokens_consumed_last_30d": 9857,
+        "tools_used_count": 3,
+        "failed_requests_rate": 0.3346,
+        "support_tickets_last_90d": 4,
+        "plan_tier": "starter",
+        "payment_failures_last_90d": 2,
+        "feature_adoption_score": 0.1882,
+        "nps_score": 4.3,
+        "last_active_days_ago": 38,
+        "weekend_usage_ratio": 0.3321,
+        "engagement_trend": 0.0,
+        "spend_usd_last_30d": 43.24,
+        "days_until_renewal": 248,
+        "agent_runs_last_30d": 20,
+        "ide_plugin_sessions_last_30d": 15,
+        "seat_utilization": 0.3844
+      }
+    },
+    {
+      "id": "enterprise_renewal_risk",
+      "title": "Enterprise renewal at risk",
+      "story": "Enterprise account renewing within 30 days with most seats idle. High band; the reviewer books an executive-sponsor call.",
+      "source": {
+        "dataset": "seed-42 synthetic users.csv",
+        "split": "test (holdout)",
+        "candidates_matching_filter": 1
+      },
+      "expected": {
+        "p_raw": 0.853823,
+        "p_cal": 0.62,
+        "band": "high",
+        "hitl_action": "escalate"
+      },
+      "top_drivers": [
+        {
+          "feature": "last_active_days_ago",
+          "contribution": 0.588
+        },
+        {
+          "feature": "feature_adoption_score",
+          "contribution": 0.376
+        },
+        {
+          "feature": "support_tickets_last_90d",
+          "contribution": 0.297
+        }
+      ],
+      "reviewer": {
+        "action_taken": "escalate",
+        "notes": "exec sponsor call booked before renewal"
+      },
+      "record": {
+        "user_id": "user_04410",
+        "user_name": "Quinn Kim",
+        "days_since_signup": 229,
+        "sessions_last_7d": 4,
+        "sessions_last_30d": 9,
+        "avg_session_minutes": 9.4,
+        "models_used_count": 5,
+        "api_calls_last_30d": 121,
+        "tokens_consumed_last_30d": 64100,
+        "tools_used_count": 2,
+        "failed_requests_rate": 0.3448,
+        "support_tickets_last_90d": 5,
+        "plan_tier": "enterprise",
+        "payment_failures_last_90d": 2,
+        "feature_adoption_score": 0.2671,
+        "nps_score": 4.6,
+        "last_active_days_ago": 40,
+        "weekend_usage_ratio": 0.3493,
+        "engagement_trend": 1.7341,
+        "spend_usd_last_30d": 373.32,
+        "days_until_renewal": 24,
+        "agent_runs_last_30d": 24,
+        "ide_plugin_sessions_last_30d": 9,
+        "seat_utilization": 0.1842
+      }
+    }
+  ],
+  "invalid_records": [
+    {
+      "id": "unknown_plan_tier",
+      "problem": "plan_tier outside the enum",
+      "error_contains": "plan_tier",
+      "record": {
+        "user_id": "invalid_unknown_plan_tier",
+        "user_name": "Invalid record (unknown_plan_tier)",
+        "days_since_signup": 696,
+        "sessions_last_7d": 5,
+        "sessions_last_30d": 23,
+        "avg_session_minutes": 10.8,
+        "models_used_count": 3,
+        "api_calls_last_30d": 431,
+        "tokens_consumed_last_30d": 63620,
+        "tools_used_count": 5,
+        "failed_requests_rate": 0.3147,
+        "support_tickets_last_90d": 5,
+        "plan_tier": "platinum",
+        "payment_failures_last_90d": 2,
+        "feature_adoption_score": 0.2989,
+        "nps_score": 5.2,
+        "last_active_days_ago": 34,
+        "weekend_usage_ratio": 0.6455,
+        "engagement_trend": 0.9478,
+        "spend_usd_last_30d": 404.01,
+        "days_until_renewal": 38,
+        "agent_runs_last_30d": 38,
+        "ide_plugin_sessions_last_30d": 17,
+        "seat_utilization": 0.5292
+      }
+    },
+    {
+      "id": "missing_nps_score",
+      "problem": "nps_score missing (nulls fail loud)",
+      "error_contains": "nps_score",
+      "record": {
+        "user_id": "invalid_missing_nps_score",
+        "user_name": "Invalid record (missing_nps_score)",
+        "days_since_signup": 696,
+        "sessions_last_7d": 5,
+        "sessions_last_30d": 23,
+        "avg_session_minutes": 10.8,
+        "models_used_count": 3,
+        "api_calls_last_30d": 431,
+        "tokens_consumed_last_30d": 63620,
+        "tools_used_count": 5,
+        "failed_requests_rate": 0.3147,
+        "support_tickets_last_90d": 5,
+        "plan_tier": "enterprise",
+        "payment_failures_last_90d": 2,
+        "feature_adoption_score": 0.2989,
+        "nps_score": null,
+        "last_active_days_ago": 34,
+        "weekend_usage_ratio": 0.6455,
+        "engagement_trend": 0.9478,
+        "spend_usd_last_30d": 404.01,
+        "days_until_renewal": 38,
+        "agent_runs_last_30d": 38,
+        "ide_plugin_sessions_last_30d": 17,
+        "seat_utilization": 0.5292
+      }
+    },
+    {
+      "id": "rate_out_of_range",
+      "problem": "failed_requests_rate above 1.0",
+      "error_contains": "failed_requests_rate",
+      "record": {
+        "user_id": "invalid_rate_out_of_range",
+        "user_name": "Invalid record (rate_out_of_range)",
+        "days_since_signup": 696,
+        "sessions_last_7d": 5,
+        "sessions_last_30d": 23,
+        "avg_session_minutes": 10.8,
+        "models_used_count": 3,
+        "api_calls_last_30d": 431,
+        "tokens_consumed_last_30d": 63620,
+        "tools_used_count": 5,
+        "failed_requests_rate": 1.4,
+        "support_tickets_last_90d": 5,
+        "plan_tier": "enterprise",
+        "payment_failures_last_90d": 2,
+        "feature_adoption_score": 0.2989,
+        "nps_score": 5.2,
+        "last_active_days_ago": 34,
+        "weekend_usage_ratio": 0.6455,
+        "engagement_trend": 0.9478,
+        "spend_usd_last_30d": 404.01,
+        "days_until_renewal": 38,
+        "agent_runs_last_30d": 38,
+        "ide_plugin_sessions_last_30d": 17,
+        "seat_utilization": 0.5292
+      }
+    },
+    {
+      "id": "non_numeric_sessions",
+      "problem": "sessions_last_30d sent as text",
+      "error_contains": "sessions_last_30d",
+      "record": {
+        "user_id": "invalid_non_numeric_sessions",
+        "user_name": "Invalid record (non_numeric_sessions)",
+        "days_since_signup": 696,
+        "sessions_last_7d": 5,
+        "sessions_last_30d": "ten",
+        "avg_session_minutes": 10.8,
+        "models_used_count": 3,
+        "api_calls_last_30d": 431,
+        "tokens_consumed_last_30d": 63620,
+        "tools_used_count": 5,
+        "failed_requests_rate": 0.3147,
+        "support_tickets_last_90d": 5,
+        "plan_tier": "enterprise",
+        "payment_failures_last_90d": 2,
+        "feature_adoption_score": 0.2989,
+        "nps_score": 5.2,
+        "last_active_days_ago": 34,
+        "weekend_usage_ratio": 0.6455,
+        "engagement_trend": 0.9478,
+        "spend_usd_last_30d": 404.01,
+        "days_until_renewal": 38,
+        "agent_runs_last_30d": 38,
+        "ide_plugin_sessions_last_30d": 17,
+        "seat_utilization": 0.5292
+      }
+    }
+  ],
+  "weekly_batch": {
+    "file": "weekly_batch.csv",
+    "rows": 211,
+    "valid_rows": 207,
+    "invalid_rows": 4,
+    "expected_actions": {
+      "escalate": 31,
+      "monitor": 143,
+      "nurture / check-in": 18,
+      "retention outreach (human review)": 15
+    }
+  }
+}

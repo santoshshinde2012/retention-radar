@@ -68,6 +68,21 @@ def hitl_action(prob: float, threshold: float, band: str) -> dict[str, Any]:
     }
 
 
+HOLD_ACTION = "hold: fix input data"
+
+
+def validation_hold(errors: list[str]) -> dict[str, Any]:
+    """HITL block for a record that failed validation: never scored, never queued."""
+    return {
+        "action": HOLD_ACTION,
+        "rationale": "Input failed validation, so no score or outreach is recommended: "
+        + "; ".join(errors),
+        "auto_action": "none",
+        "hitl_required": True,
+        "blocked_by_validation": True,
+    }
+
+
 class HitlDecisionPolicy:
     """``DecisionPolicy`` implementation used by packet + UI."""
 

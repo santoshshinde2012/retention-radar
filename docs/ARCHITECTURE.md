@@ -126,7 +126,8 @@ retention-radar/
 | Infer | Load bundle, score one row | Probability + band + drivers |
 | UI | Presets, forms, Decision tab | Streamlit HITL |
 | Batch score | Gold CSV → scores.csv / JSONL | `cli.batch_score` |
-| Thin API | Local `POST /v1/churn/score` | `serving/api.py` (no auth) |
+| Thin API | Local `POST /v1/churn/score` · `/batch` · `/reviews` | `serving/api.py` (no auth) |
+| Use cases | Seed-42 holdout scenarios per HITL path + invalid records + weekly batch + reviews + day-30 labels | `data/use_cases/` (`make use-cases`) |
 | HITL log | Append review decisions | `cli.hitl_log` + configs/templates |
 | Outcomes | Join reviews → later labels | `cli.hitl_outcomes` → `hitl_outcomes.{csv,json}` |
 | Ops-lite | Drift, retrain, when not to ship | guides/BEST_PRACTICES.md |
@@ -159,7 +160,7 @@ retention-radar/
 - GPU serving  
 - Paid feature stores or AutoML  
 
-**In scope (optional teaching serve):** a thin local FastAPI app (`serving/api.py`) with `POST /v1/churn/score` (conceptual alias `POST /v1/churn:score`). No auth — localhost teaching only. Streamlit remains the interactive HITL UI.
+**In scope (optional teaching serve):** a thin local FastAPI app (`serving/api.py`) with `POST /v1/churn/score` (conceptual alias `POST /v1/churn:score`; invalid input → 422 + hold, never scored), `POST /v1/churn/batch` (ranked queue + rejects) and `POST /v1/churn/reviews` (HITL decision logged against the service's own last score). No auth — localhost teaching only. Streamlit remains the interactive HITL UI.
 
 ## SOLID map (packages → principles)
 
@@ -169,6 +170,7 @@ The layout is a **teaching** SOLID sketch, not a claim that every file is a text
 |------------------|-----|-----|-----|-----|-----|
 | `config.py` | One place for paths, seed, 22-column contract | Extend features via config, not scattered lists | — | Does not expose train/serve APIs | Downstream depends on config values, not ad-hoc paths |
 | `data/generate.py` | Synthetic table + Santosh inject only | New generator knobs without touching serve | — | No scoring interface | Train scripts depend on CSV contract |
+| `data/use_cases.py` | Build / check the serving use-case pack from the seed-42 holdout | New scenario = one `Scenario` entry | — | Pack ≠ training data | Checks against the committed bundle |
 | `data/ingest.py` | Load + validate; fail loud on NaNs / bad plans | Extra checks can be added without changing transform | — | Validation is not mixed with Optuna | Train/eval depend on `load_users` |
 | `features/transform.py` | Encode `plan_tier`, build X/y | New columns via `MODEL_FEATURE_COLUMNS` | `DefaultFeatureTransformer` honours `FeatureTransformer` | Transform-only API | Train/serve call the transformer, not pandas ad-hoc |
 | `training/split.py` | Stratified split only | — | Same split helper for train/eval | No model API | Train/eval depend on split, not sklearn calls inline |
@@ -184,10 +186,10 @@ The layout is a **teaching** SOLID sketch, not a claim that every file is a text
 | `serving/explain.py` | Top drivers only | Swap SHAP vs gain without packet rewrite | — | Explain ≠ decide | Packet depends on explain helper |
 | `serving/policy.py` | Risk band + HITL action; `auto_action: none` | New bands without retraining | `HitlDecisionPolicy` honours `DecisionPolicy` | Policy is not a model | Packet/UI depend on policy Protocol |
 | `serving/packet.py` | Assemble validate → score → HITL JSON | Extra packet fields without trainer changes | — | Packet ≠ Streamlit | App depends on `build_decision_packet` |
-| `serving/batch_score.py` | Gold CSV → compact score rows | New output cols without UI changes | — | Batch ≠ packet | CLI depends on scorer + policy |
+| `serving/batch_score.py` | CSV → validated, ranked review queue + rejects | New output cols without UI changes | — | Batch ≠ packet | Shares `validate_payload` with packet / API |
 | `serving/hitl_log.py` | Append HITL review CSV | New log fields via schema | — | Log ≠ outcome write-back | CLI appends only |
 | `serving/outcomes.py` | Join review log → later labels; per-band / per-action report | New summary cuts without touching the log | — | Report ≠ retrain trigger | CLI reads log + labels only |
-| `serving/api.py` | Thin FastAPI score endpoint | Query flags (shap/log) without retraining | — | No auth / no CRM | Uses infer + policy |
+| `serving/api.py` | Thin FastAPI: score / batch / reviews | Query flags (shap/log) without retraining | — | No auth / no CRM | Uses packet validation + infer + policy + hitl_log |
 | `serving/drift.py` | Lite distribution check | — | — | Not a trainer | CLI only |
 | `app/streamlit_app.py` | Serve-only adapter | UI can change without retraining | — | Forms ≠ Optuna | Calls serving helpers only |
 | `docs_gen.py` | Model card + dictionary from JSON/schema | New columns appear when config/schema grow | — | Docs ≠ train | Reads metrics + schema |

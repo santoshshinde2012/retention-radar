@@ -42,6 +42,7 @@ def test_batch_score_tiny_fixture(tmp_path, committed_models_ok):
     assert len(scores) == 3
     assert out_csv.exists() and out_jsonl.exists()
     assert list(scores.columns) == [
+        "rank",
         "user_id",
         "p_raw",
         "p_cal",
@@ -53,7 +54,9 @@ def test_batch_score_tiny_fixture(tmp_path, committed_models_ok):
     ]
     assert set(scores["auto_action"].unique()) == {"none"}
     assert scores["band"].isin(["low", "medium", "high"]).all()
-    assert scores["user_id"].tolist() == ["u-0001", "u-0002", "u-0003"]
+    assert sorted(scores["user_id"]) == ["u-0001", "u-0002", "u-0003"]
+    assert scores["rank"].tolist() == [1, 2, 3] and scores["p_cal"].is_monotonic_decreasing
+    assert not out_csv.with_name("scores_rejected.csv").exists()
     line = out_jsonl.read_text(encoding="utf-8").strip().splitlines()[0]
     rec = json.loads(line)
     assert rec["auto_action"] == "none"

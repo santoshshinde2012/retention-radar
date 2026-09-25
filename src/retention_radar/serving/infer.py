@@ -41,9 +41,17 @@ def resolve_user_json(user: str | None, json_path: str | None) -> Path:
 
 
 def predict_user(
-    user_dict: dict, model_bundle: dict, calibrator=None, top_k: int = 5
+    user_dict: dict,
+    model_bundle: dict,
+    calibrator=None,
+    top_k: int = 5,
+    explain: bool = True,
 ) -> dict:
-    """Score one user through the transformer + classifier + optional calibrator."""
+    """Score one user through the transformer + classifier + optional calibrator.
+
+    ``explain=False`` skips SHAP (``top_features`` is then empty) for callers that
+    only need the score, e.g. the API without ``?shap=true``.
+    """
     model = model_bundle["model"]
     feature_names = model_bundle["feature_names"]
     X = row_to_feature_frame(user_dict)[feature_names]
@@ -52,7 +60,7 @@ def predict_user(
     raw_proba = float(raw_arr[0])
     cal_proba = float(cal_arr[0]) if cal_arr is not None else None
     display = float(display_arr[0])
-    top = top_contributing_features(model, X, feature_names, top_k=top_k)
+    top = top_contributing_features(model, X, feature_names, top_k=top_k) if explain else []
     return {
         "user_id": user_dict.get("user_id"),
         "user_name": user_dict.get("user_name"),

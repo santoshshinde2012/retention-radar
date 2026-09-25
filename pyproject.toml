@@ -27,6 +27,7 @@ rr-batch-score = "retention_radar.cli.batch_score:main"
 rr-hitl-log = "retention_radar.cli.hitl_log:main"
 rr-hitl-outcomes = "retention_radar.cli.hitl_outcomes:main"
 rr-check-reproduction = "retention_radar.cli.check_reproduction:main"
+rr-build-use-cases = "retention_radar.cli.build_use_cases:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
