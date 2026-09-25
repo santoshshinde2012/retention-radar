@@ -56,7 +56,7 @@ make infer
 # PYTHONPATH=src python -m retention_radar.cli.single_record --user santosh --out artifacts/santosh_decision_packet.json
 ```
 
-Expect raw ≈ **0.043**, calibrated ≈ **0.017**, band **low**, HITL **monitor** (`auto_action: none`). See [results/SANTOSH_ANALYSIS.md](../results/SANTOSH_ANALYSIS.md).
+Expect raw ≈ **0.043**, calibrated ≈ **0.016**, band **low**, HITL **monitor** (`auto_action: none`). See [results/SANTOSH_ANALYSIS.md](../results/SANTOSH_ANALYSIS.md).
 
 ## 4. UI and tests
 

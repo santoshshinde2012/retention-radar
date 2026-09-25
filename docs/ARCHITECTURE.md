@@ -150,7 +150,7 @@ retention-radar/
 **Batch gold scores:** `python -m retention_radar.cli.batch_score` → `artifacts/predictions/scores.csv`.  
 **Interactive:** Streamlit → load Santosh → edit → score + SHAP.  
 **Thin API:** `uvicorn retention_radar.serving.api:app --app-dir src` → `POST /v1/churn/score`.  
-**Canary:** freeze Santosh JSON; diff `P(churn)` after retrain (reference **0.043 / 0.017** · monitor).
+**Canary:** freeze Santosh JSON; diff `P(churn)` after retrain (reference **0.043 / 0.016** · monitor).
 
 ## Non-goals
 
@@ -176,7 +176,7 @@ The layout is a **teaching** SOLID sketch, not a claim that every file is a text
 | `training/train.py` | Fit default XGB + Optuna; write artifacts | Optuna search space can grow without serve changes | Best model still `predict_proba` | Does not own HITL copy | Writes files; UI never imports Optuna |
 | `training/calibrate.py` | Fit/persist probability map | Method `isotonic`/`sigmoid` | `ProbabilityCalibrator` honours `Calibrator` | Transform-only | Scorer depends on Protocol, not sklearn class |
 | `evaluation/metrics.py` | Metric dict helper | Extra keys without changing plots | — | No I/O | Train/eval share one helper |
-| `evaluation/evaluate.py` | Holdout plots + τ sweep | New plots without retraining | — | Not a trainer | Reads artifacts |
+| `evaluation/evaluate.py` | Holdout plots + τ sweep on validation (test read once at τ) | New plots without retraining | — | Not a trainer | Reads artifacts |
 | `evaluation/slices.py` | Educational `plan_tier` slices | New slice keys without claiming fairness | — | Slice report ≠ DPIA API | Evaluate calls slices |
 | `evaluation/benchmark.py` | Latency only | — | — | No training | Reads serve path |
 | **`serving/scoring.py`** | `CalibratedScorer`: raw → calibrated → display | New calibrator without UI changes | Dummy / LogReg / XGB all `predict_proba` | Tiny class: `raw_positive` + `score` | **Depends on `ProbabilisticClassifier` + `Calibrator` Protocols** (DIP) |

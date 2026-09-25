@@ -18,7 +18,7 @@ pip install -r requirements.txt && pip install -e .
 CHURN_DATA_SOURCE=synthetic ./scripts/run_all.sh
 ```
 
-Expect Santosh: raw ≈ **0.043** → calibrated ≈ **0.017** → band **low** → HITL **monitor** (`auto_action: none`).
+Expect Santosh: raw ≈ **0.043** → calibrated ≈ **0.016** → band **low** → HITL **monitor** (`auto_action: none`).
 
 Cite [`models/metrics.json`](../../models/metrics.json) · [results/BENCHMARKS.md](../../results/BENCHMARKS.md).
 

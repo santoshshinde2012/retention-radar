@@ -56,7 +56,7 @@ def test_seed42_santosh_scores(canary_paths):
     cal_f = float(cal)
 
     assert abs(raw - 0.043) <= TOL_PROB, f"raw={raw}"
-    assert abs(cal_f - 0.017) <= TOL_PROB, f"cal={cal_f}"
+    assert abs(cal_f - 0.016) <= TOL_PROB, f"cal={cal_f}"
 
     band = risk_band(cal_f)
     assert band == "low", band

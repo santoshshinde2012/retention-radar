@@ -122,7 +122,7 @@ python -m retention_radar.cli.single_record --user santosh --out artifacts/santo
 | Quantity | Value |
 |----------|------:|
 | Raw P(churn) | **0.043** |
-| Calibrated P(churn) | **0.017** |
+| Calibrated P(churn) | **0.016** |
 | Risk band | **low** |
 | Best-F1 threshold | **0.34** |
 | Half-threshold | **0.17** |

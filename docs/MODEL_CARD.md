@@ -1,6 +1,6 @@
 # Model card — AI platform churn (XGBoost)
 
-_Generated: 2026-09-15 · seed=42_
+_Generated: 2026-09-25 · seed=42_
 
 ## Overview
 
@@ -55,10 +55,11 @@ Method: `isotonic`.
 |----------|-------|
 | Test AUC-ROC (calibrated) | `0.8665` |
 | Test PR-AUC / AP | `0.6117` |
-| Best F1 threshold τ | `0.34` |
-| Best F1 at τ | `0.6015` |
+| Best F1 threshold τ (chosen on validation) | `0.34` |
+| F1 at τ (validation) | `0.6987` |
+| F1 at τ (test, reported once) | `0.6015` |
 | F1 @ 0.5 | `0.6006` |
-| Warm latency p50 / p95 (ms) | `2.01` / `2.15` |
+| Warm latency p50 / p95 (ms) | `24.03` / `32.09` |
 
 ## Result plots
 

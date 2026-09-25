@@ -32,7 +32,7 @@ Full map: [docs/guides/START_HERE.md](docs/guides/START_HERE.md). Do **not** clo
 | HITL only (`auto_action: none`) | Auto account cancellation |
 | Public **code + benchmarks + results** | Medium article home (internal) |
 
-**One-record example (seed 42):** raw **0.043** → calibrated **0.017** → band **low** → HITL **monitor**.
+**One-record example (seed 42):** raw **0.043** → calibrated **0.016** → band **low** → HITL **monitor**.
 
 **Honest ladder (test AUC):** LogReg / CatBoost **0.872** · Optuna XGB **0.870** · RF **0.868** · LightGBM **0.865**. Serving hero = **calibrated XGBoost**. Full tables: [`models/metrics.json`](models/metrics.json) · [results/BENCHMARKS.md](results/BENCHMARKS.md).
 

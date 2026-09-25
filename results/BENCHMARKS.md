@@ -58,8 +58,9 @@ Numbers rounded from [`../models/metrics.json`](../models/metrics.json) (CatBoos
 | Brier raw (test) | **0.138** |
 | Brier calibrated (test) | **0.106** |
 | Calibration method | isotonic (fit on validation) |
-| Best F1 threshold τ | **0.34** |
-| Best F1 at that τ | **0.602** |
+| Best F1 threshold τ (swept on **validation**, then frozen) | **0.34** |
+| F1 at τ — validation | **0.699** |
+| F1 at τ — test (read once) | **0.602** |
 | Calibrated test AP | **0.612** |
 
 ---
@@ -127,7 +128,7 @@ make docs-results   # refresh results/plots/ from artifacts/
 
 Or, without touching committed files: `make reproduce` retrains into `artifacts/repro/` and diffs every value against [`../models/metrics.json`](../models/metrics.json) (latency excluded — it is machine-dependent).
 
-**Reproducibility is exact, not approximate, on the pinned stack:** Python 3.12 + `requirements.txt` (XGBoost 3.4.1, scikit-learn 1.9.1, Optuna 5.0.0, LightGBM 4.7.0, CatBoost 1.2.10) re-creates all 178 non-latency values bit-for-bit and a byte-identical `churn_xgb.joblib` (verified 2026-09-25). On Python 3.11 pip can only install XGBoost ≤ 3.2, so every XGBoost-derived number drifts (e.g. best-F1 τ 0.34 → 0.42) while Dummy / LogReg / RF / LightGBM / CatBoost still match. Changing the generator also breaks bit-identical AUC — update the model card and this narrative together.
+**Reproducibility is exact, not approximate, on the pinned stack:** Python 3.12 + `requirements.txt` (XGBoost 3.4.1, scikit-learn 1.9.1, Optuna 5.0.0, LightGBM 4.7.0, CatBoost 1.2.10) re-creates all 182 non-latency values bit-for-bit and a byte-identical `churn_xgb.joblib` (verified 2026-09-25). On Python 3.11 pip can only install XGBoost ≤ 3.2, so every XGBoost-derived number drifts (e.g. best-F1 τ 0.34 → 0.42) while Dummy / LogReg / RF / LightGBM / CatBoost still match. Changing the generator also breaks bit-identical AUC — update the model card and this narrative together.
 
 **Cite the JSON**, not this markdown alone: every Table A–D cell is a rounded view of [`../models/metrics.json`](../models/metrics.json).
 

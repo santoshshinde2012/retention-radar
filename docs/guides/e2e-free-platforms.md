@@ -71,7 +71,7 @@ On every push/PR to `main`, ubuntu-latest + Python 3.12:
 
 1. `pip install -r requirements.txt && pip install -e .` (+ `ruff`)
 2. Snapshot the committed seed-42 serve bundle (`models/*.joblib` + JSON) into `.ci_seed42_fixtures/`
-3. Seed-42 canary: `pytest tests/test_seed42_canary.py tests/test_artifact_dir_isolation.py` against the **committed** bundle (Santosh raw ≈ 0.043 → calibrated ≈ 0.017 → low → monitor)
+3. Seed-42 canary: `pytest tests/test_seed42_canary.py tests/test_artifact_dir_isolation.py` against the **committed** bundle (Santosh raw ≈ 0.043 → calibrated ≈ 0.016 → low → monitor)
 4. `ruff check src/ tests/ app/`
 5. `./scripts/run_all.sh` with `N_USERS=800`, `N_OPTUNA_TRIALS=5` (generate → ingest → train → evaluate → slices → explain → benchmark → infer → drift → Santosh packet)
 6. `pytest -q` (full suite on the freshly trained smoke bundle)

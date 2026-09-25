@@ -193,11 +193,15 @@
     "test_brier_calibrated": 0.10623025277993886,
     "used_calibrated_probs": true,
     "best_f1_threshold": 0.34,
+    "best_f1_threshold_source": "validation",
+    "val_f1_at_threshold": 0.6987341772151898,
     "best_f1_at_threshold": 0.6015037593984962,
     "pr_curve_points": 40
   },
   "average_precision_test": 0.6117083946813743,
   "best_f1_threshold": 0.34,
+  "best_f1_threshold_source": "validation",
+  "val_f1_at_threshold": 0.6987341772151898,
   "best_f1_at_threshold": 0.6015037593984962,
   "slice_metrics_by_plan_tier": {
     "disclaimer": "Educational segment diagnostics by plan_tier only. NOT a protected-class fairness audit / DPIA / disparate-impact study.",
@@ -253,12 +257,12 @@
   "latency": {
     "n_warmup": 20,
     "n_runs": 200,
-    "latency_ms_mean": 2.0127890802541515,
-    "latency_ms_p50": 2.0062140029040165,
-    "latency_ms_p95": 2.151544154912699,
-    "latency_ms_p99": 2.244689655635738,
-    "latency_ms_min": 1.8087589996866882,
-    "latency_ms_max": 2.3903760011307895,
+    "latency_ms_mean": 25.55616588499788,
+    "latency_ms_p50": 24.028996499964705,
+    "latency_ms_p95": 32.093568450045495,
+    "latency_ms_p99": 39.919854650029265,
+    "latency_ms_min": 18.269788999987213,
+    "latency_ms_max": 44.02513400009411,
     "calibrated": true
   }
 }

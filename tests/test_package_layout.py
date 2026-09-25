@@ -85,3 +85,16 @@ def test_streamlit_scores_active_santosh():
     )
     assert "resolve_santosh_json" in text
     assert "SANTOSH_JSON" not in text
+
+
+def test_risk_band_rejects_non_finite():
+    import math
+
+    import pytest
+
+    for bad in (math.nan, math.inf, -math.inf):
+        with pytest.raises(ValueError):
+            risk_band(bad)
+    assert [risk_band(p) for p in (0.0, 0.2999, 0.30, 0.5999, 0.60, 1.0)] == [
+        "low", "low", "medium", "medium", "high", "high",
+    ]

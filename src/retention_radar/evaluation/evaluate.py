@@ -1,4 +1,10 @@
-"""Evaluate saved model: ROC, PR, calibration, threshold analysis."""
+"""Evaluate saved model: ROC, PR, calibration, threshold analysis.
+
+The operating threshold τ (``best_f1_threshold``) is chosen by a best-F1 sweep
+on the calibrated **validation** probabilities and then frozen; test metrics are
+reported once at that τ (``best_f1_at_threshold`` = test F1 at τ). Choosing τ on
+test would leak the holdout into a serving decision.
+"""
 
 from __future__ import annotations
 
@@ -62,18 +68,22 @@ def main() -> None:
 
     df = load_users()
     X, y = prepare_xy(df)
-    _, _, X_test, _, _, y_test = stratified_train_val_test(X, y)
+    _, X_val, X_test, _, y_val, y_test = stratified_train_val_test(X, y)
 
     model, feature_names = load_model()
     X_test = X_test[feature_names]
+    X_val = X_val[feature_names]
     y_prob_raw = model.predict_proba(X_test)[:, 1]
+    y_val_raw = model.predict_proba(X_val)[:, 1]
 
     calibrator = load_calibrator(config.CALIBRATOR_PATH)
     if calibrator is not None:
         y_prob = calibrator.transform(y_prob_raw)
+        y_val_prob = calibrator.transform(y_val_raw)
         used_calibrated = True
     else:
         y_prob = y_prob_raw
+        y_val_prob = y_val_raw
         used_calibrated = False
 
     y_pred = (y_prob >= 0.5).astype(int)
@@ -151,22 +161,22 @@ def main() -> None:
     plt.close(fig)
     print(f"Saved {cal_path}")
 
-    sweep = threshold_sweep(y_test, y_prob)
+    # τ is chosen on validation, then frozen; test is only read at that τ.
+    sweep = threshold_sweep(y_val, y_val_prob)
+    tau = sweep["best_threshold"]
+    test_rows = threshold_sweep(y_test, y_prob)["rows"]
+    test_f1_at_tau = float(f1_score(y_test, (y_prob >= tau).astype(int), zero_division=0))
     rows = sweep["rows"]
     ts = [r["threshold"] for r in rows]
     fig, ax = plt.subplots(figsize=(7, 5))
-    ax.plot(ts, [r["precision"] for r in rows], label="precision")
-    ax.plot(ts, [r["recall"] for r in rows], label="recall")
-    ax.plot(ts, [r["f1"] for r in rows], label="f1", linewidth=2)
-    ax.axvline(
-        sweep["best_threshold"],
-        color="gray",
-        linestyle="--",
-        label=f"best F1 @ {sweep['best_threshold']:.2f}",
-    )
+    ax.plot(ts, [r["precision"] for r in rows], label="precision (val)")
+    ax.plot(ts, [r["recall"] for r in rows], label="recall (val)")
+    ax.plot(ts, [r["f1"] for r in rows], label="f1 (val)", linewidth=2)
+    ax.plot(ts, [r["f1"] for r in test_rows], ":", color="black", label="f1 (test, read-only)")
+    ax.axvline(tau, color="gray", linestyle="--", label=f"τ = {tau:.2f} (val best F1)")
     ax.set_xlabel("Threshold")
     ax.set_ylabel("Score")
-    ax.set_title("Threshold analysis (business action)")
+    ax.set_title("Threshold chosen on validation (business action)")
     ax.legend(loc="best")
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1.05)
@@ -176,8 +186,10 @@ def main() -> None:
     plt.close(fig)
     print(f"Saved {thr_path}")
 
-    metrics["best_f1_threshold"] = sweep["best_threshold"]
-    metrics["best_f1_at_threshold"] = sweep["best_f1"]
+    metrics["best_f1_threshold"] = tau
+    metrics["best_f1_threshold_source"] = "validation"
+    metrics["val_f1_at_threshold"] = sweep["best_f1"]
+    metrics["best_f1_at_threshold"] = test_f1_at_tau
 
     prec, rec, _ = precision_recall_curve(y_test, y_prob)
     metrics["pr_curve_points"] = int(len(prec))
@@ -196,8 +208,10 @@ def main() -> None:
     out["brier_raw_test"] = brier_raw
     out["brier_calibrated_test"] = brier_cal
     out["average_precision_test"] = ap
-    out["best_f1_threshold"] = sweep["best_threshold"]
-    out["best_f1_at_threshold"] = sweep["best_f1"]
+    out["best_f1_threshold"] = tau
+    out["best_f1_threshold_source"] = "validation"
+    out["val_f1_at_threshold"] = sweep["best_f1"]
+    out["best_f1_at_threshold"] = test_f1_at_tau
     out["slice_metrics_by_plan_tier"] = slice_block
     with open(config.METRICS_PATH, "w", encoding="utf-8") as f:
         json.dump(out, f, indent=2)
