@@ -1,5 +1,6 @@
 ## Unreleased
 
+- fix: `python -m retention_radar.cli.drift_check --strict` ignored the exit code (the wrapper called `main()` without `SystemExit`), so CI's strict drift gate could never fail; test pins exit codes of every CLI with a `--strict`/error contract.
 - fix(serving, adversarial review): one input contract (`normalize_record` + `validate_payload`) for packet, CLI, CSV batch, API score/batch and UI. NaN/±inf, oversized ints and booleans in numeric fields are held (NaN rows were scored and queued by batch); `plan_tier` case/whitespace and extra fields are handled identically everywhere; every `/v1/churn/score` 422 carries the hold block; batch rejects non-object items and duplicate `user_id`s per row instead of failing or mis-attaching reviews.
 - fix(hitl): log appends are lock-protected and header-once (concurrent `/reviews` could truncate the log); bulk import is all-or-nothing, idempotent on rerun and honours `--timestamp`; held / score-less records cannot be reviewed; outcomes parse mixed ISO dates and treat unparseable dates as not yet observed (the leak guard was bypassed); a truncated prediction-log line no longer blocks every review; `RETENTION_RADAR_LOG_DIR` keeps verification runs out of the operator's logs.
 - fix(ui): one decision packet drives every tab, so invalid what-if input is held on Predict / Explain too; fixed dead doc links.

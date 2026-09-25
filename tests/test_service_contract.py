@@ -233,3 +233,25 @@ def test_streamlit_invalid_what_if_is_held_on_every_tab():
     assert "Churn probability" not in text
     assert f"**HITL action:** `{HOLD_ACTION}`" in text
     assert any("engagement_trend" in e.value for e in at.markdown) or any("engagement_trend" in e.value for e in at.error)
+
+
+def test_cli_wrappers_propagate_exit_codes(tmp_path, gone_dark):
+    """`python -m retention_radar.cli.*` must return the module's exit code (CI relies on it)."""
+    import subprocess
+    import sys
+
+    env = {**__import__("os").environ, "PYTHONPATH": str(config.PROJECT_ROOT / "src"), "CHURN_DATA_SOURCE": "synthetic"}
+    base = {k: gone_dark[k] for k in config.INFERENCE_REQUIRED_KEYS}
+    rows = [{**base, "user_id": f"u{i}"} for i in range(30)]
+    drifted = pd.DataFrame(rows).assign(sessions_last_30d=500, last_active_days_ago=300)
+    drifted.to_csv(tmp_path / "drifted.csv", index=False)
+    pd.DataFrame(rows + [{**base, "user_id": "bad", "nps_score": 99}]).to_csv(tmp_path / "batch.csv", index=False)
+
+    def run(*args):
+        return subprocess.run([sys.executable, "-m", *args], cwd=tmp_path, env=env, capture_output=True, text=True).returncode
+
+    assert run("retention_radar.cli.drift_check", "--csv", str(tmp_path / "drifted.csv"), "--strict",
+               "--out", str(tmp_path / "d.json")) == 1
+    assert run("retention_radar.cli.batch_score", "--csv", str(tmp_path / "batch.csv"), "--out",
+               str(tmp_path / "q.csv"), "--strict") == 1
+    assert run("retention_radar.cli.check_reproduction", "--artifact-dir", str(tmp_path / "none")) == 2
