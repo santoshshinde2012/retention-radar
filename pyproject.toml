@@ -7,7 +7,7 @@ name = "retention-radar"
 version = "0.1.0"
 description = "FOSS Retention Radar: XGBoost AI-platform churn teaching case (synthetic data, HITL)."
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 license = { text = "MIT" }
 authors = [{ name = "Santosh Shinde" }]
 
@@ -25,6 +25,9 @@ rr-slice-metrics = "retention_radar.cli.slice_metrics:main"
 rr-docs-gen = "retention_radar.cli.docs_gen:main"
 rr-batch-score = "retention_radar.cli.batch_score:main"
 rr-hitl-log = "retention_radar.cli.hitl_log:main"
+rr-hitl-outcomes = "retention_radar.cli.hitl_outcomes:main"
+rr-check-reproduction = "retention_radar.cli.check_reproduction:main"
+rr-build-use-cases = "retention_radar.cli.build_use_cases:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -36,7 +39,7 @@ pythonpath = ["src"]
 
 [tool.ruff]
 line-length = 100
-target-version = "py39"
+target-version = "py312"
 src = ["src"]
 
 [tool.ruff.lint]

@@ -73,6 +73,8 @@ flowchart TB
     INF2["serving/infer.py"]
     SR["serving/packet.py"]
     BS["serving/batch_score.py"]
+    HL["serving/hitl_log.py"]
+    OUT["serving/outcomes.py"]
     API["serving/api.py"]
     POL["serving/policy.py"]
     EXP["serving/explain.py"]
@@ -91,6 +93,7 @@ flowchart TB
   SR --> APP["app/streamlit_app.py"]
   INF2 --> APP
   INF2 --> API
+  HL --> OUT
 ```
 
 ```text
@@ -123,8 +126,10 @@ retention-radar/
 | Infer | Load bundle, score one row | Probability + band + drivers |
 | UI | Presets, forms, Decision tab | Streamlit HITL |
 | Batch score | Gold CSV → scores.csv / JSONL | `cli.batch_score` |
-| Thin API | Local `POST /v1/churn/score` | `serving/api.py` (no auth) |
+| Thin API | Local `POST /v1/churn/score` · `/batch` · `/reviews` | `serving/api.py` (no auth) |
+| Use cases | Seed-42 holdout scenarios per HITL path + invalid records + weekly batch + reviews + day-30 labels | `data/use_cases/` (`make use-cases`) |
 | HITL log | Append review decisions | `cli.hitl_log` + configs/templates |
+| Outcomes | Join reviews → later labels | `cli.hitl_outcomes` → `hitl_outcomes.{csv,json}` |
 | Ops-lite | Drift, retrain, when not to ship | guides/BEST_PRACTICES.md |
 
 ## Key artifacts contract
@@ -134,6 +139,7 @@ retention-radar/
 | `models/churn_xgb.joblib` | `infer`, Streamlit |
 | `models/calibrator.joblib` | calibrated `p` for bands |
 | `models/feature_names.json` | Transform order (22) for Santosh’s vector |
+| `models/feature_stats.json` | Outlier flags, drift reference, cohort-percentile fallback |
 | `models/metrics.json` | MODEL_CARD.md tables |
 | `artifacts/santosh_decision_packet.json` | Case study + CI canary |
 | Risk thresholds / bands | `infer.risk_band`, UI chips |
@@ -145,7 +151,7 @@ retention-radar/
 **Batch gold scores:** `python -m retention_radar.cli.batch_score` → `artifacts/predictions/scores.csv`.  
 **Interactive:** Streamlit → load Santosh → edit → score + SHAP.  
 **Thin API:** `uvicorn retention_radar.serving.api:app --app-dir src` → `POST /v1/churn/score`.  
-**Canary:** freeze Santosh JSON; diff `P(churn)` after retrain (reference **0.043 / 0.017** · monitor).
+**Canary:** freeze Santosh JSON; diff `P(churn)` after retrain (reference **0.043 / 0.016** · monitor).
 
 ## Non-goals
 
@@ -154,7 +160,7 @@ retention-radar/
 - GPU serving  
 - Paid feature stores or AutoML  
 
-**In scope (optional teaching serve):** a thin local FastAPI app (`serving/api.py`) with `POST /v1/churn/score` (conceptual alias `POST /v1/churn:score`). No auth — localhost teaching only. Streamlit remains the interactive HITL UI.
+**In scope (optional teaching serve):** a thin local FastAPI app (`serving/api.py`) with `POST /v1/churn/score` (conceptual alias `POST /v1/churn:score`; invalid input → 422 + hold, never scored), `POST /v1/churn/batch` (ranked queue + rejects) and `POST /v1/churn/reviews` (HITL decision logged against the service's own last score). No auth — localhost teaching only. Streamlit remains the interactive HITL UI.
 
 ## SOLID map (packages → principles)
 
@@ -164,6 +170,7 @@ The layout is a **teaching** SOLID sketch, not a claim that every file is a text
 |------------------|-----|-----|-----|-----|-----|
 | `config.py` | One place for paths, seed, 22-column contract | Extend features via config, not scattered lists | — | Does not expose train/serve APIs | Downstream depends on config values, not ad-hoc paths |
 | `data/generate.py` | Synthetic table + Santosh inject only | New generator knobs without touching serve | — | No scoring interface | Train scripts depend on CSV contract |
+| `data/use_cases.py` | Build / check the serving use-case pack (seed-42 test split + Santosh hero) | New scenario = one `Scenario` entry | — | Pack ≠ training data (Santosh aside: validation split) | Checks against the committed bundle |
 | `data/ingest.py` | Load + validate; fail loud on NaNs / bad plans | Extra checks can be added without changing transform | — | Validation is not mixed with Optuna | Train/eval depend on `load_users` |
 | `features/transform.py` | Encode `plan_tier`, build X/y | New columns via `MODEL_FEATURE_COLUMNS` | `DefaultFeatureTransformer` honours `FeatureTransformer` | Transform-only API | Train/serve call the transformer, not pandas ad-hoc |
 | `training/split.py` | Stratified split only | — | Same split helper for train/eval | No model API | Train/eval depend on split, not sklearn calls inline |
@@ -171,7 +178,7 @@ The layout is a **teaching** SOLID sketch, not a claim that every file is a text
 | `training/train.py` | Fit default XGB + Optuna; write artifacts | Optuna search space can grow without serve changes | Best model still `predict_proba` | Does not own HITL copy | Writes files; UI never imports Optuna |
 | `training/calibrate.py` | Fit/persist probability map | Method `isotonic`/`sigmoid` | `ProbabilityCalibrator` honours `Calibrator` | Transform-only | Scorer depends on Protocol, not sklearn class |
 | `evaluation/metrics.py` | Metric dict helper | Extra keys without changing plots | — | No I/O | Train/eval share one helper |
-| `evaluation/evaluate.py` | Holdout plots + τ sweep | New plots without retraining | — | Not a trainer | Reads artifacts |
+| `evaluation/evaluate.py` | Holdout plots + τ sweep on validation (test read once at τ) | New plots without retraining | — | Not a trainer | Reads artifacts |
 | `evaluation/slices.py` | Educational `plan_tier` slices | New slice keys without claiming fairness | — | Slice report ≠ DPIA API | Evaluate calls slices |
 | `evaluation/benchmark.py` | Latency only | — | — | No training | Reads serve path |
 | **`serving/scoring.py`** | `CalibratedScorer`: raw → calibrated → display | New calibrator without UI changes | Dummy / LogReg / XGB all `predict_proba` | Tiny class: `raw_positive` + `score` | **Depends on `ProbabilisticClassifier` + `Calibrator` Protocols** (DIP) |
@@ -179,9 +186,10 @@ The layout is a **teaching** SOLID sketch, not a claim that every file is a text
 | `serving/explain.py` | Top drivers only | Swap SHAP vs gain without packet rewrite | — | Explain ≠ decide | Packet depends on explain helper |
 | `serving/policy.py` | Risk band + HITL action; `auto_action: none` | New bands without retraining | `HitlDecisionPolicy` honours `DecisionPolicy` | Policy is not a model | Packet/UI depend on policy Protocol |
 | `serving/packet.py` | Assemble validate → score → HITL JSON | Extra packet fields without trainer changes | — | Packet ≠ Streamlit | App depends on `build_decision_packet` |
-| `serving/batch_score.py` | Gold CSV → compact score rows | New output cols without UI changes | — | Batch ≠ packet | CLI depends on scorer + policy |
+| `serving/batch_score.py` | CSV → validated, ranked review queue + rejects | New output cols without UI changes | — | Batch ≠ packet | Shares `validate_payload` with packet / API |
 | `serving/hitl_log.py` | Append HITL review CSV | New log fields via schema | — | Log ≠ outcome write-back | CLI appends only |
-| `serving/api.py` | Thin FastAPI score endpoint | Query flags (shap/log) without retraining | — | No auth / no CRM | Uses infer + policy |
+| `serving/outcomes.py` | Join review log → later labels; per-band / per-action report | New summary cuts without touching the log | — | Report ≠ retrain trigger | CLI reads log + labels only |
+| `serving/api.py` | Thin FastAPI: score / batch / reviews | Query flags (shap/log) without retraining | — | No auth / no CRM | Uses packet validation + infer + policy + hitl_log |
 | `serving/drift.py` | Lite distribution check | — | — | Not a trainer | CLI only |
 | `app/streamlit_app.py` | Serve-only adapter | UI can change without retraining | — | Forms ≠ Optuna | Calls serving helpers only |
 | `docs_gen.py` | Model card + dictionary from JSON/schema | New columns appear when config/schema grow | — | Docs ≠ train | Reads metrics + schema |

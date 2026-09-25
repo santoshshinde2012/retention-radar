@@ -63,7 +63,7 @@ This runs: `churn-sample` → `churn-gold-local` → sync → `CHURN_DATA_SOURCE
 
 CI always sets `CHURN_DATA_SOURCE=synthetic` so GitHub Actions never requires Silo/Spark.
 
-## Verified lakehouse E2E (box, 2026-09-14)
+## Verified lakehouse E2E (box, 2026-09-25 · Python 3.12, pinned stack)
 
 One-command path used: `./scripts/run_lakehouse_e2e.sh /path/to/local-data-lakehouse`.
 
@@ -72,9 +72,9 @@ One-command path used: `./scripts/run_lakehouse_e2e.sh /path/to/local-data-lakeh
 | Sample | `N_USERS=5000`, `CHURN_SEED=42`, Santosh `u-0001` |
 | Gold export | `data/export/churn_user_features.csv` + `santosh_inference_record.json` |
 | Sync | → `data/external/` via `scripts/sync_lakehouse_exports.sh` |
-| Train (lake gold) | `n_train=3000` · train churn ≈ **0.17** · Optuna XGB val AUC ≈ **0.721** · calibrated test AUC ≈ **0.694** |
+| Train (lake gold) | `n_train=3000` · train churn ≈ **0.17** · Optuna XGB val AUC ≈ **0.721** · calibrated test AUC ≈ **0.694** · best-F1 τ ≈ **0.17** |
 | Santosh (lake as-of) | raw ≈ **0.399** · calibrated ≈ **0.170** · band **low** · HITL nurture |
-| Drift lite | **severe** vs train feature_stats (expected when scoring one power-user against population means) |
+| Drift lite | **ok** — `flagged=0/22`, max \|z\| ≈ 0.03 (gold CSV vs its own train `feature_stats.json`) |
 
 ### Dual-world honesty
 

@@ -8,6 +8,7 @@ Aligned with [cookiecutter-data-science](https://cookiecutter-data-science.drive
 | **interim** | `interim/` | Intermediate transforms (empty in teaching path; CDS parity) |
 | **processed** | `processed/` | Model-ready tables if you materialize them locally (empty by default; features built in-memory) |
 | **external** | `external/` | Third-party / lakehouse gold sync (`churn_user_features.csv`, `santosh_inference_record.json`) |
+| **use cases** | [`use_cases/`](use_cases/README.md) | Committed serving scenarios from the seed-42 holdout: one record per HITL path, invalid records the service must hold, a weekly batch, reviewer decisions, day-30 labels (`make use-cases`) |
 
 ```bash
 # Prefer synthetic (CI / published ladder):

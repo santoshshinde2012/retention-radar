@@ -87,3 +87,15 @@ def test_restore_seed_paths_after_override(tmp_path):
     assert config.MODEL_PATH == config.SEED_MODELS_DIR / "churn_xgb.joblib"
     assert config.MODEL_CARD_PATH == config.DOCS_DIR / "MODEL_CARD.md"
     assert config.ARTIFACTS_DIR == config.PROJECT_ROOT / "artifacts"
+
+
+def test_run_all_packet_follows_artifact_dir():
+    """run_all.sh must not pin the Santosh packet to artifacts/ — lakehouse E2E
+    reads it from RETENTION_RADAR_ARTIFACT_DIR for results/lakehouse-e2e-summary.json."""
+    script = (config.PROJECT_ROOT / "scripts" / "run_all.sh").read_text(encoding="utf-8")
+    packet_lines = [
+        ln for ln in script.splitlines()
+        if "cli.single_record" in ln and not ln.lstrip().startswith("#")
+    ]
+    assert packet_lines, "run_all.sh should build the Santosh packet"
+    assert all("--out" not in ln for ln in packet_lines)

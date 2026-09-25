@@ -4,4 +4,4 @@ from retention_radar.serving.batch_score import *  # noqa: F403
 from retention_radar.serving.batch_score import main
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

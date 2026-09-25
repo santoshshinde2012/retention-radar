@@ -1,5 +1,5 @@
 {
-  "verified_at": "2026-09-14",
+  "verified_at": "2026-09-25",
   "source": "lakehouse gold N=5000 seed=42",
   "n_train": 3000,
   "n_test": 1000,
@@ -15,6 +15,6 @@
     "risk": "low",
     "hitl": "nurture / check-in"
   },
-  "note": "Lakehouse E2E writes only under artifacts/lakehouse_run/ via RETENTION_RADAR_ARTIFACT_DIR. This committed summary is the lakehouse dual-world cite; full runtime metrics.json is not committed and must not replace the published synthetic models.",
-  "artifact_dir": "artifacts/lakehouse_run"
+  "artifact_dir": "artifacts/lakehouse_run",
+  "note": "Lakehouse E2E writes only under artifacts/lakehouse_run/ via RETENTION_RADAR_ARTIFACT_DIR. Committed models/ + docs/MODEL_CARD.md are the published synthetic seed-42 ladder and must not be replaced."
 }

@@ -8,13 +8,12 @@ from pathlib import Path
 import pytest
 
 from retention_radar import config
-from retention_radar.data.generate import generate_users, inject_santosh, santosh_profile
-from retention_radar.features.transform import prepare_xy, row_to_feature_frame
-from retention_radar.data.ingest import validate_users
 from retention_radar.cli.train import main as train_main
-from retention_radar.serving.infer import predict_user, load_payload
+from retention_radar.data.generate import generate_users, inject_santosh, santosh_profile
+from retention_radar.data.ingest import validate_users
+from retention_radar.features.transform import prepare_xy
+from retention_radar.serving.infer import load_model_bundle, predict_user
 from retention_radar.training.calibrate import load_calibrator
-
 
 NEW_FEATURES = [
     "engagement_trend",
@@ -162,7 +161,7 @@ def test_train_and_infer_smoke(tiny_data):
         assert f in stats
         assert "p50" in stats[f]
 
-    bundle = load_payload(tiny_data["model_path"])
+    bundle = load_model_bundle(tiny_data["model_path"])
     calibrator = load_calibrator(tiny_data["calibrator_path"])
     assert calibrator is not None
     profile = json.loads(tiny_data["santosh_json"].read_text(encoding="utf-8"))
@@ -182,7 +181,7 @@ def test_single_record_packet(tiny_data):
 
     eval_main()  # populates best_f1_threshold
     profile = json.loads(tiny_data["santosh_json"].read_text(encoding="utf-8"))
-    bundle = load_payload(tiny_data["model_path"])
+    bundle = load_model_bundle(tiny_data["model_path"])
     calibrator = load_calibrator(tiny_data["calibrator_path"])
     packet = build_decision_packet(profile, model_bundle=bundle, calibrator=calibrator)
 
@@ -226,8 +225,8 @@ def test_single_record_packet(tiny_data):
 
 def test_evaluate_artifacts(tiny_data):
     train_main(n_trials=3)
-    from retention_radar.cli.evaluate import main as eval_main
     from retention_radar.cli.benchmark import main as bench_main
+    from retention_radar.cli.evaluate import main as eval_main
 
     eval_main()
     for name in (

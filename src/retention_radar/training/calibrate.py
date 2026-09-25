@@ -80,11 +80,37 @@ def save_calibrator(
     return path
 
 
+def _alias_legacy_src_package() -> None:
+    """Let pickles made as ``src.retention_radar.*`` load under ``retention_radar.*``.
+
+    Early bundles were pickled with the repo root on ``sys.path``, so they only
+    loaded when the launcher happened to add it (``python -m`` does; the
+    ``streamlit`` / ``uvicorn`` console scripts and Streamlit Cloud do not).
+    """
+    import importlib
+    import sys
+    import types
+
+    sys.modules.setdefault("src", types.ModuleType("src"))
+    for name in (
+        "retention_radar",
+        "retention_radar.training",
+        "retention_radar.training.calibrate",
+    ):
+        sys.modules.setdefault(f"src.{name}", importlib.import_module(name))
+
+
 def load_calibrator(path: Path | None = None) -> ProbabilityCalibrator | None:
     path = path or config.CALIBRATOR_PATH
     if not path.exists():
         return None
-    payload = joblib.load(path)
+    try:
+        payload = joblib.load(path)
+    except ModuleNotFoundError as exc:
+        if not (exc.name or "").startswith("src"):
+            raise
+        _alias_legacy_src_package()
+        payload = joblib.load(path)
     if isinstance(payload, dict) and "calibrator" in payload:
         return payload["calibrator"]
     if isinstance(payload, ProbabilityCalibrator):

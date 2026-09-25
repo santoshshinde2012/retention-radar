@@ -26,7 +26,7 @@ How we measure success, what the reference run produced, and how to read the lad
 | PR-AUC / average precision | Ranking under imbalance (~19.1% train churn) |
 | Precision / recall / F1 | At τ = 0.5 in ladder rows; best-F1 τ separate |
 | Brier (raw vs calibrated) | Probability reliability |
-| Warm latency | Single-row transform + `predict_proba` (+ calibrator) |
+| Warm latency | Single-row `predict_proba` (+ calibrator) on a pre-built feature row |
 
 Splits: stratified n_train / val / test = **3000 / 1000 / 1000**, seed **42**. Optuna on **validation** only; test reported once.
 
@@ -58,8 +58,9 @@ Numbers rounded from [`../models/metrics.json`](../models/metrics.json) (CatBoos
 | Brier raw (test) | **0.138** |
 | Brier calibrated (test) | **0.106** |
 | Calibration method | isotonic (fit on validation) |
-| Best F1 threshold τ | **0.34** |
-| Best F1 at that τ | **0.602** |
+| Best F1 threshold τ (swept on **validation**, then frozen) | **0.34** |
+| F1 at τ — validation | **0.699** |
+| F1 at τ — test (read once) | **0.602** |
 | Calibrated test AP | **0.612** |
 
 ---
@@ -110,7 +111,7 @@ Exact commands for the **published** seed-42 ladder (`N_USERS=5000`, `N_OPTUNA_T
 
 ```bash
 cd retention-radar
-python3 -m venv .venv && source .venv/bin/activate
+python3.12 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 pip install -e .
 # or: export PYTHONPATH="$(pwd)/src"
@@ -125,7 +126,9 @@ python -m retention_radar.cli.infer --user santosh
 make docs-results   # refresh results/plots/ from artifacts/
 ```
 
-Same seed + same package versions should match within float noise. Changing the generator breaks bit-identical AUC — update the model card and this narrative together.
+Or, without touching committed files: `make reproduce` retrains into `artifacts/repro/` and diffs every value against [`../models/metrics.json`](../models/metrics.json) (latency excluded — it is machine-dependent).
+
+**Reproducibility is exact, not approximate, on the pinned stack:** Python 3.12 + `requirements.txt` (XGBoost 3.4.1, scikit-learn 1.9.1, Optuna 5.0.0, LightGBM 4.7.0, CatBoost 1.2.10) re-creates all 182 non-latency values bit-for-bit and a byte-identical `churn_xgb.joblib` (verified 2026-09-25). On Python 3.11 the pinned install fails (XGBoost 3.4.1 needs 3.12); forcing XGBoost 3.2 there makes every XGBoost-derived number drift (e.g. best-F1 τ 0.34 → 0.32) while Dummy / LogReg / RF / LightGBM / CatBoost still match. Changing the generator also breaks bit-identical AUC — update the model card and this narrative together.
 
 **Cite the JSON**, not this markdown alone: every Table A–D cell is a rounded view of [`../models/metrics.json`](../models/metrics.json).
 

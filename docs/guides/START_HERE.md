@@ -8,7 +8,7 @@ Public FOSS path for the Medium / DET series. **Clone two public repos, run one 
 git clone https://github.com/santoshshinde2012/retention-radar.git
 git clone https://github.com/santoshshinde2012/local-data-lakehouse.git
 cd retention-radar
-python3 -m venv .venv && source .venv/bin/activate
+python3.12 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt && pip install -e .
 ```
 
@@ -18,9 +18,15 @@ pip install -r requirements.txt && pip install -e .
 CHURN_DATA_SOURCE=synthetic ./scripts/run_all.sh
 ```
 
-Expect Santosh: raw ≈ **0.043** → calibrated ≈ **0.017** → band **low** → HITL **monitor** (`auto_action: none`).
+Expect Santosh: raw ≈ **0.043** → calibrated ≈ **0.016** → band **low** → HITL **monitor** (`auto_action: none`).
 
 Cite [`models/metrics.json`](../../models/metrics.json) · [results/BENCHMARKS.md](../../results/BENCHMARKS.md).
+
+Verify the whole trilogy locally in one command (reproduce + tests + CLI/API/UI + lakehouse, committed files untouched):
+
+```bash
+make e2e-local   # picks up ../local-data-lakehouse automatically
+```
 
 ## 3. Optional lakehouse gold path
 
@@ -45,7 +51,7 @@ python -m retention_radar.cli.batch_score \
 
 Tiny fixture (tests): `tests/fixtures/batch/tiny_features.csv`.
 
-Append a HITL review-log row (predict → act; outcome write-back deferred):
+Append a HITL review-log row (predict → act):
 
 ```bash
 python -m retention_radar.cli.hitl_log \
@@ -54,6 +60,13 @@ python -m retention_radar.cli.hitl_log \
 ```
 
 Template + schema: [`configs/templates/hitl_review_log.csv`](../../configs/templates/hitl_review_log.csv) · [`configs/hitl_review_log.schema.json`](../../configs/hitl_review_log.schema.json).
+
+Close the loop once labels arrive (outcome write-back — observed churn per band / action; descriptive only):
+
+```bash
+python -m retention_radar.cli.hitl_outcomes --labels data/raw/users.csv
+# → artifacts/hitl_outcomes.csv + artifacts/hitl_outcomes.json
+```
 
 Thin local FastAPI (teaching-only, **no auth**). Preferred route `POST /v1/churn/score` (conceptual alias `POST /v1/churn:score`):
 

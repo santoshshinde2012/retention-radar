@@ -4,7 +4,7 @@ Human-in-the-loop churn ranking for a fictional AI platform.
 
 It ranks quiet fade-out risk and returns a checklist for a human. It does **not** auto-cancel anyone.
 
-[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](runtime.txt)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)](runtime.txt)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Live demo](https://img.shields.io/badge/live%20demo-TBD-lightgrey.svg)](docs/guides/e2e-free-platforms.md)
 
@@ -18,7 +18,7 @@ Teaching trilogy hub (public FOSS only):
 
 1. Clone **[retention-radar](https://github.com/santoshshinde2012/retention-radar)** + **[local-data-lakehouse](https://github.com/santoshshinde2012/local-data-lakehouse)**
 2. One synthetic command: `CHURN_DATA_SOURCE=synthetic ./scripts/run_all.sh`
-3. Optional lakehouse: `./scripts/run_lakehouse_e2e.sh ../local-data-lakehouse` (writes under `artifacts/lakehouse_run/` only — committed `models/` untouched)
+3. Optional lakehouse: `./scripts/run_lakehouse_e2e.sh ../local-data-lakehouse` (trains under `artifacts/lakehouse_run/` — committed `models/` untouched; refreshes `results/lakehouse-e2e-summary.json`)
 4. **Live demo:** TBD — Streamlit Community Cloud / HF Space ([deploy later](docs/guides/DEPLOY_LATER.md))
 
 Full map: [docs/guides/START_HERE.md](docs/guides/START_HERE.md). Do **not** clone any private article workspace.
@@ -32,7 +32,7 @@ Full map: [docs/guides/START_HERE.md](docs/guides/START_HERE.md). Do **not** clo
 | HITL only (`auto_action: none`) | Auto account cancellation |
 | Public **code + benchmarks + results** | Medium article home (internal) |
 
-**One-record example (seed 42):** raw **0.043** → calibrated **0.017** → band **low** → HITL **monitor**.
+**One-record example (seed 42):** raw **0.043** → calibrated **0.016** → band **low** → HITL **monitor**.
 
 **Honest ladder (test AUC):** LogReg / CatBoost **0.872** · Optuna XGB **0.870** · RF **0.868** · LightGBM **0.865**. Serving hero = **calibrated XGBoost**. Full tables: [`models/metrics.json`](models/metrics.json) · [results/BENCHMARKS.md](results/BENCHMARKS.md).
 
@@ -52,8 +52,8 @@ Full map: [docs/guides/START_HERE.md](docs/guides/START_HERE.md). Do **not** clo
 
 ## Requirements
 
-- Python **3.11+**
-- The committed `models/calibrator.joblib` was trained with scikit-learn **1.9.1**, so this runtime is required to install and load the serving bundle.
+- Python **3.12+** (tested on 3.12). The committed seed-42 bundle was trained with XGBoost **3.4.1** and scikit-learn **1.9.1**; XGBoost 3.3+ needs Python 3.12, so on older Pythons `pip install -r requirements.txt` stops with "No matching distribution found for xgboost==3.4.1" (an unpinned older XGBoost cannot reproduce the published numbers).
+- `requirements.txt` pins the model-affecting libraries (XGBoost, scikit-learn, Optuna, LightGBM, CatBoost) so `make run` re-creates every non-latency value in `models/metrics.json` exactly (latency is machine-dependent). Full version snapshot: [`requirements.lock`](requirements.lock).
 - Linux, macOS, or Windows (WSL on Windows)
 - CPU only
 - **macOS:** `brew install libomp` if XGBoost or LightGBM fail to load
@@ -65,7 +65,7 @@ Full map: [docs/guides/START_HERE.md](docs/guides/START_HERE.md). Do **not** clo
 ```bash
 git clone https://github.com/santoshshinde2012/retention-radar.git
 cd retention-radar
-python3 -m venv .venv
+python3.12 -m venv .venv
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 pip install -e .
@@ -90,16 +90,20 @@ Then:
 | Cite metrics | [`models/metrics.json`](models/metrics.json) |
 | Read benchmarks | [results/BENCHMARKS.md](results/BENCHMARKS.md) |
 | Score Santosh | `make infer` |
-| Batch gold scores | `python -m retention_radar.cli.batch_score --csv data/external/churn_user_features.csv` |
-| Thin local API | `uvicorn retention_radar.serving.api:app --app-dir src` → `POST /v1/churn/score` |
+| Walk every use case | `make use-cases` — [data/use_cases/](data/use_cases/README.md): weekly batch → ranked queue (+ rejects) → packets → held records → reviews → day-30 outcomes |
+| Batch scores | `python -m retention_radar.cli.batch_score --csv data/raw/users.csv` → ranked queue + `*_rejected.csv` (lakehouse gold after a sync: `--csv data/external/churn_user_features.csv`) |
+| HITL outcomes | after `make use-cases`: `python -m retention_radar.cli.hitl_outcomes --log artifacts/use_cases/hitl_review_log.csv --labels data/use_cases/labels_day30.csv` |
+| Thin local API | `uvicorn retention_radar.serving.api:app --app-dir src` → `POST /v1/churn/score`, `/v1/churn/batch`, `/v1/churn/reviews` |
 | Open UI | `make ui` (committed models only — no fit on load) |
 | Live demo | TBD — Streamlit Community Cloud / HF Space ([DEPLOY_LATER.md](docs/guides/DEPLOY_LATER.md)) |
 | Run tests | `make test` |
+| Verify everything locally | `make e2e-local` (~3 min on a laptop CPU; add the lakehouse by cloning it beside this repo) |
 
 Faster smoke:
 
 ```bash
-N_USERS=800 N_OPTUNA_TRIALS=5 CHURN_DATA_SOURCE=synthetic ./scripts/run_all.sh
+# isolated: committed models/ stay the published bundle (users.csv is regenerated at N=800)
+RETENTION_RADAR_ARTIFACT_DIR=artifacts/smoke N_USERS=800 N_OPTUNA_TRIALS=5 CHURN_DATA_SOURCE=synthetic ./scripts/run_all.sh
 ```
 
 ### Make targets
@@ -113,13 +117,17 @@ N_USERS=800 N_OPTUNA_TRIALS=5 CHURN_DATA_SOURCE=synthetic ./scripts/run_all.sh
 | `make ui` | Streamlit UI |
 | `make api` | Thin local FastAPI (teaching; no auth) |
 | `make run-lakehouse` | Lakehouse E2E (needs lakehouse checkout) |
+| `make use-cases` | Walk the service on `data/use_cases/` (queue, packets, held records, reviews, outcomes) |
+| `make reproduce` | Retrain into `artifacts/repro/` and diff against committed `models/metrics.json` (exact match expected) |
+| `make e2e-local` | **Everything end to end**: reproduce, tests, CLI + live API + live Streamlit, lakehouse (if cloned beside), isolation check |
+| `make lint` | Ruff on `src/ tests/ app/` |
 
 CLI (after install):
 
 ```bash
 python -m retention_radar.cli.train
 python -m retention_radar.cli.infer --user santosh
-python -m retention_radar.cli.batch_score --csv data/external/churn_user_features.csv
+python -m retention_radar.cli.batch_score --csv data/use_cases/weekly_batch.csv   # or data/raw/users.csv after make run
 uvicorn retention_radar.serving.api:app --app-dir src   # POST /v1/churn/score
 ```
 

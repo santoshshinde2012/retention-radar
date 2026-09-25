@@ -4,4 +4,4 @@ from retention_radar.serving.drift import *  # noqa: F403
 from retention_radar.serving.drift import main
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

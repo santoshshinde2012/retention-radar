@@ -15,10 +15,9 @@ import pytest
 
 from retention_radar import config
 from retention_radar.data.generate import santosh_profile
-from retention_radar.serving.infer import load_payload, predict_user
+from retention_radar.serving.infer import load_model_bundle, predict_user
 from retention_radar.serving.policy import hitl_action, risk_band
 from retention_radar.training.calibrate import load_calibrator
-
 
 TOL_PROB = 0.005
 TOL_AUC = 0.01
@@ -43,7 +42,7 @@ def canary_paths():
 
 
 def test_seed42_santosh_scores(canary_paths):
-    bundle = load_payload(canary_paths["model"])
+    bundle = load_model_bundle(canary_paths["model"])
     calibrator = None
     if canary_paths["calibrator"].exists():
         calibrator = load_calibrator(canary_paths["calibrator"])
@@ -57,7 +56,7 @@ def test_seed42_santosh_scores(canary_paths):
     cal_f = float(cal)
 
     assert abs(raw - 0.043) <= TOL_PROB, f"raw={raw}"
-    assert abs(cal_f - 0.017) <= TOL_PROB, f"cal={cal_f}"
+    assert abs(cal_f - 0.016) <= TOL_PROB, f"cal={cal_f}"
 
     band = risk_band(cal_f)
     assert band == "low", band

@@ -22,9 +22,13 @@ from retention_radar.serving.scoring import CalibratedScorer
 from retention_radar.training.calibrate import load_calibrator
 
 
-def load_payload(path: Path) -> dict:
+def load_model_bundle(path: Path) -> dict:
     """Load the joblib model bundle (estimator + feature names)."""
     return joblib.load(path)
+
+
+# Back-compat alias: older notebooks / articles import ``load_payload``.
+load_payload = load_model_bundle
 
 
 def resolve_user_json(user: str | None, json_path: str | None) -> Path:
@@ -37,9 +41,17 @@ def resolve_user_json(user: str | None, json_path: str | None) -> Path:
 
 
 def predict_user(
-    user_dict: dict, model_bundle: dict, calibrator=None, top_k: int = 5
+    user_dict: dict,
+    model_bundle: dict,
+    calibrator=None,
+    top_k: int = 5,
+    explain: bool = True,
 ) -> dict:
-    """Score one user through the transformer + classifier + optional calibrator."""
+    """Score one user through the transformer + classifier + optional calibrator.
+
+    ``explain=False`` skips SHAP (``top_features`` is then empty) for callers that
+    only need the score, e.g. the API without ``?shap=true``.
+    """
     model = model_bundle["model"]
     feature_names = model_bundle["feature_names"]
     X = row_to_feature_frame(user_dict)[feature_names]
@@ -48,7 +60,7 @@ def predict_user(
     raw_proba = float(raw_arr[0])
     cal_proba = float(cal_arr[0]) if cal_arr is not None else None
     display = float(display_arr[0])
-    top = top_contributing_features(model, X, feature_names, top_k=top_k)
+    top = top_contributing_features(model, X, feature_names, top_k=top_k) if explain else []
     return {
         "user_id": user_dict.get("user_id"),
         "user_name": user_dict.get("user_name"),
@@ -82,7 +94,7 @@ def main(argv: list[str] | None = None) -> None:
             f"Model not found: {model_path}. Run python -m retention_radar.cli.train first."
         )
 
-    bundle = load_payload(model_path)
+    bundle = load_model_bundle(model_path)
     calibrator = load_calibrator(config.CALIBRATOR_PATH)
     result = predict_user(user_dict, bundle, calibrator=calibrator)
 

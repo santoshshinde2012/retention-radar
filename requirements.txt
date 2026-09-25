@@ -1,12 +1,15 @@
 pandas>=2.0
 numpy>=1.24
+# Model-affecting libraries are pinned to the versions that produced the committed
+# seed-42 bundle (models/). Changing any of them changes models/metrics.json;
+# `make reproduce` fails loudly if that happens. XGBoost 3.4.1 needs Python 3.12+.
 scikit-learn==1.9.1
-xgboost>=2.0
-lightgbm>=4.0
-catboost>=1.2
-optuna>=3.4
+xgboost==3.4.1
+lightgbm==4.7.0
+catboost==1.2.10
+optuna==5.0.0
 shap>=0.44
-streamlit>=1.28
+streamlit>=1.50
 matplotlib>=3.7
 joblib>=1.3
 pytest>=7.4

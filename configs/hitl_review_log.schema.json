@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://example.local/schemas/hitl_review_log.schema.json",
   "title": "HITL review log row",
-  "description": "One human review decision after scoring. Start of predict→act→outcome; outcome write-back deferred.",
+  "description": "One human review decision after scoring. Act step of predict→act→outcome; joined to later labels by cli.hitl_outcomes.",
   "type": "object",
   "additionalProperties": false,
   "required": [

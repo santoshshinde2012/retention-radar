@@ -9,17 +9,20 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
 import joblib
+import numpy as np
 import pandas as pd
 
 from retention_radar import config
 from retention_radar.data.ingest import resolve_users_csv
 from retention_radar.features.transform import row_to_feature_frame
 from retention_radar.serving.infer import predict_user, resolve_user_json
-from retention_radar.serving.policy import HitlDecisionPolicy
+from retention_radar.serving.policy import HitlDecisionPolicy, validation_hold
 from retention_radar.training.calibrate import load_calibrator
 
 
@@ -39,13 +42,78 @@ def load_feature_stats(path: Path | None = None) -> dict:
         return json.load(f)
 
 
+@lru_cache(maxsize=1)
+def _record_validator():
+    """Compiled JSON-schema validator for the 24-field inference record (or None)."""
+    if not config.USER_RECORD_SCHEMA_PATH.exists():
+        return None
+    try:
+        import jsonschema  # type: ignore
+    except ImportError:
+        return None
+    with open(config.USER_RECORD_SCHEMA_PATH, encoding="utf-8") as f:
+        schema = json.load(f)
+    return jsonschema.Draft7Validator(schema)
+
+
+IDENTITY_KEYS = ("user_id", "user_name")
+
+
+def normalize_record(raw: Any) -> tuple[Any, list[str]]:
+    """One input contract for every surface (packet, batch, API, UI).
+
+    Projects to the 24 contract fields (extra fields such as a ``churned`` label or
+    CRM metadata are ignored and reported as a warning), strips identities, and
+    normalises ``plan_tier`` case/whitespace. Numeric text from CSVs is parsed;
+    anything else (bools, lists, NaN) is left for ``validate_payload`` to reject.
+    Non-dict input is returned unchanged so validation can refuse it.
+    """
+    if not isinstance(raw, dict):
+        return raw, []
+    notes: list[str] = []
+    extra = sorted(str(k) for k in raw if k not in config.INFERENCE_REQUIRED_KEYS)
+    if extra:
+        notes.append(f"ignored fields outside the 24-field contract: {extra}")
+    out: dict[str, Any] = {}
+    for key in config.INFERENCE_REQUIRED_KEYS:
+        if key not in raw:
+            continue
+        val = raw[key]
+        if isinstance(val, str):
+            val = val.strip()
+            if not val:
+                continue  # empty cell → reported as missing
+        if key in IDENTITY_KEYS:
+            if isinstance(val, (int, float)) and not isinstance(val, bool):
+                val = str(val)  # numeric id column in a CSV
+        elif key == "plan_tier":
+            if isinstance(val, str):
+                val = val.lower()
+        elif isinstance(val, str):
+            try:
+                val = float(val)
+            except ValueError:
+                pass  # validate_payload reports "must be numeric"
+        out[key] = val
+    return out, notes
+
+
 def validate_payload(payload: dict) -> dict[str, Any]:
     """Validate inference payload against required keys, ranges, plan_tier enum.
 
-    Returns a validation block (never raises for soft range issues — collects errors).
+    Never raises: every problem is collected into ``errors`` (→ record held) or
+    ``warnings``. Callers pass the output of ``normalize_record``.
     """
     errors: list[str] = []
     warnings: list[str] = []
+    if not isinstance(payload, dict):
+        return {
+            "ok": False,
+            "errors": [f"record must be a JSON object, got {type(payload).__name__}"],
+            "warnings": [],
+            "schema_validated": False,
+            "required_keys_present": False,
+        }
 
     missing = [
         k
@@ -59,13 +127,24 @@ def validate_payload(payload: dict) -> dict[str, Any]:
     if plan is not None and plan not in config.PLAN_TIER_ORDER:
         errors.append(f"plan_tier must be one of {config.PLAN_TIER_ORDER}, got {plan!r}")
 
+    bad_numeric: set[str] = set()
     for key, (lo, hi) in config.FEATURE_RANGES.items():
-        if key not in payload:
+        if key not in payload or payload[key] is None:
+            continue  # already reported as missing
+        raw_val = payload[key]
+        if isinstance(raw_val, bool):
+            errors.append(f"{key} must be a number, not a boolean ({raw_val!r})")
+            bad_numeric.add(key)
             continue
         try:
-            val = float(payload[key])
-        except (TypeError, ValueError):
-            errors.append(f"{key} must be numeric, got {payload[key]!r}")
+            val = float(raw_val)
+        except (TypeError, ValueError, OverflowError):
+            errors.append(f"{key} must be numeric, got {raw_val!r}")
+            bad_numeric.add(key)
+            continue
+        if not math.isfinite(val):
+            errors.append(f"{key} must be a finite number, got {raw_val!r}")
+            bad_numeric.add(key)
             continue
         if val < lo or val > hi:
             errors.append(f"{key}={val} outside allowed range [{lo}, {hi}]")
@@ -75,6 +154,7 @@ def validate_payload(payload: dict) -> dict[str, Any]:
         and "sessions_last_30d" in payload
         and "engagement_trend" in payload
         and not missing
+        and not bad_numeric & {"sessions_last_7d", "sessions_last_30d", "engagement_trend"}
     ):
         s7 = float(payload["sessions_last_7d"])
         s30 = float(payload["sessions_last_30d"])
@@ -87,19 +167,13 @@ def validate_payload(payload: dict) -> dict[str, Any]:
             )
 
     schema_ok = None
-    if config.USER_RECORD_SCHEMA_PATH.exists() and not missing:
-        try:
-            import jsonschema  # type: ignore
-
-            with open(config.USER_RECORD_SCHEMA_PATH, encoding="utf-8") as f:
-                schema = json.load(f)
-            jsonschema.validate(instance=payload, schema=schema)
-            schema_ok = True
-        except ImportError:
-            schema_ok = None
-        except Exception as exc:  # noqa: BLE001
-            schema_ok = False
-            errors.append(f"jsonschema: {exc}")
+    validator = _record_validator()
+    if validator is not None and not missing:
+        schema_errors = sorted(validator.iter_errors(payload), key=lambda e: list(e.path))
+        schema_ok = not schema_errors
+        for err in schema_errors:
+            where = ".".join(str(p) for p in err.path) or "record"
+            errors.append(f"jsonschema: {where}: {err.message}")
 
     return {
         "ok": len(errors) == 0,
@@ -138,31 +212,106 @@ def flag_outliers(payload: dict, feature_stats: dict) -> list[dict]:
     return flags
 
 
+_STATS_QUANTILES = [
+    ("min", 0.0),
+    ("p01", 1.0),
+    ("p05", 5.0),
+    ("p25", 25.0),
+    ("p50", 50.0),
+    ("p75", 75.0),
+    ("p95", 95.0),
+    ("p99", 99.0),
+    ("max", 100.0),
+]
+
+
+def _percentile_from_stats(val: float, block: dict) -> float | None:
+    """Approximate percentile rank by interpolating training-set quantiles."""
+    points = [(float(block[k]), pct) for k, pct in _STATS_QUANTILES if k in block]
+    if len(points) < 2:
+        return None
+    xs = np.array([x for x, _ in points])
+    ps = np.array([pc for _, pc in points])
+    if val < xs[0]:
+        return 0.0
+    if val >= xs[-1]:
+        return 100.0
+    # Ties (e.g. many zeros) → take the highest percentile at that value (≤ semantics).
+    idx = int(np.searchsorted(xs, val, side="right"))
+    x0, x1 = xs[idx - 1], xs[idx]
+    p0, p1 = ps[idx - 1], ps[idx]
+    if x1 == x0:
+        return float(p1)
+    return float(p0 + (p1 - p0) * (val - x0) / (x1 - x0))
+
+
 def cohort_percentiles(
     payload: dict,
     users_csv: Path | None = None,
     features: list[str] | None = None,
+    feature_stats: dict | None = None,
 ) -> dict[str, dict]:
-    """Percentile rank of each key feature vs population in users.csv."""
+    """Percentile rank of each key feature vs population in users.csv.
+
+    When users.csv is absent (e.g. Streamlit Community Cloud, which only ships the
+    committed ``models/`` bundle), fall back to an approximate rank interpolated
+    from ``feature_stats.json`` training quantiles. Each entry records its
+    ``source`` so the UI can label approximations.
+    """
     features = features or config.COHORT_COMPARE_FEATURES
     csv_path = users_csv or resolve_users_csv()
     out: dict[str, dict] = {}
-    if not csv_path.exists():
+    if csv_path.exists():
+        df = pd.read_csv(csv_path)
+        for feat in features:
+            if feat not in payload or feat not in df.columns:
+                continue
+            val = float(payload[feat])
+            col = df[feat].astype(float)
+            pct = float((col <= val).mean() * 100.0)
+            out[feat] = {
+                "value": val,
+                "percentile": round(pct, 2),
+                "population_median": float(col.median()),
+                "population_mean": float(col.mean()),
+                "source": "users_csv",
+            }
         return out
-    df = pd.read_csv(csv_path)
+
+    stats = feature_stats if feature_stats is not None else load_feature_stats()
     for feat in features:
-        if feat not in payload or feat not in df.columns:
+        block = stats.get(feat)
+        if feat not in payload or not block:
             continue
         val = float(payload[feat])
-        col = df[feat].astype(float)
-        pct = float((col <= val).mean() * 100.0)
+        pct = _percentile_from_stats(val, block)
+        if pct is None:
+            continue
         out[feat] = {
             "value": val,
             "percentile": round(pct, 2),
-            "population_median": float(col.median()),
-            "population_mean": float(col.mean()),
+            "population_median": float(block.get("p50", block.get("mean", 0.0))),
+            "population_mean": float(block.get("mean", 0.0)),
+            "source": "feature_stats",
         }
     return out
+
+
+def held_packet(payload: Any, validation: dict[str, Any]) -> dict[str, Any]:
+    """Packet for input that failed validation: no score, no explanation, HITL hold."""
+    ident = payload if isinstance(payload, dict) else {}
+    return {
+        "user_id": ident.get("user_id"),
+        "user_name": ident.get("user_name"),
+        "validation": validation,
+        "payload": payload,
+        "scoring": None,
+        "explanation": None,
+        "outliers": [],
+        "cohort_compare": {},
+        "hitl": validation_hold(validation["errors"]),
+        "meta": {"data_source": config.CHURN_DATA_SOURCE},
+    }
 
 
 def build_decision_packet(
@@ -172,13 +321,19 @@ def build_decision_packet(
     metrics: dict | None = None,
     feature_stats: dict | None = None,
     policy: HitlDecisionPolicy | None = None,
+    top_k: int = 5,
 ) -> dict[str, Any]:
     """Full validate → score → explain → cohort → HITL decision packet."""
     metrics = metrics if metrics is not None else load_metrics()
     feature_stats = feature_stats if feature_stats is not None else load_feature_stats()
     policy = policy or HitlDecisionPolicy()
 
+    payload, notes = normalize_record(payload)
     validation = validate_payload(payload)
+    validation["warnings"] = notes + validation["warnings"]
+    if not validation["ok"]:
+        # Fail loud: an invalid record is never scored, ranked or queued for outreach.
+        return held_packet(payload, validation)
     if model_bundle is None:
         if not config.MODEL_PATH.exists():
             raise FileNotFoundError(f"Model not found: {config.MODEL_PATH}")
@@ -186,7 +341,7 @@ def build_decision_packet(
     if calibrator is None:
         calibrator = load_calibrator(config.CALIBRATOR_PATH)
 
-    score = predict_user(payload, model_bundle, calibrator=calibrator)
+    score = predict_user(payload, model_bundle, calibrator=calibrator, top_k=top_k)
     display = float(score["churn_probability"])
     band = score["risk_band"]
     threshold = float(metrics.get("best_f1_threshold", 0.5))
@@ -237,6 +392,11 @@ def print_human_summary(packet: dict) -> None:
         f"Validation: {'OK' if v.get('ok') else 'FAILED'}  "
         f"errors={len(v.get('errors') or [])}"
     )
+    if s is None:
+        for err in v.get("errors") or []:
+            print(f"  error: {err}")
+        print(f"HITL action: {h.get('action')}  (auto={h.get('auto_action')})")
+        return
     raw = s.get("churn_probability_raw")
     cal = s.get("churn_probability_calibrated")
     print(
@@ -274,20 +434,27 @@ def batch_score_dir(
     n_ok = 0
     with open(out_path, "w", encoding="utf-8") as fout:
         for fp in files:
-            with open(fp, encoding="utf-8") as f:
-                payload = json.load(f)
-            packet = build_decision_packet(
-                payload, model_bundle=model_bundle, calibrator=calibrator
-            )
+            try:
+                with open(fp, encoding="utf-8") as f:
+                    payload = json.load(f)
+            except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+                # One unreadable file is held with the reason; the run continues.
+                err = [f"unreadable record file: {exc}"]
+                packet = held_packet(None, {"ok": False, "errors": err, "warnings": [],
+                                            "schema_validated": False, "required_keys_present": False})
+            else:
+                packet = build_decision_packet(payload, model_bundle=model_bundle, calibrator=calibrator)
             packet["source_file"] = str(fp)
             fout.write(json.dumps(packet) + "\n")
             n_ok += 1
             action = packet.get("hitl", {}).get("action")
-            print(
-                f"  [{n_ok}/{len(files)}] {fp.name}: "
-                f"P={packet['scoring']['churn_probability']:.4f} "
-                f"band={packet['scoring']['risk_band']} action={action}"
+            scoring = packet.get("scoring")
+            score_txt = (
+                f"P={scoring['churn_probability']:.4f} band={scoring['risk_band']}"
+                if scoring
+                else "not scored (validation failed)"
             )
+            print(f"  [{n_ok}/{len(files)}] {fp.name}: {score_txt} action={action}")
     print(f"Wrote {n_ok} packets → {out_path}")
     return n_ok
 
@@ -341,16 +508,21 @@ def main(argv: list[str] | None = None) -> None:
 
     packet = build_decision_packet(payload, model_bundle=bundle, calibrator=calibrator)
 
-    out_path = (
-        Path(args.out)
-        if args.out
-        else (config.ARTIFACTS_DIR / "santosh_decision_packet.json")
+    # Default name follows the record, so scoring another user never overwrites
+    # artifacts/santosh_decision_packet.json (which `make infer` and the docs use).
+    default_name = (
+        "santosh_decision_packet.json"
+        if args.user
+        else f"{(payload.get('user_id') if isinstance(payload, dict) else None) or json_path.stem}_decision_packet.json"
     )
+    out_path = Path(args.out) if args.out else (config.ARTIFACTS_DIR / default_name)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(packet, f, indent=2)
     print_human_summary(packet)
     print(f"\nWrote decision packet → {out_path}")
+    if not packet["validation"]["ok"]:
+        raise SystemExit(1)  # fail loud: record held for data fixes, not scored
 
 
 if __name__ == "__main__":

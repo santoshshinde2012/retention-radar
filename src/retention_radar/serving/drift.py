@@ -157,7 +157,12 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 0 if not args.strict else 1
     if not csv_path.exists():
-        print(f"CSV missing: {csv_path}", file=sys.stderr)
+        print(
+            f"CSV missing: {csv_path}. Generate it with "
+            "`python -m retention_radar.cli.generate_data` (synthetic) or sync lakehouse "
+            "gold, or pass --csv path/to/users.csv.",
+            file=sys.stderr,
+        )
         return 0 if not args.strict else 1
 
     reference = load_feature_stats(stats_path)

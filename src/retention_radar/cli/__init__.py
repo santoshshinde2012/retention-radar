@@ -14,4 +14,7 @@ __all__ = [
     "docs_gen",
     "batch_score",
     "hitl_log",
+    "hitl_outcomes",
+    "check_reproduction",
+    "build_use_cases",
 ]

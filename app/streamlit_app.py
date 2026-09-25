@@ -20,23 +20,20 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from retention_radar.training.calibrate import load_calibrator  # noqa: E402
+from retention_radar import config as rr_config  # noqa: E402
 from retention_radar.config import (  # noqa: E402
     ARTIFACTS_DIR,
     CALIBRATOR_PATH,
-    GUIDES_DIR,
     METRICS_PATH,
     MODEL_PATH,
     PLAN_TIER_ORDER,
 )
-from retention_radar.serving.infer import predict_user  # noqa: E402
-from retention_radar.serving.packet import build_decision_packet  # noqa: E402
 from retention_radar.data.ingest import (  # noqa: E402
     resolve_santosh_json,
     resolve_users_csv,
 )
-from retention_radar.serving.policy import risk_band  # noqa: E402
-from retention_radar import config as rr_config  # noqa: E402
+from retention_radar.serving.packet import build_decision_packet  # noqa: E402
+from retention_radar.training.calibrate import load_calibrator  # noqa: E402
 
 
 @st.cache_resource
@@ -91,146 +88,131 @@ def load_metrics() -> dict:
     return {}
 
 
-def collect_user_inputs(defaults: dict) -> dict:
-    st.sidebar.header("Santosh what-if")
-    st.sidebar.caption("Tweak sliders to see how risk changes.")
+USE_CASES_PATH = ROOT / "data" / "use_cases" / "personas.json"
+
+
+def load_use_cases() -> list[dict]:
+    """Scenario presets from data/use_cases/personas.json (empty if the pack is absent)."""
+    try:
+        with open(USE_CASES_PATH, encoding="utf-8") as f:
+            return json.load(f).get("personas", [])
+    except (OSError, ValueError):
+        return []
+
+
+def choose_preset() -> dict:
+    """Sidebar picker: Santosh from the active data source, then the use-case pack."""
+    santosh = load_santosh_defaults()
+    presets = [
+        {
+            "id": "santosh_default",
+            "title": f"Santosh Shinde ({rr_config.CHURN_DATA_SOURCE} source)",
+            "story": "Hero record from the active data source.",
+            "expected": None,
+            "record": santosh,
+        }
+    ]
+    for p in load_use_cases():
+        if p["record"] == santosh:
+            presets[0]["expected"] = p.get("expected")  # same record as the hero
+            continue
+        presets.append(p)
+    titles = [p["title"] for p in presets]
+    title = st.sidebar.selectbox("Use case", titles, index=0, key="use_case")
+    preset = presets[titles.index(title)]
+    st.sidebar.caption(preset.get("story", ""))
+    exp = preset.get("expected")
+    if exp:
+        st.sidebar.caption(
+            f"Committed bundle: `{exp['band']}` → `{exp['hitl_action']}` "
+            f"(p_cal {exp['p_cal']:.3f}). Move a slider to explore."
+        )
+    return preset
+
+
+def _slider(preset_id: str, label: str, key: str, lo, hi, defaults: dict, fallback, step=None, as_int=False):
+    """Slider keyed per preset; bounds widen to fit the record so it is never clipped."""
+    raw = defaults.get(key, fallback)
+    value = int(round(float(raw))) if as_int else float(raw)
+    lo, hi = min(lo, value), max(hi, value)
+    kwargs = {"key": f"{preset_id}:{key}"}
+    if step is not None:
+        kwargs["step"] = step
+    return st.slider(label, lo, hi, value, **kwargs)
+
+
+def collect_user_inputs(defaults: dict, preset_id: str = "santosh_default") -> dict:
+    st.sidebar.header("What-if")
+    st.sidebar.caption("Pick a use case, then tweak sliders to see how risk changes.")
     user_name = st.sidebar.text_input(
-        "Name", value=defaults.get("user_name", "Santosh Shinde")
+        "Name", value=defaults.get("user_name", "Santosh Shinde"), key=f"{preset_id}:user_name"
     )
     plan_tier = st.sidebar.selectbox(
         "Plan tier",
         PLAN_TIER_ORDER,
         index=PLAN_TIER_ORDER.index(defaults.get("plan_tier", "pro")),
+        key=f"{preset_id}:plan_tier",
     )
+
+    def num(label, key, lo, hi, fallback, step=None, as_int=False):
+        return _slider(preset_id, label, key, lo, hi, defaults, fallback, step=step, as_int=as_int)
 
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         st.subheader("Usage")
-        days_since_signup = st.slider(
-            "Days since signup", 14, 900, int(defaults.get("days_since_signup", 420))
-        )
-        sessions_last_7d = st.slider(
-            "Sessions last 7d", 0, 40, int(defaults.get("sessions_last_7d", 9))
-        )
-        sessions_last_30d = st.slider(
-            "Sessions last 30d", 0, 120, int(defaults.get("sessions_last_30d", 38))
-        )
-        avg_session_minutes = st.slider(
-            "Avg session minutes",
-            1.0,
-            120.0,
-            float(defaults.get("avg_session_minutes", 28.5)),
-        )
-        api_calls_last_30d = st.slider(
-            "API calls last 30d", 0, 20000, int(defaults.get("api_calls_last_30d", 1850))
-        )
-        tokens_consumed_last_30d = st.slider(
-            "Tokens last 30d",
-            0,
-            2_000_000,
-            int(defaults.get("tokens_consumed_last_30d", 420000)),
-            step=1000,
+        days_since_signup = num("Days since signup", "days_since_signup", 14, 900, 420, as_int=True)
+        sessions_last_7d = num("Sessions last 7d", "sessions_last_7d", 0, 40, 9, as_int=True)
+        sessions_last_30d = num("Sessions last 30d", "sessions_last_30d", 0, 120, 38, as_int=True)
+        avg_session_minutes = num("Avg session minutes", "avg_session_minutes", 1.0, 120.0, 28.5)
+        api_calls_last_30d = num("API calls last 30d", "api_calls_last_30d", 0, 20000, 1850, as_int=True)
+        tokens_consumed_last_30d = num(
+            "Tokens last 30d", "tokens_consumed_last_30d", 0, 2_000_000, 420000, step=1000, as_int=True
         )
     with col2:
         st.subheader("Adoption")
-        models_used_count = st.slider(
-            "Models used", 0, 15, int(defaults.get("models_used_count", 7))
-        )
-        tools_used_count = st.slider(
-            "Tools used", 0, 20, int(defaults.get("tools_used_count", 8))
-        )
-        feature_adoption_score = st.slider(
-            "Feature adoption",
-            0.0,
-            1.0,
-            float(defaults.get("feature_adoption_score", 0.78)),
-        )
-        nps_score = st.slider(
-            "NPS score", 0.0, 10.0, float(defaults.get("nps_score", 7.0)), step=0.5
-        )
-        weekend_usage_ratio = st.slider(
-            "Weekend usage ratio",
-            0.0,
-            1.0,
-            float(defaults.get("weekend_usage_ratio", 0.22)),
-        )
-        last_active_days_ago = st.slider(
-            "Last active (days ago)",
-            0,
-            120,
-            int(defaults.get("last_active_days_ago", 8)),
-        )
+        models_used_count = num("Models used", "models_used_count", 0, 15, 7, as_int=True)
+        tools_used_count = num("Tools used", "tools_used_count", 0, 20, 8, as_int=True)
+        feature_adoption_score = num("Feature adoption", "feature_adoption_score", 0.0, 1.0, 0.78)
+        nps_score = num("NPS score", "nps_score", 0.0, 10.0, 7.0, step=0.1)
+        weekend_usage_ratio = num("Weekend usage ratio", "weekend_usage_ratio", 0.0, 1.0, 0.22)
+        last_active_days_ago = num("Last active (days ago)", "last_active_days_ago", 0, 120, 8, as_int=True)
     with col3:
         st.subheader("Friction")
-        failed_requests_rate = st.slider(
-            "Failed request rate",
-            0.0,
-            0.95,
-            float(defaults.get("failed_requests_rate", 0.12)),
-            step=0.01,
+        failed_requests_rate = num(
+            "Failed request rate", "failed_requests_rate", 0.0, 0.95, 0.12, step=0.01
         )
-        support_tickets_last_90d = st.slider(
-            "Support tickets (90d)",
-            0,
-            20,
-            int(defaults.get("support_tickets_last_90d", 2)),
+        support_tickets_last_90d = num(
+            "Support tickets (90d)", "support_tickets_last_90d", 0, 20, 2, as_int=True
         )
-        payment_failures_last_90d = st.slider(
-            "Payment failures (90d)",
-            0,
-            10,
-            int(defaults.get("payment_failures_last_90d", 1)),
+        payment_failures_last_90d = num(
+            "Payment failures (90d)", "payment_failures_last_90d", 0, 10, 1, as_int=True
         )
-        spend_usd_last_30d = st.slider(
-            "Spend USD (30d)",
-            0.0,
-            2000.0,
-            float(defaults.get("spend_usd_last_30d", 189.0)),
-            step=1.0,
-        )
-        days_until_renewal = st.slider(
-            "Days until renewal",
-            0,
-            365,
-            int(defaults.get("days_until_renewal", 21)),
-        )
+        spend_usd_last_30d = num("Spend USD (30d)", "spend_usd_last_30d", 0.0, 2000.0, 189.0, step=1.0)
+        days_until_renewal = num("Days until renewal", "days_until_renewal", 0, 365, 21, as_int=True)
     with col4:
         st.subheader("AI-native / team")
         default_trend = float(defaults.get("engagement_trend", 0.95))
         auto_trend = sessions_last_7d / max(1.0, sessions_last_30d / 4.0)
-        use_auto = st.checkbox("Auto engagement_trend from sessions", value=True)
+        # Auto-derive only when the loaded record already follows the formula, so a
+        # preset is scored exactly as the API / batch would score it.
+        record_follows_formula = abs(round(auto_trend, 4) - default_trend) < 1e-3
+        use_auto = st.checkbox(
+            "Auto engagement_trend from sessions",
+            value=record_follows_formula,
+            key=f"{preset_id}:auto_trend",
+        )
         engagement_trend = (
             float(round(auto_trend, 4))
             if use_auto
-            else st.slider(
-                "Engagement trend",
-                0.0,
-                3.0,
-                default_trend,
-                step=0.01,
-            )
+            else num("Engagement trend", "engagement_trend", 0.0, 5.0, 0.95, step=0.01)
         )
         if use_auto:
             st.caption(f"engagement_trend = {engagement_trend:.4f} (≈1 stable)")
-        agent_runs_last_30d = st.slider(
-            "Agent runs (30d)",
-            0,
-            400,
-            int(defaults.get("agent_runs_last_30d", 52)),
+        agent_runs_last_30d = num("Agent runs (30d)", "agent_runs_last_30d", 0, 400, 52, as_int=True)
+        ide_plugin_sessions_last_30d = num(
+            "IDE plugin sessions (30d)", "ide_plugin_sessions_last_30d", 0, 200, 28, as_int=True
         )
-        ide_plugin_sessions_last_30d = st.slider(
-            "IDE plugin sessions (30d)",
-            0,
-            200,
-            int(defaults.get("ide_plugin_sessions_last_30d", 28)),
-        )
-        seat_utilization = st.slider(
-            "Seat utilization",
-            0.0,
-            1.0,
-            float(defaults.get("seat_utilization", 0.72)),
-            step=0.01,
-        )
+        seat_utilization = num("Seat utilization", "seat_utilization", 0.0, 1.0, 0.72, step=0.01)
 
     return {
         "user_id": defaults.get("user_id", "santosh_shinde"),
@@ -260,15 +242,12 @@ def collect_user_inputs(defaults: dict) -> dict:
     }
 
 
-def score_user(bundle, calibrator, user_dict):
-    """Thin adapter: scoring + HITL bands live in serving, not in the UI."""
-    result = predict_user(user_dict, bundle, calibrator=calibrator, top_k=8)
-    return (
-        result["churn_probability_raw"],
-        result["churn_probability_calibrated"],
-        result["churn_probability"],
-        result["top_features"],
-    )
+def show_hold(packet: dict) -> None:
+    """Invalid input: show why, never a score (same contract as API / batch)."""
+    st.error("Input failed validation, so it is not scored or queued.")
+    for err in packet["validation"].get("errors") or []:
+        st.markdown(f"- {err}")
+    st.markdown(f"**HITL action:** `{packet['hitl']['action']}`")
 
 
 def tab_predict(raw, cal, display, band, user_dict):
@@ -304,27 +283,28 @@ def tab_explain(top):
         "We use SHAP when available, otherwise a simple importance heuristic."
     )
     explain_df = pd.DataFrame(top, columns=["feature", "contribution"])
-    st.dataframe(explain_df, use_container_width=True)
+    st.dataframe(explain_df, width="stretch")
     st.bar_chart(explain_df.set_index("feature")["contribution"])
 
 
-def tab_decision(bundle, calibrator, user_dict, top):
-    st.markdown("### Santosh case — Decision packet")
+def tab_decision(packet: dict, user_dict: dict, top):
+    st.markdown(f"### Decision packet — {user_dict.get('user_name') or user_dict.get('user_id')}")
     st.write(
         "End-to-end single-record path: **validate → score (raw+cal) → explain → "
         "cohort compare → HITL action**. No auto-cancel."
     )
-    try:
-        packet = build_decision_packet(
-            user_dict, model_bundle=bundle, calibrator=calibrator
-        )
-    except Exception as exc:  # noqa: BLE001
-        st.error(f"Could not build decision packet: {exc}")
-        return
 
     v = packet["validation"]
     s = packet["scoring"]
     h = packet["hitl"]
+    if s is None:
+        st.metric("Validation", "FAIL ❌")
+        for err in v.get("errors") or []:
+            st.error(err)
+        st.markdown(f"**HITL action:** `{h['action']}`")
+        st.warning(h.get("rationale", ""))
+        st.caption(f"Auto action: `{h.get('auto_action')}` · not scored, not queued")
+        return
 
     c1, c2, c3, c4 = st.columns(4)
     with c1:
@@ -356,24 +336,28 @@ def tab_decision(bundle, calibrator, user_dict, top):
                 for k, v in cohort.items()
             ]
         )
-        st.dataframe(cdf, use_container_width=True)
+        st.dataframe(cdf, width="stretch")
         st.bar_chart(cdf.set_index("feature")["percentile"])
+        if any(v.get("source") == "feature_stats" for v in cohort.values()):
+            st.caption(
+                "users.csv not present — percentiles approximated from training "
+                "quantiles in `feature_stats.json`."
+            )
     else:
-        st.caption("No cohort stats (missing users.csv?).")
+        st.caption("No cohort stats (missing users.csv and feature_stats.json?).")
 
     st.markdown("#### Top drivers")
     explain_df = pd.DataFrame(top, columns=["feature", "contribution"])
-    st.dataframe(explain_df.head(5), use_container_width=True)
+    st.dataframe(explain_df.head(5), width="stretch")
 
     if packet.get("outliers"):
         st.warning(f"Outliers vs train p01–p99: {len(packet['outliers'])}")
         st.json(packet["outliers"])
 
-    checklist = GUIDES_DIR / "single-record-checklist.md"
-    case_study = GUIDES_DIR / "santosh-case-study.md"
     st.markdown(
-        f"Docs: [single-record checklist]({checklist.as_posix()}) · "
-        f"[Santosh case study]({case_study.as_posix()})"
+        "Docs: [single-record checklist](../docs/case-study/single-record-checklist.md) · "
+        "[Santosh case study](../docs/case-study/santosh-case-study.md) · "
+        "[use cases](../data/use_cases/README.md)"
     )
     with st.expander("Full decision packet JSON"):
         st.json(packet)
@@ -416,7 +400,7 @@ Beginner tip: **AUC** ranks users; **Brier** checks if probabilities are honest;
                     }
                 )
         if rows:
-            st.dataframe(pd.DataFrame(rows), use_container_width=True)
+            st.dataframe(pd.DataFrame(rows), width="stretch")
         st.write(
             f"Calibrated test Brier: **{metrics.get('brier_calibrated_test', 'n/a')}** "
             f"(raw: {metrics.get('brier_raw_test', 'n/a')})"
@@ -450,7 +434,7 @@ def tab_benchmarks(metrics: dict):
     ]:
         path = ARTIFACTS_DIR / fname
         if path.exists():
-            st.image(str(path), caption=caption, use_container_width=True)
+            st.image(str(path), caption=caption, width="stretch")
         else:
             st.caption(f"Missing artifact: `{fname}` — run evaluate.")
 
@@ -475,22 +459,43 @@ def main() -> None:
         )
         return
 
-    defaults = load_santosh_defaults()
+    preset = choose_preset()
     metrics = load_metrics()
     calibrator = load_cal()
-    user_dict = collect_user_inputs(defaults)
-    raw, cal, display, top = score_user(bundle, calibrator, user_dict)
-    band = risk_band(display)
+    user_dict = collect_user_inputs(preset["record"], preset["id"])
+    # One packet drives every tab: validate first, so invalid what-if input is
+    # held everywhere instead of being scored on Predict / Explain.
+    try:
+        packet = build_decision_packet(user_dict, model_bundle=bundle, calibrator=calibrator, top_k=8)
+    except Exception as exc:  # noqa: BLE001
+        st.error(f"Could not build decision packet: {exc}")
+        return
 
     t1, t2, t3, t4, t5 = st.tabs(
         ["Predict", "Explain", "Decision", "Methodology", "Benchmarks"]
     )
+    s = packet["scoring"]
+    top = [
+        (d["feature"], d["contribution"]) for d in (packet.get("explanation") or {}).get("top_features", [])
+    ]
     with t1:
-        tab_predict(raw, cal, display, band, user_dict)
+        if s is None:
+            show_hold(packet)
+        else:
+            tab_predict(
+                s["churn_probability_raw"],
+                s["churn_probability_calibrated"],
+                s["churn_probability"],
+                s["risk_band"],
+                user_dict,
+            )
     with t2:
-        tab_explain(top)
+        if s is None:
+            show_hold(packet)
+        else:
+            tab_explain(top)
     with t3:
-        tab_decision(bundle, calibrator, user_dict, top)
+        tab_decision(packet, user_dict, top)
     with t4:
         tab_methodology(metrics)
     with t5:

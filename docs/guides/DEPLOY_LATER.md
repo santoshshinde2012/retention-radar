@@ -14,8 +14,8 @@ Related: longer free-platform map in [e2e-free-platforms.md](e2e-free-platforms.
   - `models/feature_names.json`
   - `models/feature_stats.json`
   - `models/metrics.json`
-- Repo root already has `runtime.txt` (`python-3.11`) and `packages.txt` (`libgomp1` for LightGBM/XGBoost)
-- Python **3.11** is required: the committed `models/calibrator.joblib` was trained with scikit-learn **1.9.1**.
+- Repo root already has `runtime.txt` (`python-3.12`) and `packages.txt` (`libgomp1` for LightGBM/XGBoost)
+- Python **3.12** is required: the committed bundle was trained with XGBoost **3.4.1** (Python 3.12+) and scikit-learn **1.9.1**.
 
 ## Steps (Streamlit Community Cloud)
 
@@ -23,7 +23,7 @@ Related: longer free-platform map in [e2e-free-platforms.md](e2e-free-platforms.
 2. **Create app** → select `santoshshinde2012/retention-radar`.
 3. **Branch:** `main` (or a release branch you trust).
 4. **Main file path:** `app/streamlit_app.py`
-5. **Python version:** `3.11` (Advanced settings if the UI asks; matches `runtime.txt` + CI).
+5. **Python version:** `3.12` (Advanced settings if the UI asks; matches `runtime.txt` + CI).
 6. **Secrets:** leave empty — this demo needs no API keys or DB.
 7. Click **Deploy**. Wait for `pip install -r requirements.txt` and the boot log to go healthy.
 8. Open the **Decision** tab → Santosh preset → confirm `Auto action: none` (serve-only; no fit on load).
@@ -47,7 +47,7 @@ Related: longer free-platform map in [e2e-free-platforms.md](e2e-free-platforms.
 |---------|-----|
 | Model not found | Ensure the five `models/` files are committed on the deployed branch; Redeploy |
 | `ModuleNotFoundError` for package imports | Main file must be `app/streamlit_app.py` at the repo-root layout; app adds `src/` itself |
-| Wheel / Python errors | Force Python **3.11**; do not use 3.13 on free Cloud |
+| Wheel / Python errors | Force Python **3.12**; do not use 3.13 on free Cloud |
 | Deploy OOM / long “training” | Something is fitting on load — remove it; Cloud is serve-only |
 | SHAP slow first click | Expected on free CPU; importance fallback still works |
 

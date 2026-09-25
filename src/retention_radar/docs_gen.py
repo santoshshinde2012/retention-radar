@@ -305,8 +305,9 @@ def write_model_card(metrics: dict | None = None, path: Path | None = None) -> P
         "|----------|-------|",
         f"| Test AUC-ROC (calibrated) | `{_fmt_scalar(op_auc)}` |",
         f"| Test PR-AUC / AP | `{_fmt_scalar(op_ap)}` |",
-        f"| Best F1 threshold τ | `{_fmt_scalar(metrics.get('best_f1_threshold'), 2)}` |",
-        f"| Best F1 at τ | `{_fmt_scalar(metrics.get('best_f1_at_threshold'))}` |",
+        f"| Best F1 threshold τ (chosen on validation) | `{_fmt_scalar(metrics.get('best_f1_threshold'), 2)}` |",
+        f"| F1 at τ (validation) | `{_fmt_scalar(metrics.get('val_f1_at_threshold'))}` |",
+        f"| F1 at τ (test, reported once) | `{_fmt_scalar(metrics.get('best_f1_at_threshold'))}` |",
         f"| F1 @ 0.5 | `{_fmt(metrics.get('calibrated_test'), 'f1')}` |",
     ]
     lat = metrics.get("latency") or {}

@@ -6,11 +6,18 @@ duplicating band cutoffs or auto-action rules.
 
 from __future__ import annotations
 
+import math
 from typing import Any
 
 
 def risk_band(prob: float) -> str:
-    """Map a (usually calibrated) probability onto low / medium / high."""
+    """Map a (usually calibrated) probability onto low / medium / high.
+
+    Edges are fixed product constants (not τ): low < 0.30 ≤ medium < 0.60 ≤ high.
+    A non-finite probability raises instead of silently landing in "high".
+    """
+    if not math.isfinite(prob):
+        raise ValueError(f"risk_band needs a finite probability, got {prob!r}")
     if prob < 0.30:
         return "low"
     if prob < 0.60:
@@ -58,6 +65,21 @@ def hitl_action(prob: float, threshold: float, band: str) -> dict[str, Any]:
         "rationale": rationale,
         "auto_action": "none",
         "hitl_required": True,
+    }
+
+
+HOLD_ACTION = "hold: fix input data"
+
+
+def validation_hold(errors: list[str]) -> dict[str, Any]:
+    """HITL block for a record that failed validation: never scored, never queued."""
+    return {
+        "action": HOLD_ACTION,
+        "rationale": "Input failed validation, so no score or outreach is recommended: "
+        + "; ".join(errors),
+        "auto_action": "none",
+        "hitl_required": True,
+        "blocked_by_validation": True,
     }
 
 

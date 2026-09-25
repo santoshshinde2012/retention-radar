@@ -13,7 +13,7 @@ End-to-end outcome for the hero JSON through Retention Radar (seed **42**, synth
 | Field | Value |
 |-------|-------|
 | Raw P(churn) | **0.043** |
-| Calibrated P(churn) | **0.017** |
+| Calibrated P(churn) | **0.016** |
 | Risk band | **low** |
 | Best-F1 τ (frozen) | **0.34** |
 | Half-τ (monitor gate) | **0.17** |
@@ -42,7 +42,7 @@ Exact floats live in the packet JSON; do not treat SHAP as causation.
 ## Why this packet exists
 
 1. **Canary for train≠serve** — same 22-name contract as training; serve only loads artifacts.  
-2. **Calibration teaching** — raw **0.043** → cal **0.017** both belong on the UI.  
+2. **Calibration teaching** — raw **0.043** → cal **0.016** both belong on the UI.  
 3. **HITL policy** — calibrated p ≪ 0.5×τ → **monitor**, never auto-cancel.  
 4. **UX honesty** — engaged-looking user + mild friction → still **low**; do not over-alarm.
 
@@ -52,7 +52,7 @@ Exact floats live in the packet JSON; do not treat SHAP as causation.
 
 | World | Santosh scores | Where |
 |-------|----------------|-------|
-| **Synthetic (published)** | raw ≈ 0.043 / cal ≈ 0.017 · low · monitor | This analysis + `models/` |
+| **Synthetic (published)** | raw ≈ 0.043 / cal ≈ 0.016 · low · monitor | This analysis + `models/` |
 | **Lakehouse gold** | different as-of profile (see summary JSON) | [`lakehouse-e2e-summary.json`](lakehouse-e2e-summary.json) |
 
 Published Medium / README numbers are the **synthetic** row.
