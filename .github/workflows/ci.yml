@@ -44,13 +44,19 @@ jobs:
       - name: Ruff (src/ tests/ app/)
         run: ruff check src/ tests/ app/
 
-      - name: End-to-end pipeline (synthetic)
+      # Smoke retrain (N=800, 5 trials) goes to an isolated dir so the committed
+      # seed-42 bundle in models/ stays the one pytest's golden tests check.
+      - name: End-to-end pipeline (synthetic smoke, isolated)
+        env:
+          RETENTION_RADAR_ARTIFACT_DIR: ${{ github.workspace }}/artifacts/smoke
         run: ./scripts/run_all.sh
 
       - name: Pytest
         run: pytest -q
 
-      - name: Lite drift check (strict)
+      - name: Lite drift check (strict, smoke bundle vs smoke data)
+        env:
+          RETENTION_RADAR_ARTIFACT_DIR: ${{ github.workspace }}/artifacts/smoke
         run: python -m retention_radar.cli.drift_check --strict --z-threshold 3.0
 
   e2e-local:

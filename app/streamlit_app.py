@@ -283,7 +283,7 @@ def tab_explain(top):
         "We use SHAP when available, otherwise a simple importance heuristic."
     )
     explain_df = pd.DataFrame(top, columns=["feature", "contribution"])
-    st.dataframe(explain_df, use_container_width=True)
+    st.dataframe(explain_df, width="stretch")
     st.bar_chart(explain_df.set_index("feature")["contribution"])
 
 
@@ -336,7 +336,7 @@ def tab_decision(packet: dict, user_dict: dict, top):
                 for k, v in cohort.items()
             ]
         )
-        st.dataframe(cdf, use_container_width=True)
+        st.dataframe(cdf, width="stretch")
         st.bar_chart(cdf.set_index("feature")["percentile"])
         if any(v.get("source") == "feature_stats" for v in cohort.values()):
             st.caption(
@@ -348,7 +348,7 @@ def tab_decision(packet: dict, user_dict: dict, top):
 
     st.markdown("#### Top drivers")
     explain_df = pd.DataFrame(top, columns=["feature", "contribution"])
-    st.dataframe(explain_df.head(5), use_container_width=True)
+    st.dataframe(explain_df.head(5), width="stretch")
 
     if packet.get("outliers"):
         st.warning(f"Outliers vs train p01–p99: {len(packet['outliers'])}")
@@ -400,7 +400,7 @@ Beginner tip: **AUC** ranks users; **Brier** checks if probabilities are honest;
                     }
                 )
         if rows:
-            st.dataframe(pd.DataFrame(rows), use_container_width=True)
+            st.dataframe(pd.DataFrame(rows), width="stretch")
         st.write(
             f"Calibrated test Brier: **{metrics.get('brier_calibrated_test', 'n/a')}** "
             f"(raw: {metrics.get('brier_raw_test', 'n/a')})"
@@ -434,7 +434,7 @@ def tab_benchmarks(metrics: dict):
     ]:
         path = ARTIFACTS_DIR / fname
         if path.exists():
-            st.image(str(path), caption=caption, use_container_width=True)
+            st.image(str(path), caption=caption, width="stretch")
         else:
             st.caption(f"Missing artifact: `{fname}` — run evaluate.")
 

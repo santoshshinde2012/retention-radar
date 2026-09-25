@@ -73,7 +73,7 @@ On every push/PR to `main`, ubuntu-latest + Python 3.12:
 2. Snapshot the committed seed-42 serve bundle (`models/*.joblib` + JSON) into `.ci_seed42_fixtures/`
 3. Seed-42 canary: `pytest tests/test_seed42_canary.py tests/test_artifact_dir_isolation.py` against the **committed** bundle (Santosh raw ≈ 0.043 → calibrated ≈ 0.016 → low → monitor)
 4. `ruff check src/ tests/ app/`
-5. `./scripts/run_all.sh` with `N_USERS=800`, `N_OPTUNA_TRIALS=5` (generate → ingest → train → evaluate → slices → explain → benchmark → infer → drift → Santosh packet)
+5. `./scripts/run_all.sh` with `N_USERS=800`, `N_OPTUNA_TRIALS=5` into an isolated `artifacts/smoke/` (committed `models/` untouched) (generate → ingest → train → evaluate → slices → explain → benchmark → infer → drift → Santosh packet)
 6. `pytest -q` (full suite on the freshly trained smoke bundle)
 7. `python -m retention_radar.cli.drift_check --strict --z-threshold 3.0`
 
@@ -175,7 +175,7 @@ Same idea as Community Cloud: host the **already trained** Streamlit app. Do not
 ---
 title: Retention Radar
 sdk: streamlit
-sdk_version: 1.28.0
+sdk_version: 1.63.0
 app_file: app/streamlit_app.py
 python_version: 3.12
 ---
