@@ -269,7 +269,7 @@ def _with_trend(record: dict) -> dict:
 def maya_profile() -> dict:
     """Pro subscriber, fourth renewal, the first since the weekly cap was cut.
 
-    She hit the cap three times in two weeks, moved most work to the cheaper
+    She hit the cap four times in two weeks, moved most work to the cheaper
     model, and her active days fell off while CLI sessions held up. Scored at
     T-7; the renewal has not happened, so there is no label.
     """
@@ -284,8 +284,8 @@ def maya_profile() -> dict:
             "last_active_days_ago": 2,
             "agent_requests_28d": 470,
             "allowance_used_pct": 1.02,
-            "limit_hits_14d": 3,
-            "cheap_model_share_28d": 0.64,
+            "limit_hits_14d": 4,
+            "cheap_model_share_28d": 0.68,
             "overage_usd_28d": 0.0,
             "overage_toggled_off": 0,
             "suggestion_accept_rate_28d": 0.29,

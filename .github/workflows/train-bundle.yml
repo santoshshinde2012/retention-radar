@@ -5,7 +5,7 @@ name: train-bundle
 on:
   push:
     branches: [feat/coding-assistant-renewal-v2]
-    paths: [.github/workflows/train-bundle.yml]
+    paths: [.github/workflows/train-bundle.yml, src/retention_radar/data/generate.py]
 
 jobs:
   train:
