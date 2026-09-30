@@ -22,8 +22,8 @@ The lakehouse writes this contract from raw
 billing and usage events, computing every feature as of each renewal's T-7 and deriving the
 label from billing events. The last run, recorded in
 [`results/lakehouse-e2e-summary.json`](../../results/lakehouse-e2e-summary.json):
-7,387 renewals routed to the model (7.4% voluntary lapse), calibrated test AUC 0.728, and
-Maya's event-built record scored 0.774 raw → 0.216 calibrated, medium, `limit_reset`. Those
+7,387 renewals routed to the model (7.4% voluntary lapse), calibrated test AUC 0.726, and
+Maya's event-built record scored 0.774 raw → 0.210 calibrated, medium, `limit_reset`. Those
 numbers are a different world from the synthetic run and are not the published ladder.
 
 ## Path

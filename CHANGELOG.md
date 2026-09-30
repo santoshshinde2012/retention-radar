@@ -17,18 +17,19 @@ where noted.
 - Label: `churned` = voluntary lapse. Failed cards go to dunning and cancels scheduled
   before T-7 go to the cancel flow; both are excluded from the model table.
 - Cohort: `N_USERS` default 8000 → 7,329 model rows, 9.6% base rate, split 4,397 / 1,466 / 1,466.
-- Ladder (test AUC): LogReg 0.781, CatBoost 0.770, Optuna XGBoost 0.763, RF 0.758,
-  LightGBM 0.736, default XGBoost 0.728, Dummy 0.500.
+- Ladder (test AUC): LogReg 0.781, CatBoost 0.765, RF 0.758, Optuna XGBoost 0.757,
+  LightGBM 0.736, default XGBoost 0.729, Dummy 0.500. The committed bundle is trained on
+  Linux x86-64, where `make reproduce` matches it exactly.
 - Calibration: Platt (sigmoid) replaces isotonic. Isotonic gave a staircase that tied most
-  of the queue and returned P = 0.000 for some subscribers. Test Brier 0.162 raw → 0.079
-  calibrated (0.087 for always predicting the base rate). τ = 0.14.
+  of the queue and returned P = 0.000 for some subscribers. Test Brier 0.163 raw → 0.079
+  calibrated (0.087 for always predicting the base rate). τ = 0.16.
 - Policy: `serving/policy.py` now picks, per subscriber above τ, the approved playbook in
   `config.PLAYBOOKS` with the highest expected value (`in_app_usage_tips`, `limit_reset`,
   `pause_offer`, `cancel_flow_discount`, `personal_email` for Ultra only), with a
   deterministic 10% holdout. Bands are low < 0.10 ≤ medium < 0.30 ≤ high. `auto_action` is
   always `none`; `hitl_required` is true only for `personal_email`.
-- Worked examples: Maya (Pro, capped, first renewal since the cap cut; 0.554 → 0.153,
-  medium, `limit_reset`) and Arjun (steady Pro+; 0.066 → 0.023, low, `no_action`) replace
+- Worked examples: Maya (Pro, capped, first renewal since the cap cut; 0.717 → 0.288,
+  medium, `limit_reset`) and Arjun (steady Pro+; 0.124 → 0.025, low, `no_action`) replace
   the earlier single example. Files: `data/raw/subscribers/maya.json`, `arjun.json`;
   `--user maya|arjun`; `make infer` writes `artifacts/maya_decision_packet.json`.
 - Renames: packet key `hitl` → `decision`; queue column `hitl_action` → `action`, plus
@@ -51,8 +52,8 @@ where noted.
   (`churn_user_features.csv` with the 24 fields + `churned`, and
   `hero_inference_record.json`), built from raw billing + usage events as of T-7.
   `results/lakehouse-e2e-summary.json` refreshed from that run: 7,387 renewals, calibrated
-  test AUC 0.728, Maya 0.216 → `limit_reset`.
-- Latency: warm single-row score + calibrate, p50 about 1.5 ms.
+  test AUC 0.726, Maya 0.210 → `limit_reset`.
+- Latency: warm single-row score + calibrate, p50 about 2.7 ms on a GitHub Actions runner.
 - New `python -m retention_radar.cli.analysis` (run by `run_all.sh`; committed copy
   `results/analysis.json`): paired bootstrap of logistic regression vs tuned XGBoost,
   isotonic vs Platt, deciles/quintiles, and holdout sizes for a 9:1 split.

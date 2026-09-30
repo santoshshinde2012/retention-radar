@@ -130,6 +130,10 @@ def main(argv: list[str] | None = None) -> int:
     drift = [k for k, v in PINNED.items() if versions.get(k) != v]
     if sys.version_info < (3, 12):
         drift.insert(0, "python<3.12")
+    import platform
+
+    if (platform.system(), platform.machine()) != ("Linux", "x86_64"):
+        drift.append(f"platform {platform.system()} {platform.machine()} (the bundle is trained on Linux x86_64)")
 
     reference = json.loads(Path(args.reference).read_text(encoding="utf-8"))
     candidate = json.loads(cand_path.read_text(encoding="utf-8"))

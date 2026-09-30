@@ -8,7 +8,7 @@ from retention_radar.evaluation.reproduce import compare_metrics, compare_packet
 
 
 def test_compare_metrics_ignores_latency_and_flags_drift():
-    ref = {"logreg_test": {"roc_auc": 0.8719}, "best_f1_threshold": 0.14,
+    ref = {"logreg_test": {"roc_auc": 0.8719}, "best_f1_threshold": 0.16,
            "latency": {"latency_ms_p50": 2.0}, "feature_names": ["a", "b"]}
     same = json.loads(json.dumps(ref))
     same["latency"]["latency_ms_p50"] = 9.9
@@ -22,8 +22,8 @@ def test_compare_metrics_ignores_latency_and_flags_drift():
 
 
 def test_compare_packets_checks_scores_band_and_action():
-    ref = {"scoring": {"churn_probability_raw": 0.5535, "churn_probability_calibrated": 0.1532,
-                       "risk_band": "medium", "best_f1_threshold": 0.14}, "decision": {"action": "limit_reset"}}
+    ref = {"scoring": {"churn_probability_raw": 0.7174, "churn_probability_calibrated": 0.2880,
+                       "risk_band": "medium", "best_f1_threshold": 0.16}, "decision": {"action": "limit_reset"}}
     assert compare_packets(ref, json.loads(json.dumps(ref))) == []
     moved = json.loads(json.dumps(ref))
     moved["scoring"]["churn_probability_raw"] = 0.61

@@ -9,22 +9,22 @@ Reproduce: `./scripts/run_all.sh` writes `artifacts/maya_decision_packet.json` a
 ## Maya
 
 Pro plan, $20/month, three renewals paid. Her fourth renewal is the first since the weekly
-cap was cut. In the last 14 days she hit the cap three times. She now routes 64% of requests
-to the cheaper model (95th percentile of the renewal table). She was active on 15 of the last
+cap was cut. In the last 14 days she hit the cap four times (90th percentile). She now routes
+68% of requests to the cheaper model (96th percentile of the renewal table). She was active on 15 of the last
 28 days but only 2 of the last 7. CLI sessions (19) now outnumber IDE sessions (14).
 
 | Step | Result |
 |------|--------|
 | Validate | 24 fields present, ranges and enums OK, `active_days_7d ≤ active_days_28d`, `engagement_trend` matches the active-days formula |
-| Score | raw 0.554 → calibrated **0.153** (base rate 0.096) |
+| Score | raw 0.717 → calibrated **0.288** (base rate 0.096) |
 | Band | medium (edges 0.10 / 0.30) |
-| Explain (SHAP, log-odds) | `cheap_model_share_28d` +0.45 · `first_renewal_after_pricing_change` +0.16 · `cli_sessions_28d` −0.11 · `ide_sessions_28d` −0.10 · `accept_rate_change` −0.08 |
-| Decide | above τ = 0.14 → eligible; not in the holdout; candidates `limit_reset` $1.83 · `cancel_flow_discount` $1.31 · `in_app_usage_tips` $0.59 → **limit_reset** |
+| Explain (SHAP, log-odds) | `limit_hits_14d` +0.63 · `cheap_model_share_28d` +0.30 · `first_renewal_after_pricing_change` +0.21 · `renewals_completed` +0.09 · `active_days_28d` −0.08 |
+| Decide | above τ = 0.16 → eligible; not in the holdout; candidates `limit_reset` $5.20 · `cancel_flow_discount` $2.79 · `in_app_usage_tips` $1.13 → **limit_reset** |
 | Executed by | the lifecycle tool, after a retention lead approved the playbook. `auto_action: none` |
 
-What the drivers do and do not say: rationing to the cheap model is the strongest push
-toward lapse in *this model's* view of her. That is not evidence that a limit reset will
-change her decision. The expected value of $1.83 uses an **assumed** 25% effect; only the
+What the drivers do and do not say: four cap hits and rationing to the cheap model are the
+strongest pushes toward lapse in *this model's* view of her. That is not evidence that a limit reset will
+change her decision. The expected value of $5.20 uses an **assumed** 25% effect; only the
 holdout can say whether the reset works.
 
 ## Arjun
@@ -36,9 +36,9 @@ time (82nd percentile).
 | Step | Result |
 |------|--------|
 | Validate | OK. Outlier flag: `ide_sessions_28d` = 41, just above the training p99 (40). Scored anyway; the flag is information, not a hold |
-| Score | raw 0.066 → calibrated **0.023** |
+| Score | raw 0.124 → calibrated **0.025** |
 | Band | low |
-| Explain | `renewals_completed` −0.74 · `agent_task_success_rate` −0.29 · `accept_rate_change` −0.27 · `cheap_model_share_28d` −0.26 |
+| Explain | `renewals_completed` −0.53 · `cheap_model_share_28d` −0.22 · `accept_rate_change` −0.16 · `agent_task_success_rate` −0.16 |
 | Decide | below τ → **no_action** |
 
 Leaving Arjun alone is a decision, not an absence of one. Contacting renewers costs money
@@ -50,12 +50,12 @@ churn from 6% to 10% (Ascarza, Iyengar & Schleicher, JMR 2016).
 ```json
 {
   "validation": {"ok": true, "errors": [], "warnings": []},
-  "scoring": {"churn_probability_raw": 0.5535, "churn_probability_calibrated": 0.1532,
-              "risk_band": "medium", "best_f1_threshold": 0.14},
-  "explanation": {"top_features": [{"feature": "cheap_model_share_28d", "contribution": 0.453}]},
-  "cohort_compare": {"limit_hits_14d": {"value": 3.0, "percentile": 87.6}},
-  "decision": {"action": "limit_reset", "holdout": false, "expected_value_usd": 1.83,
-               "candidates": [{"playbook": "limit_reset", "expected_value_usd": 1.83}],
+  "scoring": {"churn_probability_raw": 0.7174, "churn_probability_calibrated": 0.2880,
+              "risk_band": "medium", "best_f1_threshold": 0.16},
+  "explanation": {"top_features": [{"feature": "limit_hits_14d", "contribution": 0.633}]},
+  "cohort_compare": {"limit_hits_14d": {"value": 4.0, "percentile": 90.4}},
+  "decision": {"action": "limit_reset", "holdout": false, "expected_value_usd": 5.2,
+               "candidates": [{"playbook": "limit_reset", "expected_value_usd": 5.2}],
                "auto_action": "none", "hitl_required": false}
 }
 ```

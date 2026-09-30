@@ -51,8 +51,8 @@ def _score(canary, profile):
 
 def test_maya_gets_the_limit_reset(canary):
     raw, cal, band, d = _score(canary, maya_profile())
-    assert abs(raw - 0.554) <= TOL_PROB, raw
-    assert abs(cal - 0.153) <= TOL_PROB, cal
+    assert abs(raw - 0.717) <= TOL_PROB, raw
+    assert abs(cal - 0.288) <= TOL_PROB, cal
     assert band == "medium"
     assert d["action"] == "limit_reset" and d["auto_action"] == "none"
     assert [c["playbook"] for c in d["candidates"]][:2] == ["limit_reset", "cancel_flow_discount"]
@@ -60,17 +60,17 @@ def test_maya_gets_the_limit_reset(canary):
 
 def test_arjun_is_left_alone(canary):
     raw, cal, band, d = _score(canary, arjun_profile())
-    assert abs(cal - 0.023) <= TOL_PROB, cal
+    assert abs(cal - 0.025) <= TOL_PROB, cal
     assert band == "low" and d["action"] == "no_action"
 
 
 def test_ladder_and_operating_point(canary):
     m = canary["metrics"]
     assert abs(m["logreg_test"]["roc_auc"] - 0.781) <= TOL_AUC
-    assert abs(m["catboost_test"]["roc_auc"] - 0.770) <= TOL_AUC
-    assert abs(m["tuned_test"]["roc_auc"] - 0.763) <= TOL_AUC
+    assert abs(m["catboost_test"]["roc_auc"] - 0.765) <= TOL_AUC
+    assert abs(m["tuned_test"]["roc_auc"] - 0.757) <= TOL_AUC
     assert m["logreg_test"]["roc_auc"] > m["tuned_test"]["roc_auc"]  # the honest finding
     assert m["calibration_method"] == "sigmoid"
     assert abs(m["brier_calibrated_test"] - 0.079) <= 0.002
-    assert abs(m["best_f1_threshold"] - 0.14) <= 0.011
+    assert abs(m["best_f1_threshold"] - 0.16) <= 0.011
     assert abs(m["base_rate_test"] - 0.096) <= 0.002

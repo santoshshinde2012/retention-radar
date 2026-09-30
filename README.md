@@ -42,11 +42,11 @@ bill, the first renewal after a pricing change, a rival tool taking the work. So
 
 | Subscriber | Raw → calibrated P(lapse) | Band | Action |
 |------------|---------------------------|------|--------|
-| Maya: Pro, 3 cap hits in 14 days, 64% of requests on the cheap model, first renewal since the cap cut | 0.554 → **0.153** | medium | `limit_reset` (EV ≈ $1.83) |
-| Arjun: Pro+, 12 renewals, 66% of allowance used, no cap hits | 0.066 → **0.023** | low | `no_action` |
+| Maya: Pro, 4 cap hits in 14 days, 68% of requests on the cheap model, first renewal since the cap cut | 0.717 → **0.288** | medium | `limit_reset` (EV ≈ $5.20) |
+| Arjun: Pro+, 12 renewals, 66% of allowance used, no cap hits | 0.124 → **0.025** | low | `no_action` |
 
 **Honest ladder (test AUC, 7,329 T-7 rows, 9.6% base rate):** LogReg **0.781** · CatBoost
-**0.770** · Optuna XGB **0.763** · RF **0.758** · LightGBM **0.736** · default XGB **0.728** ·
+**0.765** · RF **0.758** · Optuna XGB **0.757** · LightGBM **0.736** · default XGB **0.729** ·
 Dummy 0.500. Calibrated XGBoost serves for now; on this result a real deployment should swap in the linear model (see BENCHMARKS). Full tables:
 [`models/metrics.json`](models/metrics.json) · [results/BENCHMARKS.md](results/BENCHMARKS.md).
 
@@ -65,7 +65,9 @@ Dummy 0.500. Calibrated XGBoost serves for now; on this result a real deployment
 
 - Python **3.12+**. The committed bundle was trained with XGBoost **3.4.1** and scikit-learn
   **1.9.1**; `requirements.txt` pins the model-affecting libraries so `make run` re-creates
-  every non-latency value in `models/metrics.json` exactly. Snapshot: [`requirements.lock`](requirements.lock).
+  every non-latency value in `models/metrics.json` exactly on Linux x86-64, where the committed
+  bundle was trained (CI checks this). On other CPUs, such as Apple Silicon, a retrain differs from the
+  third decimal. Snapshot: [`requirements.lock`](requirements.lock).
 - CPU only. Linux, macOS, or Windows (WSL).
 - **macOS:** `brew install libomp` if XGBoost or LightGBM fail to load.
 

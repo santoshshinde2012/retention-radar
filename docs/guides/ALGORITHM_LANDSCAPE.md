@@ -18,13 +18,13 @@ The table is 7,329 T-7 renewals (seed 42) with 22 features after encoding `plan_
 | LightGBM, default settings | Peer booster |
 | CatBoost, default settings | Peer booster; strong on tabular benchmarks such as TabArena |
 
-Logistic regression ranks best on this run (test AUC 0.781 against 0.763 for tuned
+Logistic regression ranks best on this run (test AUC 0.781 against 0.757 for tuned
 XGBoost). Calibrated XGBoost still serves because the explanation and serving code were built around it before the ladder came in; logistic regression would explain each subscriber just as exactly (coefficient × standardised value), and a calibrator works on either. For a real deployment with this result, swap it in: serving depends only on `predict_proba`.
 
 ## Calibration
 
 Platt scaling (sigmoid), fit on validation. Isotonic regression was tried and rejected:
-with about 140 lapses in validation it produced a staircase of roughly two dozen steps,
+with 142 lapses in validation it produced a staircase of 37 distinct values,
 tied most of the queue, and gave some subscribers a calibrated probability of exactly
 0.000. Details: [results/BENCHMARKS.md](../../results/BENCHMARKS.md).
 

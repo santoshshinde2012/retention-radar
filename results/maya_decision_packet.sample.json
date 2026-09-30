@@ -19,8 +19,8 @@
     "last_active_days_ago": 2,
     "agent_requests_28d": 470,
     "allowance_used_pct": 1.02,
-    "limit_hits_14d": 3,
-    "cheap_model_share_28d": 0.64,
+    "limit_hits_14d": 4,
+    "cheap_model_share_28d": 0.68,
     "overage_usd_28d": 0.0,
     "overage_toggled_off": 0,
     "suggestion_accept_rate_28d": 0.29,
@@ -35,34 +35,34 @@
     "first_renewal_after_pricing_change": 1
   },
   "scoring": {
-    "churn_probability_raw": 0.5535488724708557,
-    "churn_probability_calibrated": 0.15318391783187424,
-    "churn_probability": 0.15318391783187424,
+    "churn_probability_raw": 0.7165229320526123,
+    "churn_probability_calibrated": 0.2880465475025406,
+    "churn_probability": 0.2880465475025406,
     "risk_band": "medium",
-    "best_f1_threshold": 0.14,
-    "half_threshold": 0.07
+    "best_f1_threshold": 0.16,
+    "half_threshold": 0.08
   },
   "explanation": {
     "top_features": [
       {
+        "feature": "limit_hits_14d",
+        "contribution": 0.6332750916481018
+      },
+      {
         "feature": "cheap_model_share_28d",
-        "contribution": 0.4531291425228119
+        "contribution": 0.30187419056892395
       },
       {
         "feature": "first_renewal_after_pricing_change",
-        "contribution": 0.16433680057525635
+        "contribution": 0.213152214884758
       },
       {
-        "feature": "cli_sessions_28d",
-        "contribution": -0.11355112493038177
+        "feature": "renewals_completed",
+        "contribution": 0.0875694677233696
       },
       {
-        "feature": "ide_sessions_28d",
-        "contribution": -0.1030668243765831
-      },
-      {
-        "feature": "accept_rate_change",
-        "contribution": -0.08197332918643951
+        "feature": "active_days_28d",
+        "contribution": -0.08221759647130966
       }
     ]
   },
@@ -83,15 +83,15 @@
       "source": "users_csv"
     },
     "limit_hits_14d": {
-      "value": 3.0,
-      "percentile": 87.6,
+      "value": 4.0,
+      "percentile": 90.41,
       "population_median": 0.0,
       "population_mean": 1.1956610724519035,
       "source": "users_csv"
     },
     "cheap_model_share_28d": {
-      "value": 0.64,
-      "percentile": 94.72,
+      "value": 0.68,
+      "percentile": 96.26,
       "population_median": 0.2682,
       "population_mean": 0.303965656979124,
       "source": "users_csv"
@@ -129,34 +129,34 @@
     "risk_band": "medium",
     "auto_action": "none",
     "holdout": false,
-    "expected_value_usd": 1.83,
+    "expected_value_usd": 5.2,
     "candidates": [
       {
         "playbook": "limit_reset",
-        "expected_value_usd": 1.83
+        "expected_value_usd": 5.2
       },
       {
         "playbook": "cancel_flow_discount",
-        "expected_value_usd": 1.31
+        "expected_value_usd": 2.79
       },
       {
         "playbook": "in_app_usage_tips",
-        "expected_value_usd": 0.59
+        "expected_value_usd": 1.13
       }
     ],
     "would_have_sent": "limit_reset",
     "hitl_required": false,
     "action": "limit_reset",
     "playbook_label": "One-time usage-limit reset with a short note",
-    "rationale": "P(lapse)=0.153 (\u03c4=0.140). Highest expected value among ['limit_reset', 'cancel_flow_discount', 'in_app_usage_tips']: One-time usage-limit reset with a short note (\u2248$1.83, assumption-based). Sent by the lifecycle tool."
+    "rationale": "P(lapse)=0.288 (\u03c4=0.160). Highest expected value among ['limit_reset', 'cancel_flow_discount', 'in_app_usage_tips']: One-time usage-limit reset with a short note (\u2248$5.20, assumption-based). Sent by the lifecycle tool."
   },
   "meta": {
-    "model_path": "models/churn_xgb.joblib",
-    "calibrator_path": "models/calibrator.joblib",
-    "feature_stats_path": "models/feature_stats.json",
-    "metrics_path": "models/metrics.json",
+    "model_path": "retention-radar/models/churn_xgb.joblib",
+    "calibrator_path": "retention-radar/models/calibrator.joblib",
+    "feature_stats_path": "retention-radar/models/feature_stats.json",
+    "metrics_path": "retention-radar/models/metrics.json",
     "feature_count": 22,
     "data_source": "synthetic",
-    "users_csv": "data/raw/renewals_t7.csv"
+    "users_csv": "retention-radar/data/raw/renewals_t7.csv"
   }
 }

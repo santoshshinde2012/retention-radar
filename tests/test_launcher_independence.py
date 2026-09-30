@@ -42,7 +42,7 @@ print(round(p['scoring']['churn_probability_calibrated'], 3), p['decision']['act
 """
     res = _run(code, tmp_path)
     assert res.returncode == 0, res.stderr[-2000:]
-    assert res.stdout.split()[-2:] == ["0.153", "limit_reset"]
+    assert res.stdout.split()[-2:] == ["0.288", "limit_reset"]
 
 
 def test_streamlit_app_boots_like_streamlit_cloud(tmp_path):

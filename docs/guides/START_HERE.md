@@ -18,8 +18,8 @@ CHURN_DATA_SOURCE=synthetic ./scripts/run_all.sh
 ```
 
 This generates 8,000 renewals (seed 42), trains and calibrates the models, and writes
-decision packets for the two worked examples. Maya should come out at calibrated 0.153,
-band medium, action `limit_reset`. Arjun should come out at 0.023, band low, `no_action`.
+decision packets for the two worked examples. Maya should come out at calibrated 0.288,
+band medium, action `limit_reset`. Arjun should come out at 0.025, band low, `no_action`.
 
 Numbers to cite: [`models/metrics.json`](../../models/metrics.json). How to read them:
 [results/BENCHMARKS.md](../../results/BENCHMARKS.md).

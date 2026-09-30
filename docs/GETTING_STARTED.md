@@ -51,8 +51,8 @@ make infer
 python -m retention_radar.cli.single_record --user maya --out artifacts/maya_decision_packet.json
 ```
 
-Maya: calibrated P(lapse) 0.153, band medium, action `limit_reset`. `--user arjun` gives
-0.023, low, `no_action`. Walkthrough: [results/WORKED_EXAMPLES.md](../results/WORKED_EXAMPLES.md).
+Maya: calibrated P(lapse) 0.288, band medium, action `limit_reset`. `--user arjun` gives
+0.025, low, `no_action`. Walkthrough: [results/WORKED_EXAMPLES.md](../results/WORKED_EXAMPLES.md).
 
 ## 4. UI and tests
 

@@ -95,7 +95,7 @@ can be replaced without touching scoring.
 
 ## The decision
 
-`serving/policy.py::decide` takes the calibrated probability, τ (0.14, best F1 on
+`serving/policy.py::decide` takes the calibrated probability, τ (0.16, best F1 on
 validation) and the record:
 
 1. Below τ: `no_action`.

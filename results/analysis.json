@@ -8,15 +8,15 @@
   },
   "ranking": {
     "logreg_test_auc": 0.7811,
-    "xgb_tuned_test_auc": 0.7631,
+    "xgb_tuned_test_auc": 0.7573,
     "bootstrap_logreg_minus_xgb": {
       "n_resamples": 2000,
-      "mean_diff": 0.018,
+      "mean_diff": 0.0239,
       "ci95": [
-        -0.0016,
-        0.0384
+        0.0042,
+        0.0446
       ],
-      "share_first_ahead": 0.965
+      "share_first_ahead": 0.994
     },
     "logreg_top_standardised_coefficients": {
       "renewals_completed": -0.763,
@@ -29,84 +29,84 @@
   },
   "calibration": {
     "brier_base_rate_only": 0.0869,
-    "brier_raw": 0.1616,
-    "brier_platt": 0.0793,
-    "brier_isotonic": 0.0808,
+    "brier_raw": 0.1627,
+    "brier_platt": 0.0794,
+    "brier_isotonic": 0.0799,
     "distinct_values_platt": 1466,
-    "distinct_values_isotonic": 24,
-    "isotonic_zero_scores": 67,
-    "max_calibrated_p": 0.4111
+    "distinct_values_isotonic": 37,
+    "isotonic_zero_scores": 44,
+    "max_calibrated_p": 0.4492
   },
   "queue": {
     "base_rate_test": 0.0962,
-    "top_10pct_lapse_rate": 0.3061,
-    "top_10pct_share_of_lapses": 0.3191,
+    "top_10pct_lapse_rate": 0.2789,
+    "top_10pct_share_of_lapses": 0.2908,
     "at_tau": {
-      "tau": 0.14,
-      "flagged_share": 0.221,
-      "precision": 0.2469,
-      "recall": 0.5674
+      "tau": 0.16,
+      "flagged_share": 0.1692,
+      "precision": 0.2581,
+      "recall": 0.4539
     },
     "lapse_rate_by_decile": {
-      "1": 0.3061,
-      "2": 0.2055,
-      "3": 0.0884,
-      "4": 0.1301,
-      "5": 0.0816,
-      "6": 0.0411,
-      "7": 0.0272,
-      "8": 0.0411,
+      "1": 0.2789,
+      "2": 0.1986,
+      "3": 0.1497,
+      "4": 0.0822,
+      "5": 0.0884,
+      "6": 0.0685,
+      "7": 0.034,
+      "8": 0.0205,
       "9": 0.0272,
       "10": 0.0136
     },
     "calibration_by_quintile": {
       "1": {
-        "mean_p": 0.0293,
+        "mean_p": 0.0311,
         "lapse_rate": 0.0204
       },
       "2": {
-        "mean_p": 0.0434,
-        "lapse_rate": 0.0341
+        "mean_p": 0.0453,
+        "lapse_rate": 0.0273
       },
       "3": {
-        "mean_p": 0.0659,
-        "lapse_rate": 0.0614
+        "mean_p": 0.0676,
+        "lapse_rate": 0.0785
       },
       "4": {
-        "mean_p": 0.111,
-        "lapse_rate": 0.1092
+        "mean_p": 0.1096,
+        "lapse_rate": 0.116
       },
       "5": {
-        "mean_p": 0.2293,
-        "lapse_rate": 0.256
+        "mean_p": 0.2244,
+        "lapse_rate": 0.2389
       }
     }
   },
   "holdout": {
-    "eligible_lapse_rate_test": 0.2469,
+    "eligible_lapse_rate_test": 0.2581,
     "note": "Sizes to detect each playbook's ASSUMED effect at 95% / 80% power with the configured holdout.",
     "power": {
       "limit_reset": {
-        "p_control": 0.2469,
-        "p_treated": 0.1852,
+        "p_control": 0.2581,
+        "p_treated": 0.1935,
         "relative_effect": 0.25,
         "holdout_pct": 10,
-        "n_holdout": 418,
-        "n_treated": 3762,
-        "n_eligible": 4180,
-        "share_of_renewals_routed_here": 0.1044,
-        "renewals_needed": 40052
+        "n_holdout": 394,
+        "n_treated": 3546,
+        "n_eligible": 3940,
+        "share_of_renewals_routed_here": 0.0853,
+        "renewals_needed": 46209
       },
       "cancel_flow_discount": {
-        "p_control": 0.2469,
-        "p_treated": 0.2173,
+        "p_control": 0.2581,
+        "p_treated": 0.2271,
         "relative_effect": 0.12,
         "holdout_pct": 10,
-        "n_holdout": 1832,
-        "n_treated": 16488,
-        "n_eligible": 18320,
-        "share_of_renewals_routed_here": 0.0846,
-        "renewals_needed": 216590
+        "n_holdout": 1727,
+        "n_treated": 15543,
+        "n_eligible": 17270,
+        "share_of_renewals_routed_here": 0.058,
+        "renewals_needed": 297857
       }
     }
   }

@@ -1,7 +1,7 @@
 {
   "about": "Seed-42 synthetic renewal use cases for the serving layer; see README.md.",
   "model_version": "seed42-churn_xgb",
-  "best_f1_threshold": 0.14,
+  "best_f1_threshold": 0.16,
   "holdout_pct": 10,
   "calendar": {
     "scored_at": "2026-09-28T06:00:00Z",
@@ -12,31 +12,31 @@
     {
       "id": "maya_capped_pro",
       "title": "Maya: capped on Pro, first renewal since the cut",
-      "story": "Pro, 3 renewals paid, and this is her first renewal since the weekly cap was cut. 3 cap hits in 14 days, 64% of requests on the cheaper model, 2 active days this week against 15 in 28. The policy picks the limit reset over a discount: her problem is the cap, not the price.",
+      "story": "Pro, 3 renewals paid, and this is her first renewal since the weekly cap was cut. 4 cap hits in 14 days, 68% of requests on the cheaper model, 2 active days this week against 15 in 28. The policy picks the limit reset over a discount: her problem is the cap, not the price.",
       "source": {
         "dataset": "data/raw/subscribers/maya.json",
         "split": "worked example (scoring-time record, not in training)"
       },
       "expected": {
-        "p_raw": 0.553549,
-        "p_cal": 0.153184,
+        "p_raw": 0.716523,
+        "p_cal": 0.288047,
         "band": "medium",
         "action": "limit_reset",
         "holdout": false,
-        "expected_value_usd": 1.83
+        "expected_value_usd": 5.2
       },
       "top_drivers": [
         {
+          "feature": "limit_hits_14d",
+          "contribution": 0.633
+        },
+        {
           "feature": "cheap_model_share_28d",
-          "contribution": 0.453
+          "contribution": 0.302
         },
         {
           "feature": "first_renewal_after_pricing_change",
-          "contribution": 0.164
-        },
-        {
-          "feature": "cli_sessions_28d",
-          "contribution": -0.114
+          "contribution": 0.213
         }
       ],
       "executed": {
@@ -54,8 +54,8 @@
         "last_active_days_ago": 2,
         "agent_requests_28d": 470,
         "allowance_used_pct": 1.02,
-        "limit_hits_14d": 3,
-        "cheap_model_share_28d": 0.64,
+        "limit_hits_14d": 4,
+        "cheap_model_share_28d": 0.68,
         "overage_usd_28d": 0.0,
         "overage_toggled_off": 0,
         "suggestion_accept_rate_28d": 0.29,
@@ -80,8 +80,8 @@
         "split": "worked example (scoring-time record, not in training)"
       },
       "expected": {
-        "p_raw": 0.065786,
-        "p_cal": 0.022688,
+        "p_raw": 0.124323,
+        "p_cal": 0.025481,
         "band": "low",
         "action": "no_action",
         "holdout": false,
@@ -90,15 +90,15 @@
       "top_drivers": [
         {
           "feature": "renewals_completed",
-          "contribution": -0.744
+          "contribution": -0.529
         },
         {
-          "feature": "agent_task_success_rate",
-          "contribution": -0.288
+          "feature": "cheap_model_share_28d",
+          "contribution": -0.221
         },
         {
           "feature": "accept_rate_change",
-          "contribution": -0.271
+          "contribution": -0.164
         }
       ],
       "executed": {
@@ -136,32 +136,32 @@
     {
       "id": "first_renewal_tourist",
       "title": "First renewal, already fading",
-      "story": "Renewal number one: 1 active days this week, 14 in 28, 27% cheap-model share. First renewals are the cliff; the only playbook worth arming is the cancel-flow discount, paid only if they click cancel.",
+      "story": "Renewal number one: 2 active days this week, 7 in 28, 19% cheap-model share. First renewals are the cliff; the only playbook worth arming is the cancel-flow discount, paid only if they click cancel.",
       "source": {
         "dataset": "seed-42 renewals_t7.csv",
         "split": "test (holdout)",
-        "candidates_matching_filter": 53
+        "candidates_matching_filter": 39
       },
       "expected": {
-        "p_raw": 0.605838,
-        "p_cal": 0.18396,
+        "p_raw": 0.623065,
+        "p_cal": 0.207976,
         "band": "medium",
         "action": "cancel_flow_discount",
         "holdout": false,
-        "expected_value_usd": 1.65
+        "expected_value_usd": 1.91
       },
       "top_drivers": [
         {
           "feature": "renewals_completed",
-          "contribution": 0.589
+          "contribution": 0.505
         },
         {
-          "feature": "ide_sessions_28d",
-          "contribution": -0.293
+          "feature": "accept_rate_change",
+          "contribution": 0.28
         },
         {
-          "feature": "first_renewal_after_pricing_change",
-          "contribution": 0.188
+          "feature": "cheap_model_share_28d",
+          "contribution": -0.216
         }
       ],
       "executed": {
@@ -170,61 +170,61 @@
         "notes": "sent as suggested"
       },
       "record": {
-        "user_id": "sub_00438",
-        "user_name": "Jordan Kim",
+        "user_id": "sub_01776",
+        "user_name": "Casey Davis",
         "plan_tier": "pro",
         "renewals_completed": 0,
-        "active_days_7d": 1,
-        "active_days_28d": 14,
-        "engagement_trend": 0.2857,
-        "last_active_days_ago": 1,
-        "agent_requests_28d": 531,
-        "allowance_used_pct": 1.1523,
-        "limit_hits_14d": 1,
-        "cheap_model_share_28d": 0.2685,
-        "overage_usd_28d": 1.85,
+        "active_days_7d": 2,
+        "active_days_28d": 7,
+        "engagement_trend": 1.1429,
+        "last_active_days_ago": 2,
+        "agent_requests_28d": 75,
+        "allowance_used_pct": 0.1778,
+        "limit_hits_14d": 0,
+        "cheap_model_share_28d": 0.1859,
+        "overage_usd_28d": 0.0,
         "overage_toggled_off": 0,
-        "suggestion_accept_rate_28d": 0.2093,
-        "accept_rate_change": 0.9264,
-        "agent_task_success_rate": 0.6199,
-        "failed_requests_rate": 0.0203,
-        "incident_exposed_28d": 0,
+        "suggestion_accept_rate_28d": 0.2396,
+        "accept_rate_change": 0.7846,
+        "agent_task_success_rate": 0.4253,
+        "failed_requests_rate": 0.0878,
+        "incident_exposed_28d": 1,
         "support_tickets_90d": 0,
-        "ide_sessions_28d": 21,
-        "cli_sessions_28d": 6,
-        "weekend_usage_ratio": 0.1271,
-        "first_renewal_after_pricing_change": 1
+        "ide_sessions_28d": 2,
+        "cli_sessions_28d": 7,
+        "weekend_usage_ratio": 0.6816,
+        "first_renewal_after_pricing_change": 0
       }
     },
     {
       "id": "side_project_lull",
       "title": "Side-project user between projects",
-      "story": "75% of activity on weekends and 1 active day(s) this week. This is the subscriber a pause offer exists for.",
+      "story": "55% of activity on weekends and 0 active day(s) this week. This is the subscriber a pause offer exists for.",
       "source": {
         "dataset": "seed-42 renewals_t7.csv",
         "split": "test (holdout)",
-        "candidates_matching_filter": 31
+        "candidates_matching_filter": 22
       },
       "expected": {
-        "p_raw": 0.60941,
-        "p_cal": 0.186228,
+        "p_raw": 0.645346,
+        "p_cal": 0.225463,
         "band": "medium",
         "action": "pause_offer",
         "holdout": false,
-        "expected_value_usd": 1.89
+        "expected_value_usd": 2.38
       },
       "top_drivers": [
         {
-          "feature": "renewals_completed",
-          "contribution": 0.561
-        },
-        {
-          "feature": "cheap_model_share_28d",
-          "contribution": -0.306
-        },
-        {
           "feature": "accept_rate_change",
-          "contribution": 0.28
+          "contribution": 0.22
+        },
+        {
+          "feature": "ide_sessions_28d",
+          "contribution": 0.124
+        },
+        {
+          "feature": "limit_hits_14d",
+          "contribution": -0.105
         }
       ],
       "executed": {
@@ -233,61 +233,61 @@
         "notes": "sent as suggested"
       },
       "record": {
-        "user_id": "sub_03243",
-        "user_name": "Taylor Kim",
+        "user_id": "sub_06315",
+        "user_name": "Taylor Lee",
         "plan_tier": "pro",
-        "renewals_completed": 0,
-        "active_days_7d": 1,
-        "active_days_28d": 9,
-        "engagement_trend": 0.4444,
-        "last_active_days_ago": 1,
-        "agent_requests_28d": 222,
-        "allowance_used_pct": 0.5012,
+        "renewals_completed": 2,
+        "active_days_7d": 0,
+        "active_days_28d": 7,
+        "engagement_trend": 0.0,
+        "last_active_days_ago": 8,
+        "agent_requests_28d": 304,
+        "allowance_used_pct": 0.6854,
         "limit_hits_14d": 0,
-        "cheap_model_share_28d": 0.2149,
+        "cheap_model_share_28d": 0.3022,
         "overage_usd_28d": 0.0,
         "overage_toggled_off": 0,
-        "suggestion_accept_rate_28d": 0.1615,
-        "accept_rate_change": 0.8552,
-        "agent_task_success_rate": 0.3334,
-        "failed_requests_rate": 0.0856,
-        "incident_exposed_28d": 1,
-        "support_tickets_90d": 1,
-        "ide_sessions_28d": 12,
-        "cli_sessions_28d": 7,
-        "weekend_usage_ratio": 0.7471,
+        "suggestion_accept_rate_28d": 0.2681,
+        "accept_rate_change": 0.8723,
+        "agent_task_success_rate": 0.569,
+        "failed_requests_rate": 0.0378,
+        "incident_exposed_28d": 0,
+        "support_tickets_90d": 0,
+        "ide_sessions_28d": 3,
+        "cli_sessions_28d": 6,
+        "weekend_usage_ratio": 0.5534,
         "first_renewal_after_pricing_change": 1
       }
     },
     {
       "id": "overage_shock",
       "title": "Switched overage off after a bill",
-      "story": "Paid $1.97 of overage in 28 days, then switched it off; 3 cap hits since. The send export shows the messaging tool suppressed the email because the subscriber opted out of marketing mail.",
+      "story": "Paid $14.70 of overage in 28 days, then switched it off; 4 cap hits since. The send export shows the messaging tool suppressed the email because the subscriber opted out of marketing mail.",
       "source": {
         "dataset": "seed-42 renewals_t7.csv",
         "split": "test (holdout)",
-        "candidates_matching_filter": 33
+        "candidates_matching_filter": 24
       },
       "expected": {
-        "p_raw": 0.638512,
-        "p_cal": 0.205509,
+        "p_raw": 0.674895,
+        "p_cal": 0.25022,
         "band": "medium",
         "action": "limit_reset",
         "holdout": false,
-        "expected_value_usd": 3.14
+        "expected_value_usd": 4.26
       },
       "top_drivers": [
         {
+          "feature": "limit_hits_14d",
+          "contribution": 0.593
+        },
+        {
+          "feature": "cheap_model_share_28d",
+          "contribution": 0.334
+        },
+        {
           "feature": "renewals_completed",
-          "contribution": 0.415
-        },
-        {
-          "feature": "agent_task_success_rate",
-          "contribution": 0.301
-        },
-        {
-          "feature": "cli_sessions_28d",
-          "contribution": -0.21
+          "contribution": -0.272
         }
       ],
       "executed": {
@@ -296,44 +296,44 @@
         "notes": "email suppressed by opt-out list; logged so it is not counted as treated"
       },
       "record": {
-        "user_id": "sub_03170",
-        "user_name": "Taylor Garcia",
+        "user_id": "sub_04884",
+        "user_name": "Quinn Wilson",
         "plan_tier": "pro",
-        "renewals_completed": 0,
-        "active_days_7d": 3,
-        "active_days_28d": 13,
-        "engagement_trend": 0.9231,
-        "last_active_days_ago": 2,
-        "agent_requests_28d": 497,
-        "allowance_used_pct": 1.0707,
-        "limit_hits_14d": 3,
-        "cheap_model_share_28d": 0.4595,
-        "overage_usd_28d": 1.97,
+        "renewals_completed": 7,
+        "active_days_7d": 2,
+        "active_days_28d": 12,
+        "engagement_trend": 0.6667,
+        "last_active_days_ago": 1,
+        "agent_requests_28d": 785,
+        "allowance_used_pct": 1.7204,
+        "limit_hits_14d": 4,
+        "cheap_model_share_28d": 0.5549,
+        "overage_usd_28d": 14.7,
         "overage_toggled_off": 1,
-        "suggestion_accept_rate_28d": 0.2108,
-        "accept_rate_change": 0.9467,
-        "agent_task_success_rate": 0.4561,
-        "failed_requests_rate": 0.0429,
+        "suggestion_accept_rate_28d": 0.2317,
+        "accept_rate_change": 0.9399,
+        "agent_task_success_rate": 0.4727,
+        "failed_requests_rate": 0.0338,
         "incident_exposed_28d": 0,
-        "support_tickets_90d": 1,
-        "ide_sessions_28d": 15,
-        "cli_sessions_28d": 17,
-        "weekend_usage_ratio": 0.2367,
+        "support_tickets_90d": 2,
+        "ide_sessions_28d": 13,
+        "cli_sessions_28d": 5,
+        "weekend_usage_ratio": 0.1371,
         "first_renewal_after_pricing_change": 0
       }
     },
     {
       "id": "quiet_but_fine",
       "title": "Quiet week, long tenure",
-      "story": "2 active day(s) this week against 15 in 28, but 10 renewals paid and no cap trouble. A dip is not a lapse.",
+      "story": "0 active day(s) this week against 5 in 28, but 10 renewals paid and no cap trouble. A dip is not a lapse.",
       "source": {
         "dataset": "seed-42 renewals_t7.csv",
         "split": "test (holdout)",
-        "candidates_matching_filter": 127
+        "candidates_matching_filter": 123
       },
       "expected": {
-        "p_raw": 0.211613,
-        "p_cal": 0.041125,
+        "p_raw": 0.230979,
+        "p_cal": 0.041064,
         "band": "low",
         "action": "no_action",
         "holdout": false,
@@ -341,16 +341,16 @@
       },
       "top_drivers": [
         {
+          "feature": "cheap_model_share_28d",
+          "contribution": -0.475
+        },
+        {
           "feature": "renewals_completed",
-          "contribution": -0.443
+          "contribution": -0.366
         },
         {
           "feature": "suggestion_accept_rate_28d",
-          "contribution": -0.306
-        },
-        {
-          "feature": "accept_rate_change",
-          "contribution": -0.236
+          "contribution": -0.192
         }
       ],
       "executed": {
@@ -359,30 +359,30 @@
         "notes": "nothing sent"
       },
       "record": {
-        "user_id": "sub_06078",
-        "user_name": "Taylor Wilson",
-        "plan_tier": "pro",
+        "user_id": "sub_06007",
+        "user_name": "Jordan Nguyen",
+        "plan_tier": "pro_plus",
         "renewals_completed": 10,
-        "active_days_7d": 2,
-        "active_days_28d": 15,
-        "engagement_trend": 0.5333,
-        "last_active_days_ago": 1,
-        "agent_requests_28d": 396,
-        "allowance_used_pct": 0.8845,
-        "limit_hits_14d": 2,
-        "cheap_model_share_28d": 0.3413,
+        "active_days_7d": 0,
+        "active_days_28d": 5,
+        "engagement_trend": 0.0,
+        "last_active_days_ago": 8,
+        "agent_requests_28d": 140,
+        "allowance_used_pct": 0.1079,
+        "limit_hits_14d": 0,
+        "cheap_model_share_28d": 0.1439,
         "overage_usd_28d": 0.0,
         "overage_toggled_off": 0,
-        "suggestion_accept_rate_28d": 0.3762,
-        "accept_rate_change": 1.0705,
-        "agent_task_success_rate": 0.5874,
-        "failed_requests_rate": 0.0662,
-        "incident_exposed_28d": 0,
+        "suggestion_accept_rate_28d": 0.3996,
+        "accept_rate_change": 0.9926,
+        "agent_task_success_rate": 0.6279,
+        "failed_requests_rate": 0.0766,
+        "incident_exposed_28d": 1,
         "support_tickets_90d": 0,
-        "ide_sessions_28d": 16,
-        "cli_sessions_28d": 12,
-        "weekend_usage_ratio": 0.2318,
-        "first_renewal_after_pricing_change": 0
+        "ide_sessions_28d": 1,
+        "cli_sessions_28d": 7,
+        "weekend_usage_ratio": 0.8289,
+        "first_renewal_after_pricing_change": 1
       }
     },
     {
@@ -392,11 +392,11 @@
       "source": {
         "dataset": "seed-42 renewals_t7.csv",
         "split": "test (holdout)",
-        "candidates_matching_filter": 19
+        "candidates_matching_filter": 17
       },
       "expected": {
-        "p_raw": 0.697145,
-        "p_cal": 0.248727,
+        "p_raw": 0.656041,
+        "p_cal": 0.234219,
         "band": "medium",
         "action": "holdout",
         "holdout": true,
@@ -404,16 +404,16 @@
       },
       "top_drivers": [
         {
-          "feature": "agent_task_success_rate",
-          "contribution": -0.634
-        },
-        {
           "feature": "limit_hits_14d",
-          "contribution": 0.558
+          "contribution": 0.441
         },
         {
-          "feature": "renewals_completed",
-          "contribution": 0.405
+          "feature": "cheap_model_share_28d",
+          "contribution": 0.275
+        },
+        {
+          "feature": "first_renewal_after_pricing_change",
+          "contribution": -0.199
         }
       ],
       "executed": {
@@ -422,30 +422,30 @@
         "notes": "holdout: nothing sent"
       },
       "record": {
-        "user_id": "sub_06568",
-        "user_name": "Jordan Lee",
+        "user_id": "sub_07217",
+        "user_name": "Morgan Wilson",
         "plan_tier": "pro",
-        "renewals_completed": 0,
+        "renewals_completed": 4,
         "active_days_7d": 4,
-        "active_days_28d": 10,
-        "engagement_trend": 1.6,
-        "last_active_days_ago": 2,
-        "agent_requests_28d": 887,
-        "allowance_used_pct": 2.2819,
-        "limit_hits_14d": 10,
-        "cheap_model_share_28d": 0.7558,
-        "overage_usd_28d": 16.35,
-        "overage_toggled_off": 1,
-        "suggestion_accept_rate_28d": 0.3419,
-        "accept_rate_change": 1.1573,
-        "agent_task_success_rate": 0.7432,
-        "failed_requests_rate": 0.052,
+        "active_days_28d": 4,
+        "engagement_trend": 4.0,
+        "last_active_days_ago": 1,
+        "agent_requests_28d": 456,
+        "allowance_used_pct": 1.626,
+        "limit_hits_14d": 4,
+        "cheap_model_share_28d": 0.6755,
+        "overage_usd_28d": 0.0,
+        "overage_toggled_off": 0,
+        "suggestion_accept_rate_28d": 0.1891,
+        "accept_rate_change": 0.9577,
+        "agent_task_success_rate": 0.4931,
+        "failed_requests_rate": 0.0315,
         "incident_exposed_28d": 0,
         "support_tickets_90d": 0,
-        "ide_sessions_28d": 13,
-        "cli_sessions_28d": 5,
-        "weekend_usage_ratio": 0.5072,
-        "first_renewal_after_pricing_change": 1
+        "ide_sessions_28d": 12,
+        "cli_sessions_28d": 1,
+        "weekend_usage_ratio": 0.33,
+        "first_renewal_after_pricing_change": 0
       }
     },
     {
@@ -458,25 +458,25 @@
         "candidates_matching_filter": 1
       },
       "expected": {
-        "p_raw": 0.635042,
-        "p_cal": 0.203135,
+        "p_raw": 0.603788,
+        "p_cal": 0.193671,
         "band": "medium",
         "action": "personal_email",
         "holdout": false,
-        "expected_value_usd": 35.78
+        "expected_value_usd": 33.42
       },
       "top_drivers": [
         {
           "feature": "renewals_completed",
-          "contribution": 0.463
-        },
-        {
-          "feature": "plan_tier_code",
-          "contribution": -0.285
+          "contribution": 0.377
         },
         {
           "feature": "accept_rate_change",
-          "contribution": 0.251
+          "contribution": 0.223
+        },
+        {
+          "feature": "allowance_used_pct",
+          "contribution": -0.16
         }
       ],
       "executed": {
@@ -522,26 +522,26 @@
         "user_name": "Invalid record (teams_seat)",
         "plan_tier": "teams",
         "renewals_completed": 0,
-        "active_days_7d": 1,
-        "active_days_28d": 14,
-        "engagement_trend": 0.2857,
-        "last_active_days_ago": 1,
-        "agent_requests_28d": 531,
-        "allowance_used_pct": 1.1523,
-        "limit_hits_14d": 1,
-        "cheap_model_share_28d": 0.2685,
-        "overage_usd_28d": 1.85,
+        "active_days_7d": 2,
+        "active_days_28d": 7,
+        "engagement_trend": 1.1429,
+        "last_active_days_ago": 2,
+        "agent_requests_28d": 75,
+        "allowance_used_pct": 0.1778,
+        "limit_hits_14d": 0,
+        "cheap_model_share_28d": 0.1859,
+        "overage_usd_28d": 0.0,
         "overage_toggled_off": 0,
-        "suggestion_accept_rate_28d": 0.2093,
-        "accept_rate_change": 0.9264,
-        "agent_task_success_rate": 0.6199,
-        "failed_requests_rate": 0.0203,
-        "incident_exposed_28d": 0,
+        "suggestion_accept_rate_28d": 0.2396,
+        "accept_rate_change": 0.7846,
+        "agent_task_success_rate": 0.4253,
+        "failed_requests_rate": 0.0878,
+        "incident_exposed_28d": 1,
         "support_tickets_90d": 0,
-        "ide_sessions_28d": 21,
-        "cli_sessions_28d": 6,
-        "weekend_usage_ratio": 0.1271,
-        "first_renewal_after_pricing_change": 1
+        "ide_sessions_28d": 2,
+        "cli_sessions_28d": 7,
+        "weekend_usage_ratio": 0.6816,
+        "first_renewal_after_pricing_change": 0
       }
     },
     {
@@ -553,26 +553,26 @@
         "user_name": "Invalid record (accept_rate_missing)",
         "plan_tier": "pro",
         "renewals_completed": 0,
-        "active_days_7d": 1,
-        "active_days_28d": 14,
-        "engagement_trend": 0.2857,
-        "last_active_days_ago": 1,
-        "agent_requests_28d": 531,
-        "allowance_used_pct": 1.1523,
-        "limit_hits_14d": 1,
-        "cheap_model_share_28d": 0.2685,
-        "overage_usd_28d": 1.85,
+        "active_days_7d": 2,
+        "active_days_28d": 7,
+        "engagement_trend": 1.1429,
+        "last_active_days_ago": 2,
+        "agent_requests_28d": 75,
+        "allowance_used_pct": 0.1778,
+        "limit_hits_14d": 0,
+        "cheap_model_share_28d": 0.1859,
+        "overage_usd_28d": 0.0,
         "overage_toggled_off": 0,
         "suggestion_accept_rate_28d": null,
-        "accept_rate_change": 0.9264,
-        "agent_task_success_rate": 0.6199,
-        "failed_requests_rate": 0.0203,
-        "incident_exposed_28d": 0,
+        "accept_rate_change": 0.7846,
+        "agent_task_success_rate": 0.4253,
+        "failed_requests_rate": 0.0878,
+        "incident_exposed_28d": 1,
         "support_tickets_90d": 0,
-        "ide_sessions_28d": 21,
-        "cli_sessions_28d": 6,
-        "weekend_usage_ratio": 0.1271,
-        "first_renewal_after_pricing_change": 1
+        "ide_sessions_28d": 2,
+        "cli_sessions_28d": 7,
+        "weekend_usage_ratio": 0.6816,
+        "first_renewal_after_pricing_change": 0
       }
     },
     {
@@ -586,24 +586,24 @@
         "renewals_completed": 0,
         "active_days_7d": 7,
         "active_days_28d": 3,
-        "engagement_trend": 0.2857,
-        "last_active_days_ago": 1,
-        "agent_requests_28d": 531,
-        "allowance_used_pct": 1.1523,
-        "limit_hits_14d": 1,
-        "cheap_model_share_28d": 0.2685,
-        "overage_usd_28d": 1.85,
+        "engagement_trend": 1.1429,
+        "last_active_days_ago": 2,
+        "agent_requests_28d": 75,
+        "allowance_used_pct": 0.1778,
+        "limit_hits_14d": 0,
+        "cheap_model_share_28d": 0.1859,
+        "overage_usd_28d": 0.0,
         "overage_toggled_off": 0,
-        "suggestion_accept_rate_28d": 0.2093,
-        "accept_rate_change": 0.9264,
-        "agent_task_success_rate": 0.6199,
-        "failed_requests_rate": 0.0203,
-        "incident_exposed_28d": 0,
+        "suggestion_accept_rate_28d": 0.2396,
+        "accept_rate_change": 0.7846,
+        "agent_task_success_rate": 0.4253,
+        "failed_requests_rate": 0.0878,
+        "incident_exposed_28d": 1,
         "support_tickets_90d": 0,
-        "ide_sessions_28d": 21,
-        "cli_sessions_28d": 6,
-        "weekend_usage_ratio": 0.1271,
-        "first_renewal_after_pricing_change": 1
+        "ide_sessions_28d": 2,
+        "cli_sessions_28d": 7,
+        "weekend_usage_ratio": 0.6816,
+        "first_renewal_after_pricing_change": 0
       }
     },
     {
@@ -615,26 +615,26 @@
         "user_name": "Invalid record (limit_hits_as_text)",
         "plan_tier": "pro",
         "renewals_completed": 0,
-        "active_days_7d": 1,
-        "active_days_28d": 14,
-        "engagement_trend": 0.2857,
-        "last_active_days_ago": 1,
-        "agent_requests_28d": 531,
-        "allowance_used_pct": 1.1523,
+        "active_days_7d": 2,
+        "active_days_28d": 7,
+        "engagement_trend": 1.1429,
+        "last_active_days_ago": 2,
+        "agent_requests_28d": 75,
+        "allowance_used_pct": 0.1778,
         "limit_hits_14d": "three",
-        "cheap_model_share_28d": 0.2685,
-        "overage_usd_28d": 1.85,
+        "cheap_model_share_28d": 0.1859,
+        "overage_usd_28d": 0.0,
         "overage_toggled_off": 0,
-        "suggestion_accept_rate_28d": 0.2093,
-        "accept_rate_change": 0.9264,
-        "agent_task_success_rate": 0.6199,
-        "failed_requests_rate": 0.0203,
-        "incident_exposed_28d": 0,
+        "suggestion_accept_rate_28d": 0.2396,
+        "accept_rate_change": 0.7846,
+        "agent_task_success_rate": 0.4253,
+        "failed_requests_rate": 0.0878,
+        "incident_exposed_28d": 1,
         "support_tickets_90d": 0,
-        "ide_sessions_28d": 21,
-        "cli_sessions_28d": 6,
-        "weekend_usage_ratio": 0.1271,
-        "first_renewal_after_pricing_change": 1
+        "ide_sessions_28d": 2,
+        "cli_sessions_28d": 7,
+        "weekend_usage_ratio": 0.6816,
+        "first_renewal_after_pricing_change": 0
       }
     }
   ],
@@ -644,11 +644,11 @@
     "valid_rows": 408,
     "invalid_rows": 4,
     "expected_actions": {
-      "cancel_flow_discount": 36,
-      "holdout": 7,
-      "limit_reset": 51,
-      "no_action": 300,
-      "pause_offer": 13,
+      "cancel_flow_discount": 22,
+      "holdout": 5,
+      "limit_reset": 36,
+      "no_action": 338,
+      "pause_offer": 6,
       "personal_email": 1
     }
   }

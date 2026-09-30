@@ -34,19 +34,19 @@ Honest ladder: **Dummy(prior) → LogReg → RF → default XGB → Optuna XGB �
 |-------|---------|--------|----------|---------|-------------|
 | Dummy (prior) | 0.5000 | 0.0000 | 0.5000 | 0.0000 | 0.0962 |
 | Logistic regression | 0.7706 | 0.3130 | 0.7811 | 0.3333 | 0.2812 |
-| Random Forest | 0.7653 | 0.3831 | 0.7576 | 0.3030 | 0.2668 |
-| XGBoost (default) | 0.7360 | 0.3252 | 0.7275 | 0.2991 | 0.2504 |
-| XGBoost (Optuna, raw) | 0.7690 | 0.3444 | 0.7631 | 0.3314 | 0.2579 |
+| Random Forest | 0.7653 | 0.3831 | 0.7576 | 0.3030 | 0.2672 |
+| XGBoost (default) | 0.7411 | 0.3132 | 0.7290 | 0.3288 | 0.2336 |
+| XGBoost (Optuna, raw) | 0.7702 | 0.3505 | 0.7573 | 0.3108 | 0.2697 |
 | LightGBM (default) | 0.7525 | 0.3185 | 0.7359 | 0.3093 | 0.2430 |
-| CatBoost (default) | 0.7749 | 0.3107 | 0.7705 | 0.3193 | 0.2810 |
-| XGBoost (calibrated) | 0.7690 | 0.0000 | 0.7631 | 0.0000 | 0.2579 |
+| CatBoost (default) | 0.7694 | 0.3171 | 0.7649 | 0.3302 | 0.2757 |
+| XGBoost (calibrated) | 0.7702 | 0.0000 | 0.7573 | 0.0000 | 0.2697 |
 
 ### Calibration (Brier — lower is better)
 
 | Split | Raw Brier | Calibrated Brier |
 |-------|-----------|------------------|
-| val | `0.1607` | `0.0779` |
-| test | `0.1616` | `0.0793` |
+| val | `0.1607` | `0.0774` |
+| test | `0.1627` | `0.0794` |
 
 Method: `sigmoid`.
 
@@ -54,13 +54,13 @@ Method: `sigmoid`.
 
 | Quantity | Value |
 |----------|-------|
-| Test AUC-ROC (calibrated) | `0.7631` |
-| Test PR-AUC / AP | `0.2579` |
-| Best F1 threshold τ (chosen on validation) | `0.14` |
-| F1 at τ (validation) | `0.3578` |
-| F1 at τ (test, reported once) | `0.3441` |
+| Test AUC-ROC (calibrated) | `0.7573` |
+| Test PR-AUC / AP | `0.2697` |
+| Best F1 threshold τ (chosen on validation) | `0.16` |
+| F1 at τ (validation) | `0.3800` |
+| F1 at τ (test, reported once) | `0.3290` |
 | F1 @ 0.5 | `0.0000` |
-| Warm latency p50 / p95 (ms) | `1.51` / `9.92` |
+| Warm latency p50 / p95 (ms) | `2.73` / `3.28` |
 
 ## Result plots
 

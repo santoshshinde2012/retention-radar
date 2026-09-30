@@ -327,7 +327,7 @@ N_USERS = int(os.environ.get("N_USERS", "8000"))
 N_OPTUNA_TRIALS = int(os.environ.get("N_OPTUNA_TRIALS", "20"))
 
 # Platt (sigmoid), not isotonic: with 142 lapses in validation, isotonic fits
-# ~24 flat steps, ties most of the queue and hands some subscribers P = 0.000.
+# a few dozen flat steps, ties most of the queue and hands some subscribers P = 0.000.
 CALIBRATION_METHOD = "sigmoid"
 
 LATENCY_WARMUP = 20

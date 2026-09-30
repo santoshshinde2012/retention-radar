@@ -98,8 +98,8 @@ Order used at train / infer time:
 | `last_active_days_ago` | 2 | 0 |
 | `agent_requests_28d` | 470 | 910 |
 | `allowance_used_pct` | 1.02 | 0.66 |
-| `limit_hits_14d` | 3 | 0 |
-| `cheap_model_share_28d` | 0.64 | 0.18 |
+| `limit_hits_14d` | 4 | 0 |
+| `cheap_model_share_28d` | 0.68 | 0.18 |
 | `overage_usd_28d` | 0.0 | 0.0 |
 | `overage_toggled_off` | 0 | 0 |
 | `suggestion_accept_rate_28d` | 0.29 | 0.33 |
