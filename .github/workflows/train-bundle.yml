@@ -27,6 +27,19 @@ jobs:
           N_OPTUNA_TRIALS: "20"
         run: |
           ./scripts/run_all.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: linux-train
+          path: |
+            models/
+            docs/MODEL_CARD.md
+            docs/data/data-dictionary.md
+            artifacts/
+      - name: Use cases + result copies
+        env:
+          CHURN_DATA_SOURCE: synthetic
+        run: |
           python -m retention_radar.cli.build_use_cases
           make docs-results
           python - <<'PY'
