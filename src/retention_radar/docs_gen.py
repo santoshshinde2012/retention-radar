@@ -23,9 +23,9 @@ def schema_field_meta(col: str, schema: dict) -> tuple[str, str, str]:
     required = set(schema.get("required", []))
 
     if col == "plan_tier_code":
-        return "integer", "0–3 (free…enterprise)", "no (derived at transform)"
+        return "integer", "0–2 (pro, pro_plus, ultra)", "no (derived at transform)"
     if col == "churned":
-        return "integer (0/1)", "0 or 1", "no in training CSV; omitted on serve"
+        return "integer (0/1)", "0 or 1", "no in training CSV; omitted on serve (renewal is ahead)"
 
     prop = props.get(col, {})
     raw_type = prop.get("type", "")
@@ -86,7 +86,17 @@ def write_data_dictionary(path: Path | None = None) -> Path:
         "",
         "Auto-generated from `src/retention_radar/config.py`, "
         "`configs/schemas/user_record.schema.json`, and `src/retention_radar/data/generate.py`.",
-        "Synthetic AI-platform churn dataset — no real PII.",
+        "One row per paying subscriber of a monthly AI coding assistant plan, snapshotted "
+        "seven days before renewal (T-7). Synthetic, no real PII.",
+        "",
+        "## Label and routing",
+        "",
+        "- `churned` = 1 when the subscriber **voluntarily** let the plan lapse at this renewal.",
+        "- Renewals that lapsed because the card failed and retries ran out are routed to "
+        "**dunning** and excluded (a payments problem, not a behaviour signal).",
+        "- Subscribers who had already scheduled a cancel before T-7 are routed to the "
+        "**cancel flow** and excluded (the outcome is decided; keeping them would leak it).",
+        "- `data/raw/renewals_all.csv` keeps every renewal with `outcome` and `route` for audit.",
         "",
         f"_Generated: {date.today().isoformat()} · seed={config.RANDOM_SEED}_",
         "",
@@ -97,7 +107,7 @@ def write_data_dictionary(path: Path | None = None) -> Path:
         "- **Train / serve:** `prepare_xy` and `row_to_feature_frame` **fail loud** "
         "if any model feature is NaN after encoding. There is no silent impute.",
         "- **Recommended real-data pattern:** add missingness indicators "
-        "(e.g. `nps_missing`) and fit an imputer **on train only**, persist it "
+        "(e.g. `accept_rate_missing` for users who turned inline suggestions off) and fit an imputer **on train only**, persist it "
         "beside the model, then apply the same transform at serve. Do not impute "
         "from a single Streamlit row.",
         "",
@@ -151,24 +161,24 @@ def write_data_dictionary(path: Path | None = None) -> Path:
         lines.append(f"| `{name}` | {i} |")
 
     try:
-        from retention_radar.data.generate import santosh_profile
+        from retention_radar.data.generate import HERO_PROFILES
 
-        profile = {k: v for k, v in santosh_profile().items() if k != "churned"}
         lines += [
             "",
-            "## Santosh Shinde — feature contract (inference)",
+            "## Worked examples (scoring-time records, no label)",
             "",
-            "Payload: `data/raw/santosh_shinde.json` (no `churned`).",
-            "",
-            "| Field | Example value |",
-            "|-------|----------------|",
+            "| Field | " + " | ".join(HERO_PROFILES) + " |",
+            "|-------|" + "|".join("---" for _ in HERO_PROFILES) + "|",
         ]
-        for k, v in profile.items():
-            lines.append(f"| `{k}` | {v} |")
+        profiles = {k: fn() for k, fn in HERO_PROFILES.items()}
+        for field in config.INFERENCE_REQUIRED_KEYS:
+            lines.append(
+                f"| `{field}` | " + " | ".join(str(profiles[k][field]) for k in profiles) + " |"
+            )
         lines += [
             "",
-            "See also [santosh-case-study.md](../case-study/santosh-case-study.md) and "
-            "[single-record-checklist.md](../case-study/single-record-checklist.md).",
+            "Payloads: `data/raw/subscribers/*.json`. Walkthrough: "
+            "[renewal-worked-examples.md](../case-study/renewal-worked-examples.md).",
             "",
         ]
     except Exception:
@@ -180,7 +190,7 @@ def write_data_dictionary(path: Path | None = None) -> Path:
         "",
         "- [ARCHITECTURE.md](../ARCHITECTURE.md) — SOLID package map",
         "- [MODEL_CARD.md](../MODEL_CARD.md)",
-        "- [Santosh case study](../case-study/santosh-case-study.md)",
+        "- [Worked examples](../case-study/renewal-worked-examples.md)",
         "- [Single-record checklist](../case-study/single-record-checklist.md)",
         "- [Data foundation / lakehouse](data-foundation-lakehouse.md)",
         "",
@@ -205,33 +215,38 @@ def write_model_card(metrics: dict | None = None, path: Path | None = None) -> P
         op_ap = cal_test.get("average_precision")
 
     lines = [
-        "# Model card — AI platform churn (XGBoost)",
+        "# Model card: voluntary lapse at renewal (AI coding assistant, XGBoost)",
         "",
         f"_Generated: {date.today().isoformat()} · seed={config.RANDOM_SEED}_",
         "",
         "## Overview",
         "",
-        "Binary classifier predicting whether a synthetic AI-platform user will churn.",
+        "Binary classifier scoring, seven days before a monthly renewal, whether a paying "
+        "subscriber of a self-serve AI coding assistant will voluntarily let the plan lapse.",
         "Stack: XGBoost (Optuna-tuned) + post-hoc probability calibration "
         f"(`{metrics.get('calibration_method', config.CALIBRATION_METHOD)}`) "
         "on the validation set.",
         "",
         "## Intended use",
         "",
-        "- Teaching / FOSS case study for churn ranking and calibrated probabilities.",
-        "- Interactive Streamlit what-if on the Santosh Shinde hero profile.",
+        "- Teaching / FOSS case study: rank T-7 renewals, calibrate, and feed an expected-value "
+        "policy that picks an approved playbook, a holdout, or no action.",
+        "- The score says who is at risk, not who will respond. Playbook effects in "
+        "`config.PLAYBOOKS` are assumptions until a holdout measures them.",
         "- **Not** for production decisions on real customers without fresh data validation.",
         "",
         "## Training data",
         "",
-        "- Synthetic users from `src/retention_radar/data/generate.py` "
-        "(rule-based propensity + noise). **No NaNs by design.**",
+        "- Synthetic renewal cohort from `src/retention_radar/data/generate.py`: unobserved "
+        "causes (need, fit, price sensitivity, side-project habit, a rival tool's pull) drive "
+        "observed usage and a noisy voluntary-lapse outcome. **No NaNs by design.**",
+        "- Dunning (failed-payment) lapses and already-scheduled cancels are excluded; see the data dictionary.",
         f"- Split: train ~{(1 - config.TEST_SIZE - config.VAL_SIZE) * 100:.0f}% / "
         f"val ~{config.VAL_SIZE * 100:.0f}% / test ~{config.TEST_SIZE * 100:.0f}% "
         f"(stratified, `random_state={config.RANDOM_SEED}`).",
         f"- n_train={metrics.get('n_train', '?')} · n_val={metrics.get('n_val', '?')} · "
         f"n_test={metrics.get('n_test', '?')} · n_trials={metrics.get('n_trials', '?')}.",
-        f"- Train churn rate: `{metrics.get('churn_rate_train', 'n/a')}`.",
+        f"- Train voluntary-lapse rate: `{metrics.get('churn_rate_train', 'n/a')}`.",
         "",
         "## Features",
         "",
@@ -242,7 +257,7 @@ def write_model_card(metrics: dict | None = None, path: Path | None = None) -> P
         "## Metrics (holdout) — from `models/metrics.json`",
         "",
         "Honest ladder: **Dummy(prior) → LogReg → RF → default XGB → Optuna XGB → LightGBM → CatBoost** "
-        "(calibrated XGB is the Santosh / serving hero). No simple-rule baseline is logged. "
+        "(calibrated XGB serves). No simple-rule baseline is logged. "
         "GBDT trilogy peers: XGB / LightGBM / CatBoost.",
         "",
         "| Model | Val AUC | Val F1 | Test AUC | Test F1 | Test PR-AUC |",
@@ -352,18 +367,20 @@ def write_model_card(metrics: dict | None = None, path: Path | None = None) -> P
         "- Labels and features are synthetic; do not treat scores as real risk.",
         "- Calibration improves probability meaning but does not fix selection bias.",
         "- SHAP explains this score, not causation.",
-        "- Single-record path is HITL only (`auto_action: none`) — "
-        "see [single-record-checklist.md](case-study/single-record-checklist.md).",
+        "- The service never executes an action (`auto_action: none`); a lifecycle tool runs "
+        "human-approved playbooks, and a deterministic holdout is kept out of every playbook.",
+        "- Contacting at-risk subscribers can raise churn (Ascarza et al., JMR 2016). "
+        "Measure lift against the holdout before scaling any playbook.",
         "",
         "## Related reading",
         "",
         "- [ARCHITECTURE.md](ARCHITECTURE.md) — SOLID package map",
         "- [data-dictionary.md](data/data-dictionary.md)",
         "- [BEST_PRACTICES.md](guides/BEST_PRACTICES.md)",
-        "- [santosh-case-study.md](case-study/santosh-case-study.md)",
+        "- [renewal-worked-examples.md](case-study/renewal-worked-examples.md)",
         "- [ALGORITHM_LANDSCAPE.md](guides/ALGORITHM_LANDSCAPE.md) — what is on the ladder vs deferred",
         "- [../results/BENCHMARKS.md](../results/BENCHMARKS.md)",
-        "- [../results/SANTOSH_ANALYSIS.md](../results/SANTOSH_ANALYSIS.md)",
+        "- [../results/WORKED_EXAMPLES.md](../results/WORKED_EXAMPLES.md)",
         "",
     ]
     path.write_text("\n".join(lines), encoding="utf-8")

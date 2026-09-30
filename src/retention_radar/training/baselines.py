@@ -4,7 +4,7 @@ Ladder in metrics.json:
   Dummy(prior) → LogReg → Random Forest → default XGB → Optuna XGB → LightGBM → CatBoost
   (+ calibrated XGB for serving)
 
-XGBoost remains the teaching / Santosh hero. RF, LightGBM, and CatBoost are bake-off
+XGBoost (calibrated) is the serving model. RF, LightGBM, and CatBoost are bake-off
 peers (GBDT trilogy). There is no separate “simple rule” baseline in this repo.
 """
 

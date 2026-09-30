@@ -1,4 +1,64 @@
-## Unreleased
+# Changelog
+
+## 2026-09-30 — coding-assistant renewals (v2)
+
+The use case changed. The repo now scores renewals of a monthly AI coding assistant plan
+instead of generic AI-platform churn. Every model, number and file name below replaces
+its earlier counterpart; nothing from the earlier setup is kept for compatibility except
+where noted.
+
+- Use case: a self-serve AI coding assistant (IDE extension + CLI agent) on monthly plans,
+  Pro $20, Pro+ $60, Ultra $200. Teams plans are out of scope and held by validation.
+  Sources and reasoning: `docs/USE_CASE.md`.
+- Data: one row per paying subscriber seven days before renewal (T-7). New 24-field
+  contract (22 features + `user_id`, `user_name`) covering tenure, habit, usage against the
+  cap, quality and surface. `data/raw/users.csv` → `data/raw/renewals_t7.csv`; new
+  `data/raw/renewals_all.csv` keeps every renewal with `outcome` and `route`.
+- Label: `churned` = voluntary lapse. Failed cards go to dunning and cancels scheduled
+  before T-7 go to the cancel flow; both are excluded from the model table.
+- Cohort: `N_USERS` default 8000 → 7,329 model rows, 9.6% base rate, split 4,397 / 1,466 / 1,466.
+- Ladder (test AUC): LogReg 0.781, CatBoost 0.770, Optuna XGBoost 0.763, RF 0.758,
+  LightGBM 0.736, default XGBoost 0.728, Dummy 0.500.
+- Calibration: Platt (sigmoid) replaces isotonic. Isotonic gave a staircase that tied most
+  of the queue and returned P = 0.000 for some subscribers. Test Brier 0.162 raw → 0.079
+  calibrated (0.087 for always predicting the base rate). τ = 0.14.
+- Policy: `serving/policy.py` now picks, per subscriber above τ, the approved playbook in
+  `config.PLAYBOOKS` with the highest expected value (`in_app_usage_tips`, `limit_reset`,
+  `pause_offer`, `cancel_flow_discount`, `personal_email` for Ultra only), with a
+  deterministic 10% holdout. Bands are low < 0.10 ≤ medium < 0.30 ≤ high. `auto_action` is
+  always `none`; `hitl_required` is true only for `personal_email`.
+- Worked examples: Maya (Pro, capped, first renewal since the cap cut; 0.554 → 0.153,
+  medium, `limit_reset`) and Arjun (steady Pro+; 0.066 → 0.023, low, `no_action`) replace
+  the earlier single example. Files: `data/raw/subscribers/maya.json`, `arjun.json`;
+  `--user maya|arjun`; `make infer` writes `artifacts/maya_decision_packet.json`.
+- Renames: packet key `hitl` → `decision`; queue column `hitl_action` → `action`, plus
+  `holdout`, `would_have_sent`, `expected_value_usd`; `serving/hitl_log.py` →
+  `serving/action_log.py` and `cli.hitl_log` → `cli.action_log` (columns `user_id, p_cal,
+  band, action_suggested, holdout, would_have_sent, executed_by, action_taken, notes,
+  timestamp`); `cli.hitl_outcomes` → `cli.outcomes`, which now reports lift per playbook
+  against the holdout with a Newcombe interval and no verdict under 30 per group;
+  `POST /v1/churn/reviews` → `POST /v1/churn/actions` (`user_id, executed_by,
+  action_taken, notes`); `configs/action_log.schema.json`, `configs/templates/action_log.csv`.
+  `HitlDecisionPolicy` and `hitl_action` remain as import aliases.
+- Use-case pack: `data/use_cases/` rebuilt as one renewal day: eight scenarios, four
+  invalid records, `daily_t7_batch.csv`, `actions_taken.csv` (send export) and
+  `renewal_outcomes.csv` (simulated from the assumed playbook effects).
+- Results and docs: `results/SANTOSH_ANALYSIS.md` → `results/WORKED_EXAMPLES.md`;
+  `results/maya_decision_packet.sample.json`; `docs/case-study/renewal-worked-examples.md`;
+  new `docs/USE_CASE.md`; guides rewritten for the new use case. Notebook renamed to
+  `notebooks/01_explore_renewals.ipynb`.
+- Lakehouse: the local-data-lakehouse export must now produce the v2 contract
+  (`churn_user_features.csv` with the 24 fields + `churned`, and
+  `hero_inference_record.json`), built from raw billing + usage events as of T-7.
+  `results/lakehouse-e2e-summary.json` refreshed from that run: 7,387 renewals, calibrated
+  test AUC 0.728, Maya 0.216 → `limit_reset`.
+- Latency: warm single-row score + calibrate, p50 about 1.5 ms.
+- New `python -m retention_radar.cli.analysis` (run by `run_all.sh`; committed copy
+  `results/analysis.json`): paired bootstrap of logistic regression vs tuned XGBoost,
+  isotonic vs Platt, deciles/quintiles, and holdout sizes for a 9:1 split.
+- `scripts/run_local_e2e.sh`: works with macOS bash 3.2 (no negative array index).
+
+## Between 0.1.0 and 2026-09-30
 
 - fix(ci): the `test` job's N=800 smoke retrain wrote into `models/`, so the golden use-case / launcher tests that follow compared against a throwaway model (12 failures). The smoke run and its strict drift check now use `RETENTION_RADAR_ARTIFACT_DIR=artifacts/smoke`. Streamlit: `use_container_width` → `width="stretch"` (removed upstream), `streamlit>=1.50`.
 - fix: `python -m retention_radar.cli.drift_check --strict` ignored the exit code (the wrapper called `main()` without `SystemExit`), so CI's strict drift gate could never fail; test pins exit codes of every CLI with a `--strict`/error contract.
@@ -31,8 +91,6 @@
 - Restructure to production folder layout: only `src/retention_radar/` under `src/`, CLI under `retention_radar.cli`, nested `docs/{guides,data,case-study}/`, runtime-only `artifacts/`.
 - Add CatBoost (default) to the honest bake-off ladder; keep calibrated Optuna XGBoost as serving hero.
 - Document algorithm landscape (IN vs DEFER: TabPFN, survival, conformal, uplift, …).
-
-# Changelog
 
 ## 0.1.0 — 2026-09-15
 

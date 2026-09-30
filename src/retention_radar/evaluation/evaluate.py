@@ -194,6 +194,35 @@ def main() -> None:
     prec, rec, _ = precision_recall_curve(y_test, y_prob)
     metrics["pr_curve_points"] = int(len(prec))
 
+    # What a retention team reads: of everyone who lapsed, how many sit in the top
+    # 10% of scores, and how often a top-10% subscriber actually lapses.
+    order = np.argsort(-y_prob, kind="mergesort")
+    k = max(1, int(round(0.10 * len(order))))
+    top = np.asarray(y_test)[order[:k]]
+    metrics["capture_at_top_10pct"] = float(top.sum() / max(1, int(np.asarray(y_test).sum())))
+    metrics["precision_at_top_10pct"] = float(top.mean())
+    metrics["base_rate_test"] = float(np.asarray(y_test).mean())
+
+    # Run the decision policy over the test set (assumption-based EV; see config.PLAYBOOKS).
+    from retention_radar.serving.policy import decide, risk_band
+
+    records = df.loc[X_test.index].to_dict(orient="records")
+    actions: dict[str, int] = {}
+    ev_total = 0.0
+    for rec, p in zip(records, y_prob):
+        d = decide(float(p), tau, risk_band(float(p)), rec)
+        actions[d["action"]] = actions.get(d["action"], 0) + 1
+        ev_total += float(d["expected_value_usd"] or 0.0)
+    metrics["policy_on_test"] = {
+        "n": len(records),
+        "actions": dict(sorted(actions.items())),
+        "contacted_share": round(
+            sum(v for a, v in actions.items() if a not in ("no_action", "holdout")) / len(records), 4
+        ),
+        "expected_value_usd_total": round(ev_total, 2),
+        "note": "Expected value uses assumed playbook effects; a holdout must measure them.",
+    }
+
     plan_tiers_test = df.loc[X_test.index, "plan_tier"]
     slice_block = slice_metrics_by_plan_tier(
         y_test, y_prob, plan_tiers_test, threshold=0.5
@@ -213,6 +242,8 @@ def main() -> None:
     out["val_f1_at_threshold"] = sweep["best_f1"]
     out["best_f1_at_threshold"] = test_f1_at_tau
     out["slice_metrics_by_plan_tier"] = slice_block
+    for key in ("capture_at_top_10pct", "precision_at_top_10pct", "base_rate_test", "policy_on_test"):
+        out[key] = metrics[key]
     with open(config.METRICS_PATH, "w", encoding="utf-8") as f:
         json.dump(out, f, indent=2)
     print(f"Updated {config.METRICS_PATH}")

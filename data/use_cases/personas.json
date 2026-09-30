@@ -1,569 +1,655 @@
 {
-  "about": "Seed-42 synthetic use cases for the serving layer; see README.md.",
+  "about": "Seed-42 synthetic renewal use cases for the serving layer; see README.md.",
   "model_version": "seed42-churn_xgb",
-  "best_f1_threshold": 0.34,
+  "best_f1_threshold": 0.14,
+  "holdout_pct": 10,
   "calendar": {
-    "scored_at": "2026-09-28T09:00:00Z",
-    "reviewed_at": "2026-09-29T15:00:00Z",
-    "labels_observed_at": "2026-10-28T00:00:00Z"
+    "scored_at": "2026-09-28T06:00:00Z",
+    "acted_at": "2026-09-28T09:00:00Z",
+    "outcomes_observed_at": "2026-10-05T00:00:00Z"
   },
   "personas": [
     {
-      "id": "steady_power_user",
-      "title": "Steady power user (Santosh)",
-      "story": "On the pro plan 420 days, adoption 0.78, renewing in 21 days. 12% failed requests and 2 tickets in 90 days: friction the model does not worry about.",
+      "id": "maya_capped_pro",
+      "title": "Maya: capped on Pro, first renewal since the cut",
+      "story": "Pro, 3 renewals paid, and this is her first renewal since the weekly cap was cut. 3 cap hits in 14 days, 64% of requests on the cheaper model, 2 active days this week against 15 in 28. The policy picks the limit reset over a discount: her problem is the cap, not the price.",
       "source": {
-        "dataset": "data/raw/santosh_shinde.json",
-        "split": "hero (injected)"
+        "dataset": "data/raw/subscribers/maya.json",
+        "split": "worked example (scoring-time record, not in training)"
       },
       "expected": {
-        "p_raw": 0.043368,
-        "p_cal": 0.016461,
-        "band": "low",
-        "hitl_action": "monitor"
-      },
-      "top_drivers": [
-        {
-          "feature": "feature_adoption_score",
-          "contribution": -1.084
-        },
-        {
-          "feature": "support_tickets_last_90d",
-          "contribution": -0.404
-        },
-        {
-          "feature": "last_active_days_ago",
-          "contribution": -0.401
-        }
-      ],
-      "reviewer": {
-        "action_taken": "monitor",
-        "notes": "healthy; no action"
-      },
-      "record": {
-        "user_id": "santosh_shinde",
-        "user_name": "Santosh Shinde",
-        "days_since_signup": 420,
-        "sessions_last_7d": 9,
-        "sessions_last_30d": 38,
-        "avg_session_minutes": 28.5,
-        "models_used_count": 7,
-        "api_calls_last_30d": 1850,
-        "tokens_consumed_last_30d": 420000,
-        "tools_used_count": 8,
-        "failed_requests_rate": 0.12,
-        "support_tickets_last_90d": 2,
-        "plan_tier": "pro",
-        "payment_failures_last_90d": 1,
-        "feature_adoption_score": 0.78,
-        "nps_score": 7.0,
-        "last_active_days_ago": 8,
-        "weekend_usage_ratio": 0.22,
-        "engagement_trend": 0.9474,
-        "spend_usd_last_30d": 189.0,
-        "days_until_renewal": 21,
-        "agent_runs_last_30d": 52,
-        "ide_plugin_sessions_last_30d": 28,
-        "seat_utilization": 0.72
-      }
-    },
-    {
-      "id": "dip_but_healthy",
-      "title": "Usage dip, still healthy",
-      "story": "Session(s) this week: 1, against 7 in 30 days (engagement_trend 0.59), but adoption 0.51, NPS 9.7 and no failed payments. One quiet week is not churn risk; the queue stays calm.",
-      "source": {
-        "dataset": "seed-42 synthetic users.csv",
-        "split": "test (holdout)",
-        "candidates_matching_filter": 44
-      },
-      "expected": {
-        "p_raw": 0.086336,
-        "p_cal": 0.016461,
-        "band": "low",
-        "hitl_action": "monitor"
-      },
-      "top_drivers": [
-        {
-          "feature": "feature_adoption_score",
-          "contribution": -0.558
-        },
-        {
-          "feature": "support_tickets_last_90d",
-          "contribution": -0.476
-        },
-        {
-          "feature": "last_active_days_ago",
-          "contribution": -0.394
-        }
-      ],
-      "reviewer": {
-        "action_taken": "monitor",
-        "notes": "seasonal dip; no action"
-      },
-      "record": {
-        "user_id": "user_00205",
-        "user_name": "Morgan Davis",
-        "days_since_signup": 578,
-        "sessions_last_7d": 1,
-        "sessions_last_30d": 7,
-        "avg_session_minutes": 32.5,
-        "models_used_count": 5,
-        "api_calls_last_30d": 280,
-        "tokens_consumed_last_30d": 85507,
-        "tools_used_count": 8,
-        "failed_requests_rate": 0.0926,
-        "support_tickets_last_90d": 1,
-        "plan_tier": "free",
-        "payment_failures_last_90d": 0,
-        "feature_adoption_score": 0.5068,
-        "nps_score": 9.7,
-        "last_active_days_ago": 10,
-        "weekend_usage_ratio": 0.1941,
-        "engagement_trend": 0.5927,
-        "spend_usd_last_30d": 0.0,
-        "days_until_renewal": 125,
-        "agent_runs_last_30d": 35,
-        "ide_plugin_sessions_last_30d": 17,
-        "seat_utilization": 0.6291
-      }
-    },
-    {
-      "id": "new_trial_friction",
-      "title": "New free trial hitting friction",
-      "story": "Free plan, 28 days old, already 4 support tickets. Low band, but above half of \u03c4: a light check-in, not a sales call.",
-      "source": {
-        "dataset": "seed-42 synthetic users.csv",
-        "split": "test (holdout)",
-        "candidates_matching_filter": 2
-      },
-      "expected": {
-        "p_raw": 0.544511,
-        "p_cal": 0.173913,
-        "band": "low",
-        "hitl_action": "nurture / check-in"
-      },
-      "top_drivers": [
-        {
-          "feature": "last_active_days_ago",
-          "contribution": -0.413
-        },
-        {
-          "feature": "feature_adoption_score",
-          "contribution": 0.273
-        },
-        {
-          "feature": "support_tickets_last_90d",
-          "contribution": 0.27
-        }
-      ],
-      "reviewer": {
-        "action_taken": "nurture / check-in",
-        "notes": "offered an onboarding session"
-      },
-      "record": {
-        "user_id": "user_04890",
-        "user_name": "Casey Wilson",
-        "days_since_signup": 28,
-        "sessions_last_7d": 2,
-        "sessions_last_30d": 10,
-        "avg_session_minutes": 23.8,
-        "models_used_count": 3,
-        "api_calls_last_30d": 90,
-        "tokens_consumed_last_30d": 12745,
-        "tools_used_count": 3,
-        "failed_requests_rate": 0.2157,
-        "support_tickets_last_90d": 4,
-        "plan_tier": "free",
-        "payment_failures_last_90d": 1,
-        "feature_adoption_score": 0.3346,
-        "nps_score": 7.0,
-        "last_active_days_ago": 25,
-        "weekend_usage_ratio": 0.1679,
-        "engagement_trend": 0.7698,
-        "spend_usd_last_30d": 0.0,
-        "days_until_renewal": 23,
-        "agent_runs_last_30d": 12,
-        "ide_plugin_sessions_last_30d": 13,
-        "seat_utilization": 0.5681
-      }
-    },
-    {
-      "id": "borderline_friction",
-      "title": "Borderline: friction just under \u03c4",
-      "story": "4 tickets and 24% failed requests: medium band but still below the best-F1 threshold. The policy says nurture; the reviewer upgrades to outreach because the tickets are about one bug. This is the human override the log exists for.",
-      "source": {
-        "dataset": "seed-42 synthetic users.csv",
-        "split": "test (holdout)",
-        "candidates_matching_filter": 45
-      },
-      "expected": {
-        "p_raw": 0.638557,
-        "p_cal": 0.3125,
+        "p_raw": 0.553549,
+        "p_cal": 0.153184,
         "band": "medium",
-        "hitl_action": "nurture / check-in"
+        "action": "limit_reset",
+        "holdout": false,
+        "expected_value_usd": 1.83
       },
       "top_drivers": [
         {
-          "feature": "feature_adoption_score",
-          "contribution": 0.531
+          "feature": "cheap_model_share_28d",
+          "contribution": 0.453
         },
         {
-          "feature": "last_active_days_ago",
-          "contribution": -0.261
+          "feature": "first_renewal_after_pricing_change",
+          "contribution": 0.164
         },
         {
-          "feature": "support_tickets_last_90d",
-          "contribution": 0.24
+          "feature": "cli_sessions_28d",
+          "contribution": -0.114
         }
       ],
-      "reviewer": {
-        "action_taken": "retention outreach (human review)",
-        "notes": "4 tickets on the same bug; call instead of email"
+      "executed": {
+        "executed_by": "lifecycle-tool",
+        "action_taken": "limit_reset",
+        "notes": "sent as suggested"
       },
       "record": {
-        "user_id": "user_00480",
-        "user_name": "Sam Patel",
-        "days_since_signup": 491,
-        "sessions_last_7d": 3,
-        "sessions_last_30d": 4,
-        "avg_session_minutes": 21.4,
-        "models_used_count": 2,
-        "api_calls_last_30d": 79,
-        "tokens_consumed_last_30d": 37636,
-        "tools_used_count": 4,
-        "failed_requests_rate": 0.2378,
-        "support_tickets_last_90d": 4,
-        "plan_tier": "free",
-        "payment_failures_last_90d": 1,
-        "feature_adoption_score": 0.2164,
-        "nps_score": 5.8,
-        "last_active_days_ago": 27,
-        "weekend_usage_ratio": 0.2326,
-        "engagement_trend": 3.035,
-        "spend_usd_last_30d": 0.0,
-        "days_until_renewal": 98,
-        "agent_runs_last_30d": 23,
-        "ide_plugin_sessions_last_30d": 5,
-        "seat_utilization": 0.5537
+        "user_id": "sub_maya",
+        "user_name": "Maya (worked example)",
+        "plan_tier": "pro",
+        "renewals_completed": 3,
+        "active_days_7d": 2,
+        "active_days_28d": 15,
+        "last_active_days_ago": 2,
+        "agent_requests_28d": 470,
+        "allowance_used_pct": 1.02,
+        "limit_hits_14d": 3,
+        "cheap_model_share_28d": 0.64,
+        "overage_usd_28d": 0.0,
+        "overage_toggled_off": 0,
+        "suggestion_accept_rate_28d": 0.29,
+        "accept_rate_change": 0.96,
+        "agent_task_success_rate": 0.58,
+        "failed_requests_rate": 0.05,
+        "incident_exposed_28d": 1,
+        "support_tickets_90d": 0,
+        "ide_sessions_28d": 14,
+        "cli_sessions_28d": 19,
+        "weekend_usage_ratio": 0.21,
+        "first_renewal_after_pricing_change": 1,
+        "engagement_trend": 0.5333
       }
     },
     {
-      "id": "payment_friction",
-      "title": "Payment failures plus support load",
-      "story": "2 failed payments and 5 support tickets in 90 days on the enterprise plan. Above \u03c4, so a human owns the outreach; nothing is sent automatically.",
+      "id": "arjun_steady_pro_plus",
+      "title": "Arjun: steady Pro+, deliberately left alone",
+      "story": "Pro+ for 12 months, 66% of the allowance used, no cap hits, accept rate steady. Scoring him is useful; contacting him is not.",
       "source": {
-        "dataset": "seed-42 synthetic users.csv",
+        "dataset": "data/raw/subscribers/arjun.json",
+        "split": "worked example (scoring-time record, not in training)"
+      },
+      "expected": {
+        "p_raw": 0.065786,
+        "p_cal": 0.022688,
+        "band": "low",
+        "action": "no_action",
+        "holdout": false,
+        "expected_value_usd": null
+      },
+      "top_drivers": [
+        {
+          "feature": "renewals_completed",
+          "contribution": -0.744
+        },
+        {
+          "feature": "agent_task_success_rate",
+          "contribution": -0.288
+        },
+        {
+          "feature": "accept_rate_change",
+          "contribution": -0.271
+        }
+      ],
+      "executed": {
+        "executed_by": "none",
+        "action_taken": "no_action",
+        "notes": "nothing sent"
+      },
+      "record": {
+        "user_id": "sub_arjun",
+        "user_name": "Arjun (worked example)",
+        "plan_tier": "pro_plus",
+        "renewals_completed": 12,
+        "active_days_7d": 5,
+        "active_days_28d": 20,
+        "last_active_days_ago": 0,
+        "agent_requests_28d": 910,
+        "allowance_used_pct": 0.66,
+        "limit_hits_14d": 0,
+        "cheap_model_share_28d": 0.18,
+        "overage_usd_28d": 0.0,
+        "overage_toggled_off": 0,
+        "suggestion_accept_rate_28d": 0.33,
+        "accept_rate_change": 1.03,
+        "agent_task_success_rate": 0.69,
+        "failed_requests_rate": 0.03,
+        "incident_exposed_28d": 1,
+        "support_tickets_90d": 1,
+        "ide_sessions_28d": 41,
+        "cli_sessions_28d": 12,
+        "weekend_usage_ratio": 0.12,
+        "first_renewal_after_pricing_change": 0,
+        "engagement_trend": 1.0
+      }
+    },
+    {
+      "id": "first_renewal_tourist",
+      "title": "First renewal, already fading",
+      "story": "Renewal number one: 1 active days this week, 14 in 28, 27% cheap-model share. First renewals are the cliff; the only playbook worth arming is the cancel-flow discount, paid only if they click cancel.",
+      "source": {
+        "dataset": "seed-42 renewals_t7.csv",
+        "split": "test (holdout)",
+        "candidates_matching_filter": 53
+      },
+      "expected": {
+        "p_raw": 0.605838,
+        "p_cal": 0.18396,
+        "band": "medium",
+        "action": "cancel_flow_discount",
+        "holdout": false,
+        "expected_value_usd": 1.65
+      },
+      "top_drivers": [
+        {
+          "feature": "renewals_completed",
+          "contribution": 0.589
+        },
+        {
+          "feature": "ide_sessions_28d",
+          "contribution": -0.293
+        },
+        {
+          "feature": "first_renewal_after_pricing_change",
+          "contribution": 0.188
+        }
+      ],
+      "executed": {
+        "executed_by": "lifecycle-tool",
+        "action_taken": "cancel_flow_discount",
+        "notes": "sent as suggested"
+      },
+      "record": {
+        "user_id": "sub_00438",
+        "user_name": "Jordan Kim",
+        "plan_tier": "pro",
+        "renewals_completed": 0,
+        "active_days_7d": 1,
+        "active_days_28d": 14,
+        "engagement_trend": 0.2857,
+        "last_active_days_ago": 1,
+        "agent_requests_28d": 531,
+        "allowance_used_pct": 1.1523,
+        "limit_hits_14d": 1,
+        "cheap_model_share_28d": 0.2685,
+        "overage_usd_28d": 1.85,
+        "overage_toggled_off": 0,
+        "suggestion_accept_rate_28d": 0.2093,
+        "accept_rate_change": 0.9264,
+        "agent_task_success_rate": 0.6199,
+        "failed_requests_rate": 0.0203,
+        "incident_exposed_28d": 0,
+        "support_tickets_90d": 0,
+        "ide_sessions_28d": 21,
+        "cli_sessions_28d": 6,
+        "weekend_usage_ratio": 0.1271,
+        "first_renewal_after_pricing_change": 1
+      }
+    },
+    {
+      "id": "side_project_lull",
+      "title": "Side-project user between projects",
+      "story": "75% of activity on weekends and 1 active day(s) this week. This is the subscriber a pause offer exists for.",
+      "source": {
+        "dataset": "seed-42 renewals_t7.csv",
         "split": "test (holdout)",
         "candidates_matching_filter": 31
       },
       "expected": {
-        "p_raw": 0.681749,
-        "p_cal": 0.431818,
+        "p_raw": 0.60941,
+        "p_cal": 0.186228,
         "band": "medium",
-        "hitl_action": "retention outreach (human review)"
+        "action": "pause_offer",
+        "holdout": false,
+        "expected_value_usd": 1.89
       },
       "top_drivers": [
         {
-          "feature": "last_active_days_ago",
-          "contribution": 0.52
+          "feature": "renewals_completed",
+          "contribution": 0.561
         },
         {
-          "feature": "agent_runs_last_30d",
-          "contribution": -0.351
+          "feature": "cheap_model_share_28d",
+          "contribution": -0.306
         },
         {
-          "feature": "support_tickets_last_90d",
-          "contribution": 0.328
+          "feature": "accept_rate_change",
+          "contribution": 0.28
         }
       ],
-      "reviewer": {
-        "action_taken": "retention outreach (human review)",
-        "notes": "billing fixed on call; outreach done"
+      "executed": {
+        "executed_by": "lifecycle-tool",
+        "action_taken": "pause_offer",
+        "notes": "sent as suggested"
       },
       "record": {
-        "user_id": "user_00144",
-        "user_name": "Taylor Wilson",
-        "days_since_signup": 696,
-        "sessions_last_7d": 5,
-        "sessions_last_30d": 23,
-        "avg_session_minutes": 10.8,
-        "models_used_count": 3,
-        "api_calls_last_30d": 431,
-        "tokens_consumed_last_30d": 63620,
-        "tools_used_count": 5,
-        "failed_requests_rate": 0.3147,
-        "support_tickets_last_90d": 5,
-        "plan_tier": "enterprise",
-        "payment_failures_last_90d": 2,
-        "feature_adoption_score": 0.2989,
-        "nps_score": 5.2,
-        "last_active_days_ago": 34,
-        "weekend_usage_ratio": 0.6455,
-        "engagement_trend": 0.9478,
-        "spend_usd_last_30d": 404.01,
-        "days_until_renewal": 38,
-        "agent_runs_last_30d": 38,
-        "ide_plugin_sessions_last_30d": 17,
-        "seat_utilization": 0.5292
+        "user_id": "sub_03243",
+        "user_name": "Taylor Kim",
+        "plan_tier": "pro",
+        "renewals_completed": 0,
+        "active_days_7d": 1,
+        "active_days_28d": 9,
+        "engagement_trend": 0.4444,
+        "last_active_days_ago": 1,
+        "agent_requests_28d": 222,
+        "allowance_used_pct": 0.5012,
+        "limit_hits_14d": 0,
+        "cheap_model_share_28d": 0.2149,
+        "overage_usd_28d": 0.0,
+        "overage_toggled_off": 0,
+        "suggestion_accept_rate_28d": 0.1615,
+        "accept_rate_change": 0.8552,
+        "agent_task_success_rate": 0.3334,
+        "failed_requests_rate": 0.0856,
+        "incident_exposed_28d": 1,
+        "support_tickets_90d": 1,
+        "ide_sessions_28d": 12,
+        "cli_sessions_28d": 7,
+        "weekend_usage_ratio": 0.7471,
+        "first_renewal_after_pricing_change": 1
       }
     },
     {
-      "id": "gone_dark",
-      "title": "Gone dark",
-      "story": "Nothing in the last 30 days (no sessions, API calls, tokens or agent runs); last seen 40 days ago, with 5 tickets and 2 failed payments in 90 days. High band: escalate to the retention owner today.",
+      "id": "overage_shock",
+      "title": "Switched overage off after a bill",
+      "story": "Paid $1.97 of overage in 28 days, then switched it off; 3 cap hits since. The send export shows the messaging tool suppressed the email because the subscriber opted out of marketing mail.",
       "source": {
-        "dataset": "seed-42 synthetic users.csv",
+        "dataset": "seed-42 renewals_t7.csv",
         "split": "test (holdout)",
-        "candidates_matching_filter": 6
+        "candidates_matching_filter": 33
       },
       "expected": {
-        "p_raw": 0.933141,
-        "p_cal": 1.0,
-        "band": "high",
-        "hitl_action": "escalate"
+        "p_raw": 0.638512,
+        "p_cal": 0.205509,
+        "band": "medium",
+        "action": "limit_reset",
+        "holdout": false,
+        "expected_value_usd": 3.14
       },
       "top_drivers": [
         {
-          "feature": "feature_adoption_score",
-          "contribution": 0.682
+          "feature": "renewals_completed",
+          "contribution": 0.415
         },
         {
-          "feature": "last_active_days_ago",
-          "contribution": 0.525
+          "feature": "agent_task_success_rate",
+          "contribution": 0.301
         },
         {
-          "feature": "engagement_trend",
-          "contribution": 0.314
+          "feature": "cli_sessions_28d",
+          "contribution": -0.21
         }
       ],
-      "reviewer": {
-        "action_taken": "escalate",
-        "notes": "escalated to account owner"
+      "executed": {
+        "executed_by": "lifecycle-tool",
+        "action_taken": "suppressed (marketing opt-out)",
+        "notes": "email suppressed by opt-out list; logged so it is not counted as treated"
       },
       "record": {
-        "user_id": "user_01527",
-        "user_name": "Taylor Lee",
-        "days_since_signup": 847,
-        "sessions_last_7d": 0,
-        "sessions_last_30d": 0,
-        "avg_session_minutes": 12.9,
-        "models_used_count": 2,
-        "api_calls_last_30d": 0,
-        "tokens_consumed_last_30d": 0,
-        "tools_used_count": 0,
-        "failed_requests_rate": 0.3078,
-        "support_tickets_last_90d": 5,
-        "plan_tier": "free",
-        "payment_failures_last_90d": 2,
-        "feature_adoption_score": 0.0888,
-        "nps_score": 4.8,
-        "last_active_days_ago": 40,
-        "weekend_usage_ratio": 0.4686,
-        "engagement_trend": 0.0,
-        "spend_usd_last_30d": 0.0,
-        "days_until_renewal": 118,
-        "agent_runs_last_30d": 0,
-        "ide_plugin_sessions_last_30d": 0,
-        "seat_utilization": 0.3415
+        "user_id": "sub_03170",
+        "user_name": "Taylor Garcia",
+        "plan_tier": "pro",
+        "renewals_completed": 0,
+        "active_days_7d": 3,
+        "active_days_28d": 13,
+        "engagement_trend": 0.9231,
+        "last_active_days_ago": 2,
+        "agent_requests_28d": 497,
+        "allowance_used_pct": 1.0707,
+        "limit_hits_14d": 3,
+        "cheap_model_share_28d": 0.4595,
+        "overage_usd_28d": 1.97,
+        "overage_toggled_off": 1,
+        "suggestion_accept_rate_28d": 0.2108,
+        "accept_rate_change": 0.9467,
+        "agent_task_success_rate": 0.4561,
+        "failed_requests_rate": 0.0429,
+        "incident_exposed_28d": 0,
+        "support_tickets_90d": 1,
+        "ide_sessions_28d": 15,
+        "cli_sessions_28d": 17,
+        "weekend_usage_ratio": 0.2367,
+        "first_renewal_after_pricing_change": 0
       }
     },
     {
-      "id": "enterprise_renewal_risk",
-      "title": "Enterprise renewal at risk",
-      "story": "Enterprise account renewing in 24 days with seat utilisation 18%, last active 40 days ago. High band; the reviewer books an executive-sponsor call.",
+      "id": "quiet_but_fine",
+      "title": "Quiet week, long tenure",
+      "story": "2 active day(s) this week against 15 in 28, but 10 renewals paid and no cap trouble. A dip is not a lapse.",
       "source": {
-        "dataset": "seed-42 synthetic users.csv",
+        "dataset": "seed-42 renewals_t7.csv",
+        "split": "test (holdout)",
+        "candidates_matching_filter": 127
+      },
+      "expected": {
+        "p_raw": 0.211613,
+        "p_cal": 0.041125,
+        "band": "low",
+        "action": "no_action",
+        "holdout": false,
+        "expected_value_usd": null
+      },
+      "top_drivers": [
+        {
+          "feature": "renewals_completed",
+          "contribution": -0.443
+        },
+        {
+          "feature": "suggestion_accept_rate_28d",
+          "contribution": -0.306
+        },
+        {
+          "feature": "accept_rate_change",
+          "contribution": -0.236
+        }
+      ],
+      "executed": {
+        "executed_by": "none",
+        "action_taken": "no_action",
+        "notes": "nothing sent"
+      },
+      "record": {
+        "user_id": "sub_06078",
+        "user_name": "Taylor Wilson",
+        "plan_tier": "pro",
+        "renewals_completed": 10,
+        "active_days_7d": 2,
+        "active_days_28d": 15,
+        "engagement_trend": 0.5333,
+        "last_active_days_ago": 1,
+        "agent_requests_28d": 396,
+        "allowance_used_pct": 0.8845,
+        "limit_hits_14d": 2,
+        "cheap_model_share_28d": 0.3413,
+        "overage_usd_28d": 0.0,
+        "overage_toggled_off": 0,
+        "suggestion_accept_rate_28d": 0.3762,
+        "accept_rate_change": 1.0705,
+        "agent_task_success_rate": 0.5874,
+        "failed_requests_rate": 0.0662,
+        "incident_exposed_28d": 0,
+        "support_tickets_90d": 0,
+        "ide_sessions_28d": 16,
+        "cli_sessions_28d": 12,
+        "weekend_usage_ratio": 0.2318,
+        "first_renewal_after_pricing_change": 0
+      }
+    },
+    {
+      "id": "holdout_example",
+      "title": "Eligible, but in the holdout",
+      "story": "P(lapse) is above \u03c4 and a playbook would pay back, but this subscriber hashes into the 10% holdout. Nothing is sent; the row is what the playbook is measured against.",
+      "source": {
+        "dataset": "seed-42 renewals_t7.csv",
+        "split": "test (holdout)",
+        "candidates_matching_filter": 19
+      },
+      "expected": {
+        "p_raw": 0.697145,
+        "p_cal": 0.248727,
+        "band": "medium",
+        "action": "holdout",
+        "holdout": true,
+        "expected_value_usd": null
+      },
+      "top_drivers": [
+        {
+          "feature": "agent_task_success_rate",
+          "contribution": -0.634
+        },
+        {
+          "feature": "limit_hits_14d",
+          "contribution": 0.558
+        },
+        {
+          "feature": "renewals_completed",
+          "contribution": 0.405
+        }
+      ],
+      "executed": {
+        "executed_by": "none",
+        "action_taken": "holdout",
+        "notes": "holdout: nothing sent"
+      },
+      "record": {
+        "user_id": "sub_06568",
+        "user_name": "Jordan Lee",
+        "plan_tier": "pro",
+        "renewals_completed": 0,
+        "active_days_7d": 4,
+        "active_days_28d": 10,
+        "engagement_trend": 1.6,
+        "last_active_days_ago": 2,
+        "agent_requests_28d": 887,
+        "allowance_used_pct": 2.2819,
+        "limit_hits_14d": 10,
+        "cheap_model_share_28d": 0.7558,
+        "overage_usd_28d": 16.35,
+        "overage_toggled_off": 1,
+        "suggestion_accept_rate_28d": 0.3419,
+        "accept_rate_change": 1.1573,
+        "agent_task_success_rate": 0.7432,
+        "failed_requests_rate": 0.052,
+        "incident_exposed_28d": 0,
+        "support_tickets_90d": 0,
+        "ide_sessions_28d": 13,
+        "cli_sessions_28d": 5,
+        "weekend_usage_ratio": 0.5072,
+        "first_renewal_after_pricing_change": 1
+      }
+    },
+    {
+      "id": "ultra_personal_email",
+      "title": "Ultra subscriber: the one place a person writes",
+      "story": "Ultra ($200/month) above \u03c4. At this price, fifteen minutes of a person's time has a positive expected value, so the playbook is a personal email, not a template.",
+      "source": {
+        "dataset": "seed-42 renewals_t7.csv",
         "split": "test (holdout)",
         "candidates_matching_filter": 1
       },
       "expected": {
-        "p_raw": 0.853823,
-        "p_cal": 0.62,
-        "band": "high",
-        "hitl_action": "escalate"
+        "p_raw": 0.635042,
+        "p_cal": 0.203135,
+        "band": "medium",
+        "action": "personal_email",
+        "holdout": false,
+        "expected_value_usd": 35.78
       },
       "top_drivers": [
         {
-          "feature": "last_active_days_ago",
-          "contribution": 0.588
+          "feature": "renewals_completed",
+          "contribution": 0.463
         },
         {
-          "feature": "feature_adoption_score",
-          "contribution": 0.376
+          "feature": "plan_tier_code",
+          "contribution": -0.285
         },
         {
-          "feature": "support_tickets_last_90d",
-          "contribution": 0.297
+          "feature": "accept_rate_change",
+          "contribution": 0.251
         }
       ],
-      "reviewer": {
-        "action_taken": "escalate",
-        "notes": "exec sponsor call booked before renewal"
+      "executed": {
+        "executed_by": "a person (simulated)",
+        "action_taken": "personal_email",
+        "notes": "written and sent by a person"
       },
       "record": {
-        "user_id": "user_04410",
-        "user_name": "Quinn Kim",
-        "days_since_signup": 229,
-        "sessions_last_7d": 4,
-        "sessions_last_30d": 9,
-        "avg_session_minutes": 9.4,
-        "models_used_count": 5,
-        "api_calls_last_30d": 121,
-        "tokens_consumed_last_30d": 64100,
-        "tools_used_count": 2,
-        "failed_requests_rate": 0.3448,
-        "support_tickets_last_90d": 5,
-        "plan_tier": "enterprise",
-        "payment_failures_last_90d": 2,
-        "feature_adoption_score": 0.2671,
-        "nps_score": 4.6,
-        "last_active_days_ago": 40,
-        "weekend_usage_ratio": 0.3493,
-        "engagement_trend": 1.7341,
-        "spend_usd_last_30d": 373.32,
-        "days_until_renewal": 24,
-        "agent_runs_last_30d": 24,
-        "ide_plugin_sessions_last_30d": 9,
-        "seat_utilization": 0.1842
+        "user_id": "sub_00310",
+        "user_name": "Alex Garcia",
+        "plan_tier": "ultra",
+        "renewals_completed": 1,
+        "active_days_7d": 1,
+        "active_days_28d": 6,
+        "engagement_trend": 0.6667,
+        "last_active_days_ago": 2,
+        "agent_requests_28d": 263,
+        "allowance_used_pct": 0.0306,
+        "limit_hits_14d": 0,
+        "cheap_model_share_28d": 0.2936,
+        "overage_usd_28d": 0.0,
+        "overage_toggled_off": 0,
+        "suggestion_accept_rate_28d": 0.2249,
+        "accept_rate_change": 0.7815,
+        "agent_task_success_rate": 0.567,
+        "failed_requests_rate": 0.0777,
+        "incident_exposed_28d": 1,
+        "support_tickets_90d": 2,
+        "ide_sessions_28d": 8,
+        "cli_sessions_28d": 1,
+        "weekend_usage_ratio": 0.4465,
+        "first_renewal_after_pricing_change": 1
       }
     }
   ],
   "invalid_records": [
     {
-      "id": "unknown_plan_tier",
-      "problem": "plan_tier outside the enum",
+      "id": "teams_seat",
+      "problem": "plan_tier 'teams': seat contraction is a different model",
       "error_contains": "plan_tier",
       "record": {
-        "user_id": "invalid_unknown_plan_tier",
-        "user_name": "Invalid record (unknown_plan_tier)",
-        "days_since_signup": 696,
-        "sessions_last_7d": 5,
-        "sessions_last_30d": 23,
-        "avg_session_minutes": 10.8,
-        "models_used_count": 3,
-        "api_calls_last_30d": 431,
-        "tokens_consumed_last_30d": 63620,
-        "tools_used_count": 5,
-        "failed_requests_rate": 0.3147,
-        "support_tickets_last_90d": 5,
-        "plan_tier": "platinum",
-        "payment_failures_last_90d": 2,
-        "feature_adoption_score": 0.2989,
-        "nps_score": 5.2,
-        "last_active_days_ago": 34,
-        "weekend_usage_ratio": 0.6455,
-        "engagement_trend": 0.9478,
-        "spend_usd_last_30d": 404.01,
-        "days_until_renewal": 38,
-        "agent_runs_last_30d": 38,
-        "ide_plugin_sessions_last_30d": 17,
-        "seat_utilization": 0.5292
+        "user_id": "invalid_teams_seat",
+        "user_name": "Invalid record (teams_seat)",
+        "plan_tier": "teams",
+        "renewals_completed": 0,
+        "active_days_7d": 1,
+        "active_days_28d": 14,
+        "engagement_trend": 0.2857,
+        "last_active_days_ago": 1,
+        "agent_requests_28d": 531,
+        "allowance_used_pct": 1.1523,
+        "limit_hits_14d": 1,
+        "cheap_model_share_28d": 0.2685,
+        "overage_usd_28d": 1.85,
+        "overage_toggled_off": 0,
+        "suggestion_accept_rate_28d": 0.2093,
+        "accept_rate_change": 0.9264,
+        "agent_task_success_rate": 0.6199,
+        "failed_requests_rate": 0.0203,
+        "incident_exposed_28d": 0,
+        "support_tickets_90d": 0,
+        "ide_sessions_28d": 21,
+        "cli_sessions_28d": 6,
+        "weekend_usage_ratio": 0.1271,
+        "first_renewal_after_pricing_change": 1
       }
     },
     {
-      "id": "missing_nps_score",
-      "problem": "nps_score missing (nulls fail loud)",
-      "error_contains": "nps_score",
+      "id": "accept_rate_missing",
+      "problem": "suggestion_accept_rate_28d missing (inline suggestions turned off): nulls fail loud",
+      "error_contains": "suggestion_accept_rate_28d",
       "record": {
-        "user_id": "invalid_missing_nps_score",
-        "user_name": "Invalid record (missing_nps_score)",
-        "days_since_signup": 696,
-        "sessions_last_7d": 5,
-        "sessions_last_30d": 23,
-        "avg_session_minutes": 10.8,
-        "models_used_count": 3,
-        "api_calls_last_30d": 431,
-        "tokens_consumed_last_30d": 63620,
-        "tools_used_count": 5,
-        "failed_requests_rate": 0.3147,
-        "support_tickets_last_90d": 5,
-        "plan_tier": "enterprise",
-        "payment_failures_last_90d": 2,
-        "feature_adoption_score": 0.2989,
-        "nps_score": null,
-        "last_active_days_ago": 34,
-        "weekend_usage_ratio": 0.6455,
-        "engagement_trend": 0.9478,
-        "spend_usd_last_30d": 404.01,
-        "days_until_renewal": 38,
-        "agent_runs_last_30d": 38,
-        "ide_plugin_sessions_last_30d": 17,
-        "seat_utilization": 0.5292
+        "user_id": "invalid_accept_rate_missing",
+        "user_name": "Invalid record (accept_rate_missing)",
+        "plan_tier": "pro",
+        "renewals_completed": 0,
+        "active_days_7d": 1,
+        "active_days_28d": 14,
+        "engagement_trend": 0.2857,
+        "last_active_days_ago": 1,
+        "agent_requests_28d": 531,
+        "allowance_used_pct": 1.1523,
+        "limit_hits_14d": 1,
+        "cheap_model_share_28d": 0.2685,
+        "overage_usd_28d": 1.85,
+        "overage_toggled_off": 0,
+        "suggestion_accept_rate_28d": null,
+        "accept_rate_change": 0.9264,
+        "agent_task_success_rate": 0.6199,
+        "failed_requests_rate": 0.0203,
+        "incident_exposed_28d": 0,
+        "support_tickets_90d": 0,
+        "ide_sessions_28d": 21,
+        "cli_sessions_28d": 6,
+        "weekend_usage_ratio": 0.1271,
+        "first_renewal_after_pricing_change": 1
       }
     },
     {
-      "id": "rate_out_of_range",
-      "problem": "failed_requests_rate above 1.0",
-      "error_contains": "failed_requests_rate",
+      "id": "active_days_inconsistent",
+      "problem": "active_days_7d larger than active_days_28d",
+      "error_contains": "active_days_7d",
       "record": {
-        "user_id": "invalid_rate_out_of_range",
-        "user_name": "Invalid record (rate_out_of_range)",
-        "days_since_signup": 696,
-        "sessions_last_7d": 5,
-        "sessions_last_30d": 23,
-        "avg_session_minutes": 10.8,
-        "models_used_count": 3,
-        "api_calls_last_30d": 431,
-        "tokens_consumed_last_30d": 63620,
-        "tools_used_count": 5,
-        "failed_requests_rate": 1.4,
-        "support_tickets_last_90d": 5,
-        "plan_tier": "enterprise",
-        "payment_failures_last_90d": 2,
-        "feature_adoption_score": 0.2989,
-        "nps_score": 5.2,
-        "last_active_days_ago": 34,
-        "weekend_usage_ratio": 0.6455,
-        "engagement_trend": 0.9478,
-        "spend_usd_last_30d": 404.01,
-        "days_until_renewal": 38,
-        "agent_runs_last_30d": 38,
-        "ide_plugin_sessions_last_30d": 17,
-        "seat_utilization": 0.5292
+        "user_id": "invalid_active_days_inconsistent",
+        "user_name": "Invalid record (active_days_inconsistent)",
+        "plan_tier": "pro",
+        "renewals_completed": 0,
+        "active_days_7d": 7,
+        "active_days_28d": 3,
+        "engagement_trend": 0.2857,
+        "last_active_days_ago": 1,
+        "agent_requests_28d": 531,
+        "allowance_used_pct": 1.1523,
+        "limit_hits_14d": 1,
+        "cheap_model_share_28d": 0.2685,
+        "overage_usd_28d": 1.85,
+        "overage_toggled_off": 0,
+        "suggestion_accept_rate_28d": 0.2093,
+        "accept_rate_change": 0.9264,
+        "agent_task_success_rate": 0.6199,
+        "failed_requests_rate": 0.0203,
+        "incident_exposed_28d": 0,
+        "support_tickets_90d": 0,
+        "ide_sessions_28d": 21,
+        "cli_sessions_28d": 6,
+        "weekend_usage_ratio": 0.1271,
+        "first_renewal_after_pricing_change": 1
       }
     },
     {
-      "id": "non_numeric_sessions",
-      "problem": "sessions_last_30d sent as text",
-      "error_contains": "sessions_last_30d",
+      "id": "limit_hits_as_text",
+      "problem": "limit_hits_14d sent as text",
+      "error_contains": "limit_hits_14d",
       "record": {
-        "user_id": "invalid_non_numeric_sessions",
-        "user_name": "Invalid record (non_numeric_sessions)",
-        "days_since_signup": 696,
-        "sessions_last_7d": 5,
-        "sessions_last_30d": "ten",
-        "avg_session_minutes": 10.8,
-        "models_used_count": 3,
-        "api_calls_last_30d": 431,
-        "tokens_consumed_last_30d": 63620,
-        "tools_used_count": 5,
-        "failed_requests_rate": 0.3147,
-        "support_tickets_last_90d": 5,
-        "plan_tier": "enterprise",
-        "payment_failures_last_90d": 2,
-        "feature_adoption_score": 0.2989,
-        "nps_score": 5.2,
-        "last_active_days_ago": 34,
-        "weekend_usage_ratio": 0.6455,
-        "engagement_trend": 0.9478,
-        "spend_usd_last_30d": 404.01,
-        "days_until_renewal": 38,
-        "agent_runs_last_30d": 38,
-        "ide_plugin_sessions_last_30d": 17,
-        "seat_utilization": 0.5292
+        "user_id": "invalid_limit_hits_as_text",
+        "user_name": "Invalid record (limit_hits_as_text)",
+        "plan_tier": "pro",
+        "renewals_completed": 0,
+        "active_days_7d": 1,
+        "active_days_28d": 14,
+        "engagement_trend": 0.2857,
+        "last_active_days_ago": 1,
+        "agent_requests_28d": 531,
+        "allowance_used_pct": 1.1523,
+        "limit_hits_14d": "three",
+        "cheap_model_share_28d": 0.2685,
+        "overage_usd_28d": 1.85,
+        "overage_toggled_off": 0,
+        "suggestion_accept_rate_28d": 0.2093,
+        "accept_rate_change": 0.9264,
+        "agent_task_success_rate": 0.6199,
+        "failed_requests_rate": 0.0203,
+        "incident_exposed_28d": 0,
+        "support_tickets_90d": 0,
+        "ide_sessions_28d": 21,
+        "cli_sessions_28d": 6,
+        "weekend_usage_ratio": 0.1271,
+        "first_renewal_after_pricing_change": 1
       }
     }
   ],
-  "weekly_batch": {
-    "file": "weekly_batch.csv",
-    "rows": 211,
-    "valid_rows": 207,
+  "daily_batch": {
+    "file": "daily_t7_batch.csv",
+    "rows": 412,
+    "valid_rows": 408,
     "invalid_rows": 4,
     "expected_actions": {
-      "escalate": 33,
-      "monitor": 142,
-      "nurture / check-in": 18,
-      "retention outreach (human review)": 14
+      "cancel_flow_discount": 36,
+      "holdout": 7,
+      "limit_reset": 51,
+      "no_action": 300,
+      "pause_offer": 13,
+      "personal_email": 1
     }
   }
 }

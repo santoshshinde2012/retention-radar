@@ -31,8 +31,8 @@ mkdir -p "$LAKE_ART"
 export RETENTION_RADAR_ARTIFACT_DIR="$LAKE_ART"
 
 cd "$LAKE"
-echo "==> [lakehouse] churn-sample (N_USERS=${N_USERS:-5000})"
-N_USERS="${N_USERS:-5000}" CHURN_SEED="${CHURN_SEED:-42}" "$PY" scripts/generate_churn_sample.py
+echo "==> [lakehouse] churn-sample (N_USERS=${N_USERS:-8000})"
+N_USERS="${N_USERS:-8000}" CHURN_SEED="${CHURN_SEED:-42}" "$PY" scripts/generate_churn_sample.py
 echo "==> [lakehouse] churn-gold-local"
 "$PY" scripts/build_churn_gold_local.py
 
@@ -61,7 +61,7 @@ def _r4(x):
 
 art = Path("artifacts/lakehouse_run")
 metrics_path = art / "metrics.json"
-packet_path = art / "santosh_decision_packet.json"
+packet_path = art / "maya_decision_packet.json"
 summary_path = Path(os.environ.get("LAKEHOUSE_SUMMARY_PATH", "results/lakehouse-e2e-summary.json"))
 
 metrics = {}
@@ -70,13 +70,13 @@ if metrics_path.exists():
 
 if not packet_path.exists():
     raise SystemExit(
-        f"missing {packet_path}: run_all.sh must write the Santosh packet under "
-        "RETENTION_RADAR_ARTIFACT_DIR (refusing to write a summary with null Santosh fields)"
+        f"missing {packet_path}: run_all.sh must write the worked-example packet under "
+        "RETENTION_RADAR_ARTIFACT_DIR (refusing to write a summary with null fields)"
     )
 packet = json.loads(packet_path.read_text(encoding="utf-8"))
 
 scoring = packet.get("scoring") or {}
-hitl = packet.get("hitl") or {}
+decision = packet.get("decision") or {}
 payload = packet.get("payload") or {}
 
 n_total = None
@@ -98,7 +98,7 @@ summary = {
     "best_optuna_auc_val": metrics.get("best_optuna_auc") or tuned_val.get("roc_auc"),
     "calibrated_test_roc_auc": cal_test.get("roc_auc") or eval_test.get("test_roc_auc"),
     "best_f1_threshold": eval_test.get("best_f1_threshold") or scoring.get("best_f1_threshold"),
-    "santosh": {
+    "worked_example": {
         "user_id": packet.get("user_id") or payload.get("user_id"),
         "name": packet.get("user_name") or payload.get("user_name"),
         "p_churn_raw": _r4(scoring.get("churn_probability_raw")),
@@ -106,7 +106,7 @@ summary = {
             scoring.get("churn_probability_calibrated") or scoring.get("churn_probability")
         ),
         "risk": scoring.get("risk_band"),
-        "hitl": hitl.get("action"),
+        "action": decision.get("action"),
     },
     "artifact_dir": str(art),
     "note": (

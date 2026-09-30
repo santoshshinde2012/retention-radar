@@ -52,7 +52,7 @@ def test_apply_artifact_dir_redirects_model_and_docs(tmp_path, seed_fingerprints
         config.METRICS_PATH.write_text('{"source":"lakehouse"}\n', encoding="utf-8")
         config.MODEL_CARD_PATH.write_text("# lakehouse card\n", encoding="utf-8")
         config.DATA_DICTIONARY_PATH.write_text("# lakehouse dict\n", encoding="utf-8")
-        (lake / "santosh_decision_packet.json").write_text("{}\n", encoding="utf-8")
+        (lake / "maya_decision_packet.json").write_text("{}\n", encoding="utf-8")
 
         assert config.MODEL_PATH.exists()
         assert not (config.SEED_MODELS_DIR / "churn_xgb.joblib").samefile(config.MODEL_PATH)
@@ -90,12 +90,12 @@ def test_restore_seed_paths_after_override(tmp_path):
 
 
 def test_run_all_packet_follows_artifact_dir():
-    """run_all.sh must not pin the Santosh packet to artifacts/ — lakehouse E2E
+    """run_all.sh must not pin the worked-example packets to artifacts/: lakehouse E2E
     reads it from RETENTION_RADAR_ARTIFACT_DIR for results/lakehouse-e2e-summary.json."""
     script = (config.PROJECT_ROOT / "scripts" / "run_all.sh").read_text(encoding="utf-8")
     packet_lines = [
         ln for ln in script.splitlines()
         if "cli.single_record" in ln and not ln.lstrip().startswith("#")
     ]
-    assert packet_lines, "run_all.sh should build the Santosh packet"
+    assert packet_lines, "run_all.sh should build the worked-example packets"
     assert all("--out" not in ln for ln in packet_lines)

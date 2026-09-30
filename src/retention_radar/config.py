@@ -1,4 +1,10 @@
-"""Project paths, seed, and feature column definitions.
+"""Project paths, seed, and the renewal-scoring contract.
+
+Use case: a self-serve AI coding assistant (IDE extension + CLI agent) sold as
+monthly Pro / Pro+ / Ultra plans. Each row is one paying subscriber scored
+seven days before a renewal (T-7). The label is *voluntary* lapse at that
+renewal; failed-payment (involuntary) churn and subscribers who already
+scheduled a cancel are routed to other tracks, not to this model.
 
 All paths are relative to PROJECT_ROOT so scripts work no matter
 where you launch them from (as long as ``src`` is on PYTHONPATH, or the
@@ -32,10 +38,14 @@ RESULTS_DIR = PROJECT_ROOT / "results"
 RESULTS_PLOTS_DIR = RESULTS_DIR / "plots"
 
 # Key files (data paths are not redirected by artifact override)
-USERS_CSV = RAW_DIR / "users.csv"
-SANTOSH_JSON = RAW_DIR / "santosh_shinde.json"
+# One row per subscriber at T-7 before renewal (the model's training table).
+USERS_CSV = RAW_DIR / "renewals_t7.csv"
+# Every renewal in the cohort, with outcome + routing columns (label audit trail).
+RENEWALS_ALL_CSV = RAW_DIR / "renewals_all.csv"
+# Scoring-time records for the two worked examples (no label: the renewal is ahead).
+HERO_DIR = RAW_DIR / "subscribers"
 LAKEHOUSE_FEATURES_CSV = EXTERNAL_DIR / "churn_user_features.csv"
-LAKEHOUSE_SANTOSH_JSON = EXTERNAL_DIR / "santosh_inference_record.json"
+LAKEHOUSE_HERO_JSON = EXTERNAL_DIR / "hero_inference_record.json"
 # auto | synthetic | lakehouse — auto prefers external lakehouse exports when present
 CHURN_DATA_SOURCE = os.environ.get("CHURN_DATA_SOURCE", "auto")
 USER_RECORD_SCHEMA_PATH = SCHEMAS_DIR / "user_record.schema.json"
@@ -102,7 +112,7 @@ FEATURE_STATS_PATH = MODELS_DIR / "feature_stats.json"
 
 
 def runtime_log_dir() -> Path:
-    """Where the API / HITL tools append runtime logs (prediction log, review log).
+    """Where the API and action-log tools append runtime logs (prediction log, action log).
 
     ``RETENTION_RADAR_LOG_DIR`` overrides it without moving the model bundle
     (``RETENTION_RADAR_ARTIFACT_DIR`` moves both); default is ``ARTIFACTS_DIR``.
@@ -119,180 +129,206 @@ apply_artifact_dir()
 RANDOM_SEED = 42
 
 # ---------------------------------------------------------------------------
-# Schema
+# Plans (fictional product, priced like the 2025-26 AI coding assistant market)
 # ---------------------------------------------------------------------------
-# Columns used as model features (after encoding plan_tier → plan_tier_code)
+PLAN_TIER_ORDER = ["pro", "pro_plus", "ultra"]
+PLAN_TIER_MAP = {name: idx for idx, name in enumerate(PLAN_TIER_ORDER)}
+PLAN_PRICE_USD = {"pro": 20.0, "pro_plus": 60.0, "ultra": 200.0}
+
+# ---------------------------------------------------------------------------
+# Schema: 22 serve fields (+ user_id, user_name) known at T-7
+# ---------------------------------------------------------------------------
 FEATURE_COLUMNS = [
-    "days_since_signup",
-    "sessions_last_7d",
-    "sessions_last_30d",
-    "avg_session_minutes",
-    "models_used_count",
-    "api_calls_last_30d",
-    "tokens_consumed_last_30d",
-    "tools_used_count",
-    "failed_requests_rate",
-    "support_tickets_last_90d",
-    "plan_tier",  # encoded to ordinal int in features
-    "payment_failures_last_90d",
-    "feature_adoption_score",
-    "nps_score",
-    "last_active_days_ago",
-    "weekend_usage_ratio",
+    "plan_tier",  # encoded to plan_tier_code
+    "renewals_completed",
+    "active_days_7d",
+    "active_days_28d",
     "engagement_trend",
-    "spend_usd_last_30d",
-    "days_until_renewal",
-    "agent_runs_last_30d",
-    "ide_plugin_sessions_last_30d",
-    "seat_utilization",
+    "last_active_days_ago",
+    "agent_requests_28d",
+    "allowance_used_pct",
+    "limit_hits_14d",
+    "cheap_model_share_28d",
+    "overage_usd_28d",
+    "overage_toggled_off",
+    "suggestion_accept_rate_28d",
+    "accept_rate_change",
+    "agent_task_success_rate",
+    "failed_requests_rate",
+    "incident_exposed_28d",
+    "support_tickets_90d",
+    "ide_sessions_28d",
+    "cli_sessions_28d",
+    "weekend_usage_ratio",
+    "first_renewal_after_pricing_change",
 ]
 
-# Numeric features after plan_tier is encoded
-MODEL_FEATURE_COLUMNS = [
-    "days_since_signup",
-    "sessions_last_7d",
-    "sessions_last_30d",
-    "avg_session_minutes",
-    "models_used_count",
-    "api_calls_last_30d",
-    "tokens_consumed_last_30d",
-    "tools_used_count",
-    "failed_requests_rate",
-    "support_tickets_last_90d",
-    "plan_tier_code",
-    "payment_failures_last_90d",
-    "feature_adoption_score",
-    "nps_score",
-    "last_active_days_ago",
-    "weekend_usage_ratio",
-    "engagement_trend",
-    "spend_usd_last_30d",
-    "days_until_renewal",
-    "agent_runs_last_30d",
-    "ide_plugin_sessions_last_30d",
-    "seat_utilization",
-]
+MODEL_FEATURE_COLUMNS = ["plan_tier_code"] + FEATURE_COLUMNS[1:]
 
-# Human-readable descriptions for data dictionary / model card
 FEATURE_DESCRIPTIONS = {
-    "user_id": "Stable synthetic user identifier.",
-    "user_name": "Display name (synthetic; Santosh is the hero profile).",
-    "days_since_signup": "Days since account creation.",
-    "sessions_last_7d": "Product sessions in the last 7 days.",
-    "sessions_last_30d": "Product sessions in the last 30 days.",
-    "avg_session_minutes": "Average session length in minutes.",
-    "models_used_count": "Distinct AI models the user has invoked.",
-    "api_calls_last_30d": "API calls in the last 30 days.",
-    "tokens_consumed_last_30d": "Token usage in the last 30 days.",
-    "tools_used_count": "Distinct tools / integrations used.",
-    "failed_requests_rate": "Fraction of failed requests (0–1).",
-    "support_tickets_last_90d": "Support tickets opened in last 90 days.",
-    "plan_tier": "Subscription tier: free | starter | pro | enterprise.",
-    "plan_tier_code": "Ordinal encoding of plan_tier (free=0 … enterprise=3).",
-    "payment_failures_last_90d": "Failed payment attempts in last 90 days.",
-    "feature_adoption_score": "0–1 score of how broadly features are used.",
-    "nps_score": "Net Promoter Score style rating (0–10).",
-    "last_active_days_ago": "Days since last observed activity.",
-    "weekend_usage_ratio": "Share of usage that happens on weekends (0–1).",
-    "engagement_trend": (
-        "sessions_last_7d / max(1, sessions_last_30d/4); "
-        "≈1 stable, <1 cooling, >1 accelerating."
-    ),
-    "spend_usd_last_30d": "Synthetic monthly spend in USD (last 30 days).",
-    "days_until_renewal": "Days until next billing / renewal (B2B-ish).",
-    "agent_runs_last_30d": "Agent / automation runs in the last 30 days (AI-native).",
-    "ide_plugin_sessions_last_30d": "IDE plugin sessions in the last 30 days.",
-    "seat_utilization": "0–1 seats used vs seats provisioned (team signal).",
-    "churned": "Binary label: 1 = churned, 0 = retained (training only).",
+    "user_id": "Stable synthetic subscriber id (not a feature).",
+    "user_name": "Display name for the worked examples (not a feature).",
+    "plan_tier": "Monthly plan: pro ($20) | pro_plus ($60) | ultra ($200).",
+    "plan_tier_code": "Ordinal encoding of plan_tier (pro=0, pro_plus=1, ultra=2).",
+    "renewals_completed": "Monthly renewals already paid. 0 = this is the first renewal (the cliff).",
+    "active_days_7d": "Days with any coding activity in the 7 days before T-7 (0-7).",
+    "active_days_28d": "Days with any coding activity in the 28 days before T-7 (0-28).",
+    "engagement_trend": "active_days_7d / max(1, active_days_28d / 4): ~1 steady, <1 fading.",
+    "last_active_days_ago": "Days since the last coding activity, measured at T-7.",
+    "agent_requests_28d": "Agent / chat requests sent to frontier models in 28 days.",
+    "allowance_used_pct": "Share of the plan's included usage consumed in 28 days (can exceed 1 with overage).",
+    "limit_hits_14d": "Times a 5-hour or weekly usage cap blocked a request in 14 days.",
+    "cheap_model_share_28d": "Share of requests routed to a cheaper / auto model (rationing signal).",
+    "overage_usd_28d": "Usage billed above the plan in 28 days (USD).",
+    "overage_toggled_off": "1 if paid overage was switched off or capped after being on.",
+    "suggestion_accept_rate_28d": "Accepted / shown inline suggestions in 28 days.",
+    "accept_rate_change": "Accept rate this 28 days / previous 28 days (1 = unchanged).",
+    "agent_task_success_rate": "Agent tasks that ended with the change kept (not reverted) in 28 days.",
+    "failed_requests_rate": "Share of requests that errored or timed out in 28 days.",
+    "incident_exposed_28d": "1 if the subscriber had requests during a declared incident window.",
+    "support_tickets_90d": "Support tickets opened in 90 days.",
+    "ide_sessions_28d": "IDE-extension sessions in 28 days.",
+    "cli_sessions_28d": "CLI-agent sessions in 28 days.",
+    "weekend_usage_ratio": "Share of activity on weekends (side-project signal).",
+    "first_renewal_after_pricing_change": "1 if this is the subscriber's first renewal since the last limit / pricing change.",
+    "churned": "Label: 1 = voluntarily let the plan lapse at this renewal (training only).",
 }
 
-# Inference payload required keys (no churned label)
-INFERENCE_REQUIRED_KEYS = [
-    "user_id",
-    "user_name",
-    "days_since_signup",
-    "sessions_last_7d",
-    "sessions_last_30d",
-    "avg_session_minutes",
-    "models_used_count",
-    "api_calls_last_30d",
-    "tokens_consumed_last_30d",
-    "tools_used_count",
+INFERENCE_REQUIRED_KEYS = ["user_id", "user_name"] + FEATURE_COLUMNS
+
+BINARY_FEATURES = [
+    "overage_toggled_off",
+    "incident_exposed_28d",
+    "first_renewal_after_pricing_change",
+]
+RATE_FEATURES = [
+    "cheap_model_share_28d",
+    "suggestion_accept_rate_28d",
+    "agent_task_success_rate",
     "failed_requests_rate",
-    "support_tickets_last_90d",
-    "plan_tier",
-    "payment_failures_last_90d",
-    "feature_adoption_score",
-    "nps_score",
-    "last_active_days_ago",
     "weekend_usage_ratio",
-    "engagement_trend",
-    "spend_usd_last_30d",
-    "days_until_renewal",
-    "agent_runs_last_30d",
-    "ide_plugin_sessions_last_30d",
-    "seat_utilization",
 ]
 
-# Soft range hints for single-record validation
 FEATURE_RANGES = {
-    "days_since_signup": (1, 2000),
-    "sessions_last_7d": (0, 60),
-    "sessions_last_30d": (0, 200),
-    "avg_session_minutes": (0.5, 240.0),
-    "models_used_count": (0, 30),
-    "api_calls_last_30d": (0, 100000),
-    "tokens_consumed_last_30d": (0, 50_000_000),
-    "tools_used_count": (0, 40),
+    "renewals_completed": (0, 60),
+    "active_days_7d": (0, 7),
+    "active_days_28d": (0, 28),
+    "engagement_trend": (0.0, 4.0),
+    "last_active_days_ago": (0, 90),
+    "agent_requests_28d": (0, 50000),
+    "allowance_used_pct": (0.0, 3.0),
+    "limit_hits_14d": (0, 60),
+    "cheap_model_share_28d": (0.0, 1.0),
+    "overage_usd_28d": (0.0, 5000.0),
+    "overage_toggled_off": (0, 1),
+    "suggestion_accept_rate_28d": (0.0, 1.0),
+    "accept_rate_change": (0.0, 3.0),
+    "agent_task_success_rate": (0.0, 1.0),
     "failed_requests_rate": (0.0, 1.0),
-    "support_tickets_last_90d": (0, 50),
-    "payment_failures_last_90d": (0, 20),
-    "feature_adoption_score": (0.0, 1.0),
-    "nps_score": (0.0, 10.0),
-    "last_active_days_ago": (0, 365),
+    "incident_exposed_28d": (0, 1),
+    "support_tickets_90d": (0, 50),
+    "ide_sessions_28d": (0, 500),
+    "cli_sessions_28d": (0, 500),
     "weekend_usage_ratio": (0.0, 1.0),
-    "engagement_trend": (0.0, 5.0),
-    "spend_usd_last_30d": (0.0, 100000.0),
-    "days_until_renewal": (0, 730),
-    "agent_runs_last_30d": (0, 5000),
-    "ide_plugin_sessions_last_30d": (0, 500),
-    "seat_utilization": (0.0, 1.0),
+    "first_renewal_after_pricing_change": (0, 1),
 }
 
-# Cohort comparison keys shown in decision packet / Streamlit
 COHORT_COMPARE_FEATURES = [
-    "sessions_last_30d",
+    "active_days_28d",
     "engagement_trend",
-    "feature_adoption_score",
-    "failed_requests_rate",
-    "last_active_days_ago",
-    "spend_usd_last_30d",
-    "days_until_renewal",
-    "agent_runs_last_30d",
-    "ide_plugin_sessions_last_30d",
-    "seat_utilization",
-    "nps_score",
+    "limit_hits_14d",
+    "cheap_model_share_28d",
+    "allowance_used_pct",
+    "suggestion_accept_rate_28d",
+    "agent_task_success_rate",
+    "renewals_completed",
 ]
 
 ID_COLUMNS = ["user_id", "user_name"]
 TARGET_COLUMN = "churned"
 
-# Ordered plan tiers (higher = more valuable)
-PLAN_TIER_ORDER = ["free", "starter", "pro", "enterprise"]
-PLAN_TIER_MAP = {name: idx for idx, name in enumerate(PLAN_TIER_ORDER)}
+# Renewal outcomes in renewals_all.csv. Only rows routed to "model" train/score.
+OUTCOME_RENEWED = "renewed"
+OUTCOME_VOLUNTARY = "voluntary_lapse"
+OUTCOME_INVOLUNTARY = "involuntary_lapse"
+ROUTE_MODEL = "model"
+ROUTE_DUNNING = "dunning"  # card failed and retries ran out: payments problem
+ROUTE_CANCEL_FLOW = "cancel_flow"  # cancel already scheduled before T-7
 
-# Train / val / test fractions (of full data)
-# TEST_SIZE=0.20 → 20% test. VAL_SIZE=0.20 of full → ~25% of remaining → 20% val, 60% train.
+# ---------------------------------------------------------------------------
+# Worked examples (scoring-time records, never in the training table)
+# ---------------------------------------------------------------------------
+HEROES = {
+    "maya": "maya.json",  # Pro, first renewal since the weekly-cap cut, rationing
+    "arjun": "arjun.json",  # steady Pro+ user; the one we deliberately leave alone
+}
+DEFAULT_HERO = "maya"
+
+# ---------------------------------------------------------------------------
+# Decision policy. Every number here is an ASSUMPTION until a holdout measures it.
+# ---------------------------------------------------------------------------
+# Risk bands on calibrated p (base rate is ~9%, so "high" starts well below 0.5).
+RISK_BAND_EDGES = (0.10, 0.30)
+# Share of eligible subscribers kept out of every playbook to measure lift.
+HOLDOUT_PCT = 10
+# Months a saved subscriber stays on average after a save (Churnkey reports ~5).
+MONTHS_RETAINED_AFTER_SAVE = 5.0
+# Playbooks a retention lead has approved. effect = share of would-be churners the
+# playbook keeps; cost_usd = paid per send; discount_usd = paid per acceptance,
+# including by subscribers who would have renewed anyway (sure_thing_accept).
+PLAYBOOKS = {
+    "in_app_usage_tips": {
+        "label": "In-app message: how to stretch the allowance",
+        "effect": 0.04,
+        "cost_usd": 0.02,
+        "discount_usd": 0.0,
+        "sure_thing_accept": 0.0,
+    },
+    "limit_reset": {
+        "label": "One-time usage-limit reset with a short note",
+        "effect": 0.25,
+        "cost_usd": 2.00,  # compute for one reset of the 5-hour window on Pro
+        "discount_usd": 0.0,
+        "sure_thing_accept": 0.0,
+    },
+    "pause_offer": {
+        "label": "Offer a one-month pause instead of cancel",
+        "effect": 0.15,
+        "cost_usd": 0.02,
+        "discount_usd": 0.0,
+        "sure_thing_accept": 0.02,
+        "pause_months": 1.0,
+    },
+    "cancel_flow_discount": {
+        "label": "Arm a 3-month 20%-off offer in the cancel flow",
+        "effect": 0.12,
+        "cost_usd": 0.0,
+        "discount_usd_pct_of_price": 0.60,  # 20% x 3 months = 0.6 of one month
+        "sure_thing_accept": 0.03,
+    },
+    # The only playbook with a person in it: worth ~15 minutes of staff time only
+    # when the plan is big enough to pay for it.
+    "personal_email": {
+        "label": "Personal email from the team, written by a person",
+        "effect": 0.25,
+        "cost_usd": 15.0,
+        "discount_usd": 0.0,
+        "sure_thing_accept": 0.0,
+        "plans": ["ultra"],
+    },
+}
+
+# Train / val / test fractions (of the model table)
 TEST_SIZE = 0.20
 VAL_SIZE = 0.20
 
-# Dataset size / Optuna (env overrides for CI speed; local defaults unchanged)
-N_USERS = int(os.environ.get("N_USERS", "5000"))
+# Cohort size (renewals generated before routing) / Optuna trials. Env overrides for CI.
+N_USERS = int(os.environ.get("N_USERS", "8000"))
 N_OPTUNA_TRIALS = int(os.environ.get("N_OPTUNA_TRIALS", "20"))
 
-# Calibration method: "isotonic" (preferred) or "sigmoid"
-CALIBRATION_METHOD = "isotonic"
+# Platt (sigmoid), not isotonic: with 142 lapses in validation, isotonic fits
+# ~24 flat steps, ties most of the queue and hands some subscribers P = 0.000.
+CALIBRATION_METHOD = "sigmoid"
 
-# Latency benchmark defaults
 LATENCY_WARMUP = 20
 LATENCY_RUNS = 200

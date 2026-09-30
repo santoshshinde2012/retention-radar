@@ -1,24 +1,25 @@
-# Model card — AI platform churn (XGBoost)
+# Model card: voluntary lapse at renewal (AI coding assistant, XGBoost)
 
-_Generated: 2026-09-25 · seed=42_
+_Generated: 2026-09-30 · seed=42_
 
 ## Overview
 
-Binary classifier predicting whether a synthetic AI-platform user will churn.
-Stack: XGBoost (Optuna-tuned) + post-hoc probability calibration (`isotonic`) on the validation set.
+Binary classifier scoring, seven days before a monthly renewal, whether a paying subscriber of a self-serve AI coding assistant will voluntarily let the plan lapse.
+Stack: XGBoost (Optuna-tuned) + post-hoc probability calibration (`sigmoid`) on the validation set.
 
 ## Intended use
 
-- Teaching / FOSS case study for churn ranking and calibrated probabilities.
-- Interactive Streamlit what-if on the Santosh Shinde hero profile.
+- Teaching / FOSS case study: rank T-7 renewals, calibrate, and feed an expected-value policy that picks an approved playbook, a holdout, or no action.
+- The score says who is at risk, not who will respond. Playbook effects in `config.PLAYBOOKS` are assumptions until a holdout measures them.
 - **Not** for production decisions on real customers without fresh data validation.
 
 ## Training data
 
-- Synthetic users from `src/retention_radar/data/generate.py` (rule-based propensity + noise). **No NaNs by design.**
+- Synthetic renewal cohort from `src/retention_radar/data/generate.py`: unobserved causes (need, fit, price sensitivity, side-project habit, a rival tool's pull) drive observed usage and a noisy voluntary-lapse outcome. **No NaNs by design.**
+- Dunning (failed-payment) lapses and already-scheduled cancels are excluded; see the data dictionary.
 - Split: train ~60% / val ~20% / test ~20% (stratified, `random_state=42`).
-- n_train=3000 · n_val=1000 · n_test=1000 · n_trials=20.
-- Train churn rate: `0.191`.
+- n_train=4397 · n_val=1466 · n_test=1466 · n_trials=20.
+- Train voluntary-lapse rate: `0.09642938367068456`.
 
 ## Features
 
@@ -27,39 +28,39 @@ See [data-dictionary.md](data/data-dictionary.md) for dtype, ranges, and nullabi
 
 ## Metrics (holdout) — from `models/metrics.json`
 
-Honest ladder: **Dummy(prior) → LogReg → RF → default XGB → Optuna XGB → LightGBM → CatBoost** (calibrated XGB is the Santosh / serving hero). No simple-rule baseline is logged. GBDT trilogy peers: XGB / LightGBM / CatBoost.
+Honest ladder: **Dummy(prior) → LogReg → RF → default XGB → Optuna XGB → LightGBM → CatBoost** (calibrated XGB serves). No simple-rule baseline is logged. GBDT trilogy peers: XGB / LightGBM / CatBoost.
 
 | Model | Val AUC | Val F1 | Test AUC | Test F1 | Test PR-AUC |
 |-------|---------|--------|----------|---------|-------------|
-| Dummy (prior) | 0.5000 | 0.0000 | 0.5000 | 0.0000 | 0.1910 |
-| Logistic regression | 0.9144 | 0.6614 | 0.8719 | 0.5783 | 0.6444 |
-| Random Forest | 0.9096 | 0.6799 | 0.8685 | 0.5844 | 0.6429 |
-| XGBoost (default) | 0.9061 | 0.6652 | 0.8691 | 0.5961 | 0.6382 |
-| XGBoost (Optuna, raw) | 0.9133 | 0.6599 | 0.8699 | 0.5801 | 0.6415 |
-| LightGBM (default) | 0.9091 | 0.6524 | 0.8648 | 0.5835 | 0.6332 |
-| CatBoost (default) | 0.9145 | 0.6750 | 0.8715 | 0.5826 | 0.6355 |
-| XGBoost (calibrated) | 0.9206 | 0.6781 | 0.8665 | 0.6006 | 0.6117 |
+| Dummy (prior) | 0.5000 | 0.0000 | 0.5000 | 0.0000 | 0.0962 |
+| Logistic regression | 0.7706 | 0.3130 | 0.7811 | 0.3333 | 0.2812 |
+| Random Forest | 0.7653 | 0.3831 | 0.7576 | 0.3030 | 0.2668 |
+| XGBoost (default) | 0.7360 | 0.3252 | 0.7275 | 0.2991 | 0.2504 |
+| XGBoost (Optuna, raw) | 0.7690 | 0.3444 | 0.7631 | 0.3314 | 0.2579 |
+| LightGBM (default) | 0.7525 | 0.3185 | 0.7359 | 0.3093 | 0.2430 |
+| CatBoost (default) | 0.7749 | 0.3107 | 0.7705 | 0.3193 | 0.2810 |
+| XGBoost (calibrated) | 0.7690 | 0.0000 | 0.7631 | 0.0000 | 0.2579 |
 
 ### Calibration (Brier — lower is better)
 
 | Split | Raw Brier | Calibrated Brier |
 |-------|-----------|------------------|
-| val | `0.1164` | `0.0802` |
-| test | `0.1382` | `0.1062` |
+| val | `0.1607` | `0.0779` |
+| test | `0.1616` | `0.0793` |
 
-Method: `isotonic`.
+Method: `sigmoid`.
 
 ### Operating point (calibrated test scores)
 
 | Quantity | Value |
 |----------|-------|
-| Test AUC-ROC (calibrated) | `0.8665` |
-| Test PR-AUC / AP | `0.6117` |
-| Best F1 threshold τ (chosen on validation) | `0.34` |
-| F1 at τ (validation) | `0.6987` |
-| F1 at τ (test, reported once) | `0.6015` |
-| F1 @ 0.5 | `0.6006` |
-| Warm latency p50 / p95 (ms) | `2.01` / `2.15` |
+| Test AUC-ROC (calibrated) | `0.7631` |
+| Test PR-AUC / AP | `0.2579` |
+| Best F1 threshold τ (chosen on validation) | `0.14` |
+| F1 at τ (validation) | `0.3578` |
+| F1 at τ (test, reported once) | `0.3441` |
+| F1 @ 0.5 | `0.0000` |
+| Warm latency p50 / p95 (ms) | `1.51` / `9.92` |
 
 ## Result plots
 
@@ -94,14 +95,15 @@ Committed copies live under `results/plots/` (runtime dumps in `artifacts/`).
 - Labels and features are synthetic; do not treat scores as real risk.
 - Calibration improves probability meaning but does not fix selection bias.
 - SHAP explains this score, not causation.
-- Single-record path is HITL only (`auto_action: none`) — see [single-record-checklist.md](case-study/single-record-checklist.md).
+- The service never executes an action (`auto_action: none`); a lifecycle tool runs human-approved playbooks, and a deterministic holdout is kept out of every playbook.
+- Contacting at-risk subscribers can raise churn (Ascarza et al., JMR 2016). Measure lift against the holdout before scaling any playbook.
 
 ## Related reading
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) — SOLID package map
 - [data-dictionary.md](data/data-dictionary.md)
 - [BEST_PRACTICES.md](guides/BEST_PRACTICES.md)
-- [santosh-case-study.md](case-study/santosh-case-study.md)
+- [renewal-worked-examples.md](case-study/renewal-worked-examples.md)
 - [ALGORITHM_LANDSCAPE.md](guides/ALGORITHM_LANDSCAPE.md) — what is on the ladder vs deferred
 - [../results/BENCHMARKS.md](../results/BENCHMARKS.md)
-- [../results/SANTOSH_ANALYSIS.md](../results/SANTOSH_ANALYSIS.md)
+- [../results/WORKED_EXAMPLES.md](../results/WORKED_EXAMPLES.md)

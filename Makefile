@@ -25,7 +25,7 @@ lint:
 	$(PY) -m ruff check src/ tests/ app/
 
 infer:
-	$(PY) -m retention_radar.cli.single_record --user santosh --out artifacts/santosh_decision_packet.json
+	$(PY) -m retention_radar.cli.single_record --user maya --out artifacts/maya_decision_packet.json
 
 ui:
 	$(PY) -m streamlit run app/streamlit_app.py
@@ -33,18 +33,18 @@ ui:
 api:
 	$(PY) -m uvicorn retention_radar.serving.api:app --host 127.0.0.1 --port 8000
 
-# Walk the service on data/use_cases/: queue → packets → held records → reviews → outcomes.
+# Walk one renewal day on data/use_cases/: queue → packets → held records → send export → outcomes + lift.
 use-cases:
 	PYTHON=$(PY) ./scripts/run_use_cases.sh
 
-# Rebuild data/use_cases/ from seed-42 data/raw/users.csv + the committed bundle.
+# Rebuild data/use_cases/ from seed-42 data/raw/renewals_t7.csv + the committed bundle.
 build-use-cases:
 	CHURN_DATA_SOURCE=synthetic $(PY) -m retention_radar.cli.generate_data
 	CHURN_DATA_SOURCE=synthetic $(PY) -m retention_radar.cli.build_use_cases
 
 # Retrain into artifacts/repro/ (committed models/ untouched) and diff against models/metrics.json.
 reproduce:
-	RETENTION_RADAR_ARTIFACT_DIR=artifacts/repro CHURN_DATA_SOURCE=synthetic N_USERS=5000 N_OPTUNA_TRIALS=20 ./scripts/run_all.sh
+	RETENTION_RADAR_ARTIFACT_DIR=artifacts/repro CHURN_DATA_SOURCE=synthetic N_USERS=8000 N_OPTUNA_TRIALS=20 ./scripts/run_all.sh
 	$(PY) -m retention_radar.cli.check_reproduction --artifact-dir artifacts/repro
 
 # Everything end to end (reproduce, tests, CLI/API/UI surfaces, optional lakehouse); see scripts/run_local_e2e.sh.
@@ -54,3 +54,4 @@ e2e-local:
 docs-results:
 	mkdir -p results/plots
 	cp artifacts/roc_curve.png artifacts/pr_curve.png artifacts/calibration_curve.png artifacts/confusion_matrix.png artifacts/threshold_f1.png results/plots/
+	cp artifacts/analysis.json results/analysis.json

@@ -1,94 +1,91 @@
-# Start here — Retention Radar teaching trilogy
+# Start here
 
-Public FOSS path for the Medium / DET series. **Clone two public repos, run one synthetic command.** Do **not** clone any private article workspace.
+Clone the repo, run one command, then read the results.
 
-## 1. Clone
+## 1. Clone and install
 
 ```bash
 git clone https://github.com/santoshshinde2012/retention-radar.git
-git clone https://github.com/santoshshinde2012/local-data-lakehouse.git
 cd retention-radar
 python3.12 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt && pip install -e .
 ```
 
-## 2. One synthetic command (published seed-42 ladder)
+## 2. Run the pipeline
 
 ```bash
 CHURN_DATA_SOURCE=synthetic ./scripts/run_all.sh
 ```
 
-Expect Santosh: raw ≈ **0.043** → calibrated ≈ **0.016** → band **low** → HITL **monitor** (`auto_action: none`).
+This generates 8,000 renewals (seed 42), trains and calibrates the models, and writes
+decision packets for the two worked examples. Maya should come out at calibrated 0.153,
+band medium, action `limit_reset`. Arjun should come out at 0.023, band low, `no_action`.
 
-Cite [`models/metrics.json`](../../models/metrics.json) · [results/BENCHMARKS.md](../../results/BENCHMARKS.md).
+Numbers to cite: [`models/metrics.json`](../../models/metrics.json). How to read them:
+[results/BENCHMARKS.md](../../results/BENCHMARKS.md).
 
-Verify the whole trilogy locally in one command (reproduce + tests + CLI/API/UI + lakehouse, committed files untouched):
+To check everything at once (reproduction, tests, CLI, API, UI, and the lakehouse path if
+it is cloned beside this repo) without touching committed files:
 
 ```bash
-make e2e-local   # picks up ../local-data-lakehouse automatically
+make e2e-local
 ```
 
-## 3. Optional lakehouse gold path
+## 3. Walk one renewal day
 
-Needs the lakehouse checkout beside this repo (or pass the path):
+```bash
+make use-cases
+```
+
+Scores a day of T-7 renewals into an action queue, holds invalid records, imports what
+the messaging tool sent, and reports lift against the holdout. Details:
+[data/use_cases/README.md](../../data/use_cases/README.md).
+
+Single pieces:
+
+```bash
+# Score a CSV into a ranked action queue (invalid rows go to *_rejected.csv)
+python -m retention_radar.cli.batch_score --csv data/raw/renewals_t7.csv \
+  --out artifacts/predictions/scores.csv
+
+# Log what was done for one subscriber
+python -m retention_radar.cli.action_log \
+  --from-packet artifacts/maya_decision_packet.json \
+  --executed-by lifecycle_tool --action-taken limit_reset
+
+# Thin local API (no auth)
+uvicorn retention_radar.serving.api:app --app-dir src --port 8000
+curl -s localhost:8000/v1/churn/score -H 'content-type: application/json' \
+  -d @data/raw/subscribers/maya.json
+```
+
+Action-log template and schema: [`configs/templates/action_log.csv`](../../configs/templates/action_log.csv) ·
+[`configs/action_log.schema.json`](../../configs/action_log.schema.json).
+
+## 4. Lakehouse path (optional)
+
+Needs a [local-data-lakehouse](https://github.com/santoshshinde2012/local-data-lakehouse)
+checkout that exports the v2 renewal contract:
 
 ```bash
 ./scripts/run_lakehouse_e2e.sh ../local-data-lakehouse
 ```
 
-Lakehouse train/eval writes **only** under `artifacts/lakehouse_run/` (`RETENTION_RADAR_ARTIFACT_DIR`). Committed `models/` and `docs/MODEL_CARD.md` stay the published synthetic serve bundle. Dual-world cite: [`results/lakehouse-e2e-summary.json`](../../results/lakehouse-e2e-summary.json).
+It trains under `artifacts/lakehouse_run/` only. See
+[data-foundation-lakehouse.md](../data/data-foundation-lakehouse.md).
 
-
-## 3b. Optional FOSS production-shaped path (local)
-
-Batch-score gold features with the committed seed-42 serve bundle (HITL only — `auto_action: none`):
+## 5. UI
 
 ```bash
-python -m retention_radar.cli.batch_score \
-  --csv data/external/churn_user_features.csv \
-  --out artifacts/predictions/scores.csv
+make ui
 ```
 
-Tiny fixture (tests): `tests/fixtures/batch/tiny_features.csv`.
+Loads the committed models; nothing is trained on page load. There is no hosted demo yet;
+deploy steps are in [DEPLOY_LATER.md](DEPLOY_LATER.md).
 
-Append a HITL review-log row (predict → act):
+## What to read
 
-```bash
-python -m retention_radar.cli.hitl_log \
-  --from-packet artifacts/santosh_decision_packet.json \
-  --reviewer you --action-taken monitor --notes "ok"
-```
-
-Template + schema: [`configs/templates/hitl_review_log.csv`](../../configs/templates/hitl_review_log.csv) · [`configs/hitl_review_log.schema.json`](../../configs/hitl_review_log.schema.json).
-
-Close the loop once labels arrive (outcome write-back — observed churn per band / action; descriptive only):
-
-```bash
-python -m retention_radar.cli.hitl_outcomes --labels data/raw/users.csv
-# → artifacts/hitl_outcomes.csv + artifacts/hitl_outcomes.json
-```
-
-Thin local FastAPI (teaching-only, **no auth**). Preferred route `POST /v1/churn/score` (conceptual alias `POST /v1/churn:score`):
-
-```bash
-uvicorn retention_radar.serving.api:app --app-dir src --port 8000
-# curl -s localhost:8000/v1/churn/score -H 'content-type: application/json' -d @data/raw/santosh_shinde.json
-```
-
-## 4. UI / live demo
-
-```bash
-make ui   # streamlit run app/streamlit_app.py — loads committed models only (no fit on load)
-```
-
-**Live demo:** TBD — Streamlit Community Cloud / HF Space  
-(Exact deploy steps when ready: [DEPLOY_LATER.md](DEPLOY_LATER.md); full free-platform map: [e2e-free-platforms.md](e2e-free-platforms.md))
-
-## 5. Articles
-
-Narrative articles live in a **separate internal** workspace. This public repo is code + benchmarks + results only — never a private clone instruction for readers.
-
-## See also (related teaching repos)
-
-- [medallion-write-back-loop](https://github.com/santoshshinde2012/medallion-write-back-loop) — medallion write-back teaching loop (not wired into this E2E)
-- [churn-vs-risk-poc](https://github.com/santoshshinde2012/churn-vs-risk-poc) — churn vs risk POC (not wired into this E2E)
+1. [USE_CASE.md](../USE_CASE.md): the business problem and its sources.
+2. [results/WORKED_EXAMPLES.md](../../results/WORKED_EXAMPLES.md): Maya and Arjun.
+3. [results/BENCHMARKS.md](../../results/BENCHMARKS.md): the ladder, calibration, the policy.
+4. [MODEL_CARD.md](../MODEL_CARD.md): intended use and limits.

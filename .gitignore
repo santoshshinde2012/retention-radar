@@ -39,7 +39,7 @@ htmlcov/
 # Data (keep directory placeholders + documented samples)
 data/raw/*.csv
 data/raw/*.json
-!data/raw/santosh_shinde.json
+!data/raw/subscribers/
 !data/raw/.gitkeep
 
 data/interim/*
@@ -58,7 +58,7 @@ models/*
 !models/feature_stats.json
 !models/metrics.json
 
-# Runtime plots + HITL packets (evaluate / single_record). Keep .gitkeep.
+# Runtime plots + decision packets (evaluate / single_record). Keep .gitkeep.
 # Committed sample charts live in results/plots/; do not commit runtime dumps here.
 artifacts/*
 artifacts/**

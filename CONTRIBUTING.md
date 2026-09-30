@@ -1,9 +1,7 @@
 # Contributing
 
-Thanks for improving **Retention Radar**, a FOSS AI-platform churn teaching repo.  
-Repo: [https://github.com/santoshshinde2012/retention-radar](https://github.com/santoshshinde2012/retention-radar)
-
-Prefer focused PRs: code + benchmarks + results analysis. Articles are authored separately (internal); this repo is the public code home.
+Repo: [github.com/santoshshinde2012/retention-radar](https://github.com/santoshshinde2012/retention-radar).
+Keep pull requests focused: code, benchmarks, results.
 
 ## Setup
 
@@ -14,55 +12,63 @@ python3.12 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 pip install -e .
-# Optional informational pins: requirements.lock (CI still uses requirements.txt)
-# If you skip editable install: export PYTHONPATH="$(pwd)/src"
 ```
 
-## Run the full pipeline
+`requirements.lock` is a snapshot for reference; CI installs from `requirements.txt`.
+
+## Run the pipeline
 
 ```bash
-chmod +x scripts/run_all.sh
 CHURN_DATA_SOURCE=synthetic ./scripts/run_all.sh
 ```
 
-Primary citation file: **`models/metrics.json`**.
+This retrains into `models/` and replaces the committed bundle. For a quick run that
+leaves `models/` alone:
 
-Faster smoke (committed `models/` untouched): `RETENTION_RADAR_ARTIFACT_DIR=artifacts/smoke N_USERS=800 N_OPTUNA_TRIALS=5 ./scripts/run_all.sh`. Without `RETENTION_RADAR_ARTIFACT_DIR`, `run_all.sh` retrains **into** `models/` and replaces the published bundle.
+```bash
+RETENTION_RADAR_ARTIFACT_DIR=artifacts/smoke N_USERS=800 N_OPTUNA_TRIALS=5 \
+  CHURN_DATA_SOURCE=synthetic ./scripts/run_all.sh
+```
 
-## Refresh model card & data dictionary
+Cite `models/metrics.json`.
+
+## Regenerate the model card and data dictionary
 
 ```bash
 python -m retention_radar.cli.docs_gen
 ```
 
-Writes `docs/MODEL_CARD.md` and `docs/data/data-dictionary.md`.
+Writes `docs/MODEL_CARD.md` and `docs/data/data-dictionary.md`. Edit those through
+`docs_gen` rather than by hand, so they match `models/metrics.json`.
 
 ## Tests
 
 ```bash
-export PYTHONPATH="$(pwd)/src"
-export CHURN_DATA_SOURCE=synthetic
-pytest -q
+CHURN_DATA_SOURCE=synthetic pytest -q     # or: make test
 ```
 
-**PRs should keep pytest green.** Pin `CHURN_DATA_SOURCE=synthetic` so a local
-`data/external/` lakehouse export cannot change what CI measures.
+Pull requests must keep the suite green. `CHURN_DATA_SOURCE=synthetic` stops a local
+`data/external/` export from changing what is tested. `make e2e-local` runs the full
+check that CI runs.
 
-Lakehouse E2E (optional; trains under `artifacts/lakehouse_run/`, but refreshes the committed `results/lakehouse-e2e-summary.json`):
+The lakehouse run (optional) trains under `artifacts/lakehouse_run/` but rewrites the
+committed `results/lakehouse-e2e-summary.json`, and needs the lakehouse repo's v2 export:
 
 ```bash
 ./scripts/run_lakehouse_e2e.sh /path/to/local-data-lakehouse
 git checkout -- results/lakehouse-e2e-summary.json   # unless you mean to publish it
 ```
 
-## Style notes
+## Conventions
 
-- FOSS only — no paid SaaS in the core path. See [docs/guides/e2e-free-platforms.md](docs/guides/e2e-free-platforms.md).
-- Synthetic data disclaimer stays visible; HITL only (`auto_action: none`) in `src/retention_radar/serving/policy.py`.
-- New logic goes in `src/retention_radar/`; CLI entrypoints live under `src/retention_radar/cli/` (`python -m retention_radar.cli.*`).
-- Do not claim production ROI or fairness audits from this teaching repo.
-- Prefer editing generated docs via `docs_gen` so they stay in sync with `models/metrics.json`.
+- Open-source tools only in the core path. See [docs/guides/e2e-free-platforms.md](docs/guides/e2e-free-platforms.md).
+- Keep the synthetic-data notice visible.
+- The service never sends anything: `auto_action` stays `none` in `src/retention_radar/serving/policy.py`.
+- Playbook effects in `config.PLAYBOOKS` are assumptions; do not describe them as measured.
+- Code goes in `src/retention_radar/`; CLI entry points in `src/retention_radar/cli/`.
+- No ROI or fairness claims.
+- Checklist: [docs/guides/BEST_PRACTICES.md](docs/guides/BEST_PRACTICES.md).
 
 ## License
 
-MIT © Santosh Shinde — see [LICENSE](LICENSE).
+MIT © Santosh Shinde, see [LICENSE](LICENSE).

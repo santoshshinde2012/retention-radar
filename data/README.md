@@ -1,22 +1,23 @@
-# data/ — layer roles (CDS parity)
+# data/
 
-Aligned with [cookiecutter-data-science](https://cookiecutter-data-science.drivendata.org/) data layers. Generated CSVs are gitignored; placeholders (`.gitkeep`) and documented samples stay.
+Layout follows the cookiecutter-data-science data layers.
 
-| Layer | Path | Role |
-|-------|------|------|
-| **raw** | `raw/` | Immutable inputs: Santosh hero JSON (`santosh_shinde.json`), generated `users.csv` (gitignored) |
-| **interim** | `interim/` | Intermediate transforms (empty in teaching path; CDS parity) |
-| **processed** | `processed/` | Model-ready tables if you materialize them locally (empty by default; features built in-memory) |
-| **external** | `external/` | Third-party / lakehouse gold sync (`churn_user_features.csv`, `santosh_inference_record.json`) |
-| **use cases** | [`use_cases/`](use_cases/README.md) | Committed serving scenarios from the seed-42 holdout: one record per HITL path, invalid records the service must hold, a weekly batch, reviewer decisions, day-30 labels (`make use-cases`) |
+| Layer | Path | Contents |
+|-------|------|----------|
+| raw | `raw/` | `renewals_t7.csv`: the model table, one row per subscriber at T-7 (generated, gitignored). `renewals_all.csv`: every generated renewal with `outcome` and `route` (dunning, cancel_flow, model), for auditing the label (generated, gitignored). `subscribers/maya.json`, `subscribers/arjun.json`: scoring-time records for the worked examples (committed) |
+| interim | `interim/` | empty |
+| processed | `processed/` | empty; features are built in memory |
+| external | `external/` | lakehouse exports: `churn_user_features.csv`, `hero_inference_record.json` (gitignored) |
+| use cases | [`use_cases/`](use_cases/README.md) | one renewal day from test-split subscribers: scenarios, invalid records, `daily_t7_batch.csv`, `actions_taken.csv`, `renewal_outcomes.csv` (committed) |
 
 ```bash
-# Prefer synthetic (CI / published ladder):
-CHURN_DATA_SOURCE=synthetic ./scripts/run_all.sh
+# Generate the synthetic tables (seed 42)
+CHURN_DATA_SOURCE=synthetic python -m retention_radar.cli.generate_data
 
-# Prefer lakehouse gold when exports are present:
+# Use lakehouse exports instead (needs the v2 export)
 ./scripts/sync_lakehouse_exports.sh /path/to/local-data-lakehouse/data/export
 CHURN_DATA_SOURCE=auto python -m retention_radar.cli.ingest
 ```
 
-See [docs/data/data-foundation-lakehouse.md](../docs/data/data-foundation-lakehouse.md) and [external/README.md](external/README.md).
+Field definitions: [docs/data/data-dictionary.md](../docs/data/data-dictionary.md).
+Lakehouse: [docs/data/data-foundation-lakehouse.md](../docs/data/data-foundation-lakehouse.md).

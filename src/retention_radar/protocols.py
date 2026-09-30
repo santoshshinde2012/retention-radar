@@ -14,7 +14,7 @@ import pandas as pd
 
 @runtime_checkable
 class FeatureTransformer(Protocol):
-    """Map a raw user table or dict onto the 22-column model contract."""
+    """Map a raw renewal table or dict onto the 22-column model contract."""
 
     def prepare_xy(self, df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
         """Return encoded ``X`` and label ``y`` for training."""
@@ -45,8 +45,10 @@ class Calibrator(Protocol):
 
 @runtime_checkable
 class DecisionPolicy(Protocol):
-    """HITL action mapping. Implementations must keep ``auto_action: none``."""
+    """Score → action mapping. Implementations must keep ``auto_action: none``."""
 
-    def decide(self, prob: float, threshold: float, band: str) -> dict[str, Any]:
-        """Return action, rationale, and auto_action fields."""
+    def decide(
+        self, prob: float, threshold: float, band: str, record: dict | None = None
+    ) -> dict[str, Any]:
+        """Return action, rationale, holdout flag and auto_action fields."""
         ...

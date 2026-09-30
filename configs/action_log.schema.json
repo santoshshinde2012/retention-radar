@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://example.local/schemas/action_log.schema.json",
+  "title": "Renewal action log row",
+  "description": "What was actually done for one scored subscriber (a playbook sent, a holdout kept, or nothing). The act step of score -> act -> outcome; joined to renewal outcomes by cli.outcomes to estimate lift against the holdout.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "user_id",
+    "p_cal",
+    "band",
+    "action_suggested",
+    "holdout",
+    "would_have_sent",
+    "executed_by",
+    "action_taken",
+    "notes",
+    "timestamp"
+  ],
+  "properties": {
+    "user_id": { "type": "string", "minLength": 1 },
+    "p_cal": {
+      "type": ["number", "string"],
+      "description": "Calibrated P(voluntary lapse) at T-7"
+    },
+    "band": { "type": "string", "enum": ["low", "medium", "high"] },
+    "action_suggested": {
+      "type": "string",
+      "description": "Policy output: a playbook name, holdout or no_action"
+    },
+    "holdout": {
+      "type": ["boolean", "string"],
+      "description": "True if the subscriber was deterministically held out of every playbook"
+    },
+    "would_have_sent": {
+      "type": "string",
+      "description": "For holdout rows: the playbook the policy would have sent (empty otherwise or if none pays back)"
+    },
+    "executed_by": {
+      "type": "string",
+      "description": "Who or what acted: the lifecycle tool, a named person (Ultra personal email), or 'none'"
+    },
+    "action_taken": {
+      "type": "string",
+      "description": "What was actually sent (may differ: suppression lists, a person skipping the email)"
+    },
+    "notes": { "type": "string" },
+    "timestamp": { "type": "string", "description": "ISO-8601 UTC time the action was logged" }
+  }
+}

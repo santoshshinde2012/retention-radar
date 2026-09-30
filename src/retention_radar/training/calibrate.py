@@ -20,7 +20,7 @@ from retention_radar import config
 class ProbabilityCalibrator:
     """Thin wrapper: transform raw positive-class probabilities → calibrated."""
 
-    def __init__(self, method: str = "isotonic"):
+    def __init__(self, method: str = "sigmoid"):
         if method not in {"isotonic", "sigmoid"}:
             raise ValueError(f"Unknown calibration method: {method}")
         self.method = method

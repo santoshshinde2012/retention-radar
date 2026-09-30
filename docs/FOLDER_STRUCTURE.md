@@ -1,87 +1,52 @@
-# Folder structure — Retention Radar
+# Folder structure
 
-Teaching / ML use-case layout aligned with **cookiecutter-data-science** data layers and **src-layout** packaging.  
-**Code + benchmarks + results analysis** live here (public code home).  
-Articles are authored separately (**internal**); readers should not be pointed at an articles GitHub repo.  
-Data foundation / SoR → [local-data-lakehouse](https://github.com/santoshshinde2012/local-data-lakehouse).
+Uses a src layout for the package and the cookiecutter-data-science `data/` layers.
 
 ```text
 retention-radar/
 ├── README.md, LICENSE, CHANGELOG.md, CONTRIBUTING.md, Makefile
-├── pyproject.toml, requirements.txt, requirements.lock, runtime.txt
-├── .env.example, .gitignore
-├── .github/workflows/ci.yml
-├── configs/                         # production convention: contracts / config
-│   ├── README.md
-│   ├── hitl_review_log.schema.json
-│   ├── templates/hitl_review_log.csv
-│   └── schemas/
-│       └── user_record.schema.json
-├── src/retention_radar/             # ONLY Python package under src/
-│   ├── __init__.py
+├── pyproject.toml, requirements.txt, requirements.lock, runtime.txt, packages.txt
+├── .env.example, .github/workflows/ci.yml
+├── configs/
+│   ├── schemas/user_record.schema.json   # the 24-field T-7 record
+│   ├── action_log.schema.json
+│   └── templates/action_log.csv
+├── src/retention_radar/
 │   ├── config.py, protocols.py, docs_gen.py
-│   ├── cli/                         # train, evaluate, infer, batch_score, hitl_log, hitl_outcomes, …
-│   ├── data/, features/, training/, evaluation/, serving/  # + thin FastAPI
-├── app/streamlit_app.py             # Streamlit serve-only
-├── scripts/                         # shell orchestration only
+│   ├── cli/          # python -m retention_radar.cli.<name>
+│   ├── data/         # generate, ingest, use_cases
+│   ├── features/
+│   ├── training/
+│   ├── evaluation/
+│   └── serving/      # infer, packet, policy, batch_score, action_log, outcomes, api, drift
+├── app/streamlit_app.py
+├── scripts/          # run_all, run_use_cases, run_lakehouse_e2e, sync_lakehouse_exports, run_local_e2e
 ├── data/
-│   ├── README.md                    # raw / interim / processed / external roles
-│   ├── raw/                         # Santosh JSON; users.csv (gitignored)
-│   ├── use_cases/                   # serving scenarios, invalid records, weekly batch, reviews, labels
-│   ├── interim/                     # CDS parity (empty teaching path)
-│   ├── processed/                   # CDS parity (features usually in-memory)
-│   └── external/                    # lakehouse gold sync
-├── models/                          # seed-42 serve bundle (joblibs + metrics)
-├── results/                         # ≡ reports/ in CDS templates (name kept for dig-deeper URLs)
-│   ├── README.md, BENCHMARKS.md, SANTOSH_ANALYSIS.md
-│   └── plots/                       # ≡ reports/figures
-├── artifacts/                       # runtime-only (.gitkeep; * gitignored)
-├── notebooks/                       # exploration only; import package
-├── docs/
-│   ├── README.md
-│   ├── GETTING_STARTED.md
-│   ├── FOLDER_STRUCTURE.md
-│   ├── ARCHITECTURE.md
-│   ├── MODEL_CARD.md
-│   ├── guides/
-│   ├── data/
-│   └── case-study/
+│   ├── raw/          # renewals_t7.csv, renewals_all.csv (generated, gitignored); subscribers/maya.json, arjun.json
+│   ├── use_cases/    # one renewal day: scenarios, invalid records, daily batch, send export, outcomes
+│   ├── external/     # lakehouse gold exports (gitignored)
+│   ├── interim/      # empty
+│   └── processed/    # empty
+├── models/           # committed seed-42 serve bundle
+├── results/          # BENCHMARKS.md, WORKED_EXAMPLES.md, sample packet, plots/
+├── artifacts/        # runtime output, gitignored
+├── notebooks/        # exploration only
+├── docs/             # use case, guides, architecture, model card, data, case study
 └── tests/
 ```
 
-## Alignment notes
-
-| Convention | How we follow it |
-|------------|------------------|
-| **src-layout** | Package only under `src/retention_radar/`; `pip install -e .` |
-| **CDS data layers** | `data/{raw,interim,processed,external}/` with README |
-| **configs/** | JSON Schema + config home (not scattered at repo root) |
-| **notebooks/** | Exploration only — no production train/serve logic |
-| **results/** (not `reports/`) | Same role as CDS `reports/` + `reports/figures/` → `results/plots/`; **name kept** so public article dig-deeper links to `results/BENCHMARKS.md` stay valid |
-| **Out of scope** | Airflow, DVC, MLflow, production auth / CRM write-back |
-| **Optional teaching serve** | Thin local FastAPI (`serving/api.py`) — no auth |
-
-## Folder purposes
+## Notes
 
 | Path | Purpose |
 |------|---------|
-| `src/retention_radar/` | Product package (SOLID boundaries) |
-| `src/retention_radar/cli/` | CLI entrypoints (`python -m retention_radar.cli.*`) |
-| `configs/schemas/` | User-record JSON Schema (`USER_RECORD_SCHEMA_PATH`) |
-| `configs/templates/` | HITL review-log CSV header template |
-| `serving/api.py` | Optional thin local FastAPI (`POST /v1/churn/score`) |
-| `app/` | Streamlit — **serve-only** |
-| `scripts/` | E2E + lakehouse sync helpers (`make run` / `make run-lakehouse`) |
-| `models/` | Seed-42 serve bundle — **commit** for Cloud |
-| `results/` | Committed analysis + charts (not runtime) |
-| `artifacts/` | Local evaluate / infer dumps — **never commit** |
-| `notebooks/` | Ad-hoc exploration; import the package |
-| `docs/` | Engineering docs + model card + nested guides |
-| `data/external/` | Lakehouse gold sync (CSVs gitignored) |
-| `data/use_cases/` | Committed serving use-case pack (`make use-cases`; rebuilt by `cli.build_use_cases`) |
+| `src/retention_radar/cli/` | Thin entry points: `train`, `evaluate`, `infer`, `single_record`, `batch_score`, `action_log`, `outcomes`, `drift_check`, `build_use_cases`, `check_reproduction`, `docs_gen`, … |
+| `app/` | Serve only; never trains |
+| `models/` | Committed so the UI can run on a free host without training |
+| `results/` | Committed analysis and charts. `artifacts/` is what a run writes; `make docs-results` copies plots into `results/plots/` |
+| `data/use_cases/` | Committed; rebuilt by `python -m retention_radar.cli.build_use_cases` |
+| `notebooks/` | Exploration; import the package, keep logic in `src/` |
 
-**Product vs scratch:** package + `app/` + committed `models/` + `results/` are product. `artifacts/`, generated `data/raw/users.csv`, Optuna DBs, and `__pycache__` are scratch.
+Generated and scratch: `artifacts/`, `data/raw/*.csv`, `data/external/*`, Optuna databases,
+`__pycache__`.
 
-**Charts:** `artifacts/` is what evaluate writes at runtime. `results/plots/` is the committed pack. Refresh with `make docs-results`.
-
-More: [GETTING_STARTED.md](GETTING_STARTED.md) · [ARCHITECTURE.md](ARCHITECTURE.md) · [../results/README.md](../results/README.md)
+Not used here: Airflow, DVC, MLflow, production auth.

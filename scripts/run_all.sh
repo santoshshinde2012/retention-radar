@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# End-to-end Retention Radar pipeline.
+# End-to-end Retention Radar pipeline (T-7 renewal scoring for a monthly AI coding assistant plan).
 # Default: synthetic generator (CI-safe).
 # Lakehouse: CHURN_DATA_SOURCE=lakehouse|auto with data/external exports present.
 set -euo pipefail
@@ -50,16 +50,20 @@ python -m retention_radar.cli.explain
 echo "==> benchmark"
 python -m retention_radar.cli.benchmark
 
-echo "==> infer santosh"
-python -m retention_radar.cli.infer --user santosh
+echo "==> analysis (bootstrap, calibrators, deciles, holdout sizes)"
+python -m retention_radar.cli.analysis > /dev/null
+
+echo "==> infer maya (worked example)"
+python -m retention_radar.cli.infer --user maya
 
 echo "==> drift_check (non-fatal)"
 python -m retention_radar.cli.drift_check || echo "drift_check skipped/failed (non-fatal)"
 
-echo "==> single_record santosh decision packet"
+echo "==> decision packets for the worked examples"
 # No --out: default resolves to config.ARTIFACTS_DIR, so RETENTION_RADAR_ARTIFACT_DIR
-# (lakehouse E2E) keeps its packet under artifacts/lakehouse_run/ instead of
-# overwriting the synthetic artifacts/santosh_decision_packet.json.
-python -m retention_radar.cli.single_record --user santosh
+# (lakehouse E2E) keeps its packets under artifacts/lakehouse_run/ instead of
+# overwriting the synthetic artifacts/*_decision_packet.json.
+python -m retention_radar.cli.single_record --user maya
+python -m retention_radar.cli.single_record --user arjun
 
-echo "==> done (Santosh decision packet written)"
+echo "==> done (decision packets written)"

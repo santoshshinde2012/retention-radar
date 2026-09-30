@@ -1,8 +1,8 @@
 """Score a user JSON with the trained churn model.
 
 Examples:
-    python -m retention_radar.cli.infer --user santosh
-    python -m retention_radar.cli.infer --json data/raw/santosh_shinde.json
+    python -m retention_radar.cli.infer --user maya
+    python -m retention_radar.cli.infer --json data/raw/subscribers/arjun.json
 """
 
 from __future__ import annotations
@@ -14,7 +14,7 @@ from pathlib import Path
 import joblib
 
 from retention_radar import config
-from retention_radar.data.ingest import resolve_santosh_json
+from retention_radar.data.ingest import resolve_hero_json
 from retention_radar.features.transform import row_to_feature_frame
 from retention_radar.serving.explain import top_contributing_features
 from retention_radar.serving.policy import risk_band
@@ -32,12 +32,12 @@ load_payload = load_model_bundle
 
 
 def resolve_user_json(user: str | None, json_path: str | None) -> Path:
-    """Resolve ``--user santosh`` or ``--json path`` to a payload file."""
+    """Resolve ``--user maya|arjun`` or ``--json path`` to a payload file."""
     if json_path:
         return Path(json_path)
-    if user and user.lower() in {"santosh", "santosh_shinde", "santosh-shinde"}:
-        return resolve_santosh_json()
-    raise SystemExit("Provide --user santosh or --json path/to/user.json")
+    if user and user.lower() in config.HEROES:
+        return resolve_hero_json(user.lower())
+    raise SystemExit(f"Provide --user {{{'|'.join(config.HEROES)}}} or --json path/to/record.json")
 
 
 def predict_user(
@@ -73,8 +73,10 @@ def predict_user(
 
 
 def main(argv: list[str] | None = None) -> None:
-    parser = argparse.ArgumentParser(description="Infer churn probability for a user")
-    parser.add_argument("--user", type=str, default=None, help="Shortcut: santosh")
+    parser = argparse.ArgumentParser(description="Score one subscriber at T-7")
+    parser.add_argument(
+        "--user", type=str, default=None, help=f"Worked example: {', '.join(config.HEROES)}"
+    )
     parser.add_argument("--json", type=str, default=None, help="Path to user JSON")
     parser.add_argument(
         "--model", type=str, default=None, help="Path to joblib model"

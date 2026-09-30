@@ -1,75 +1,67 @@
-# Best practices checklist (FOSS Retention Radar)
-
-Short checklist for contributors and readers adapting this teaching repo.
+# Checklist for changes
 
 ## Reproducibility
 
-- [ ] Keep `RANDOM_SEED = 42` (or document any change).
-- [ ] Prefer `./scripts/run_all.sh` so generate → train → evaluate → packet stay in lockstep.
-- [ ] Cite **`models/metrics.json`** over prose numbers after regenerating.
-- [ ] CI uses smaller `N_USERS` / `N_OPTUNA_TRIALS`; local defaults are larger — both are OK if documented.
-- [ ] `pytest -q` with `CHURN_DATA_SOURCE=synthetic` so a local lakehouse export cannot hijack CI-shaped tests.
+- [ ] Keep `RANDOM_SEED = 42`, or say why it changed.
+- [ ] Use `./scripts/run_all.sh` so generate, train, evaluate and packets stay in step.
+- [ ] Cite `models/metrics.json`, not numbers copied from prose.
+- [ ] Run `make reproduce` after anything that could change the model.
+- [ ] Run tests with `CHURN_DATA_SOURCE=synthetic` so a local lakehouse export cannot change them.
 
-## Dual-world data (synthetic vs lakehouse)
+## The label
 
-- [ ] **Published article / model-card ladder** is the **synthetic** seed-42 run. Do not overwrite committed `models/` with a lakehouse retrain.
-- [ ] Feature SoR is [local-data-lakehouse](https://github.com/santoshshinde2012/local-data-lakehouse): `make churn-gold-local` (no Docker) or `make churn-e2e` (Spark). Sync with `./scripts/sync_lakehouse_exports.sh`.
-- [ ] `CHURN_DATA_SOURCE=auto|synthetic|lakehouse`. `./scripts/run_lakehouse_e2e.sh` writes under `artifacts/lakehouse_run/` via `RETENTION_RADAR_ARTIFACT_DIR` — committed `models/` / MODEL_CARD stay the published synthetic ladder.
-- [ ] Lakehouse Santosh is event-aggregated as-of **2024-03-02**. Scores differ from seed-42 Santosh **by design**. Do not mix the two in one caption.
+- [ ] `churned` means a voluntary lapse at this renewal.
+- [ ] Failed cards go to dunning and stay out of the model table.
+- [ ] Cancels scheduled before T-7 go to the cancel flow and stay out of the model table.
+- [ ] Every feature must exist in the live record at T-7. Nothing known only after the renewal.
 
-## Leakage & evaluation honesty
+## Evaluation
 
-- [ ] Features available at **score time only** (no post-churn or label-derived columns).
-- [ ] Optuna / threshold search on **validation**; touch **test** once.
-- [ ] Report Dummy + LogReg + RF + default XGB + Optuna XGB + LightGBM + CatBoost (honest ladder), not XGB alone.
-- [ ] If AUC ≈ 1.0 on synthetic data, **stop and debug** before celebrating.
-- [ ] Unknown `plan_tier` **raises**. Silent zeros are train/serve skew.
+- [ ] Optuna, the calibrator and τ use validation only. Test is read once.
+- [ ] Report the whole ladder, including Dummy and logistic regression.
+- [ ] An AUC near 1.0 on this data means a leak. Find it before going further.
+- [ ] Unknown `plan_tier` (including `teams`) is held, never silently encoded.
 
-## Calibration & thresholds
+## Calibration and threshold
 
-- [ ] Treat raw `predict_proba` as ranking unless calibrated.
-- [ ] Serve risk bands from **calibrated** `p` when the calibrator is enabled.
-- [ ] Remember best-F1 τ often ≠ 0.5; document the dial you use.
+- [ ] Raw `predict_proba` is inflated by `scale_pos_weight`. Bands and the policy use the calibrated value.
+- [ ] If you change the calibrator, check that no subscriber gets exactly 0.000 and that the queue does not tie.
+- [ ] τ is the best-F1 threshold on validation. Say so wherever it is used.
 
-## Human-in-the-loop (HITL)
+## Policy
 
-- [ ] Decision packet `auto_action` stays **`none`** (`src/retention_radar/serving/policy.py`).
-- [ ] UI copy never claims auto-cancel or destiny ("will churn").
-- [ ] Explanations (SHAP) are **associative drivers**, not causal proof.
+- [ ] `auto_action` stays `none` in `serving/policy.py`. The service suggests; a lifecycle tool sends.
+- [ ] Playbook effects in `config.PLAYBOOKS` are assumptions. Do not present expected values or simulated lift as results.
+- [ ] Keep the holdout. Without it, no playbook can be measured.
+- [ ] Only `personal_email` has a person in it, and only for Ultra.
+- [ ] SHAP drivers describe the model, not the subscriber's reasons, and not what an action would change.
 
 ## Drift
 
-- [ ] `python -m retention_radar.cli.drift_check` compares the **active** users table (`resolve_users_csv`) to `models/feature_stats.json`.
-- [ ] Teaching default exits 0. Gate a pipeline / CI with `--strict`.
-- [ ] Do not compare lakehouse gold to leftover synthetic `data/raw/users.csv`.
+- [ ] `python -m retention_radar.cli.drift_check` compares the active table with `models/feature_stats.json`. Use `--strict` to fail a pipeline.
+- [ ] Do not compare a lakehouse export with a leftover synthetic `data/raw/renewals_t7.csv`.
 
-## Synthetic data disclaimer
+## Synthetic data
 
-- [ ] README, model card, and Streamlit mention **synthetic / no real PII**.
-- [ ] Do not claim production ROI or protected-class fairness audits from this repo.
-- [ ] Slice metrics by `plan_tier` are educational segments only.
+- [ ] README, model card and UI say the data is synthetic with no real PII.
+- [ ] No ROI or fairness claims. Slices by `plan_tier` are for inspection only.
 
-## Train ≠ serve
+## Train and serve
 
-- [ ] Serve path loads joblib + feature names; does not fit encoders or call Optuna.
-- [ ] Shared contract: 22 features, bands/thresholds, model version metadata.
-- [ ] Never retrain inside Streamlit on page load.
-- [ ] Optional thin FastAPI (`serving/api.py`) is teaching-only — **no auth**; `auto_action` stays `none`.
-- [ ] Batch scores + HITL review log cover predict→act; `cli.hitl_outcomes` closes the loop by joining reviews to later labels (descriptive — not an uplift estimate).
+- [ ] Serving loads the bundle; it never fits an encoder or runs Optuna.
+- [ ] Never train inside Streamlit.
+- [ ] The FastAPI app has no auth. Keep it on localhost.
 
-## Articles (authored elsewhere)
+## Lakehouse
 
-Articles for Medium / Data Engineer Things live in a separate **internal** workspace.
-This repo stays the public code / benchmarks / results home — do not add article drafts here.
-Seed-42 numbers in public docs must match `models/metrics.json`. Do not invent metrics.
+- [ ] The published numbers are the synthetic run. A lakehouse run writes under `artifacts/lakehouse_run/`; do not copy it into `models/`.
+- [ ] The lakehouse export must match the v2 contract (24 fields + `churned`, `hero_inference_record.json`).
 
-## CI & docs
+## Docs and CI
 
-- [ ] `pytest -q` green before PR (synthetic pipeline tests under `tests/`).
-- [ ] After metric-changing PRs, refresh guides via `python -m retention_radar.cli.docs_gen` — but not after a lakehouse smoke if you still publish the synthetic ladder.
-- [ ] Keep engineering docs under `docs/` (`ARCHITECTURE.md`, `MODEL_CARD.md`); analysis under `results/`.
-- [ ] Free E2E path stays documented in [e2e-free-platforms.md](e2e-free-platforms.md).
+- [ ] `pytest -q` passes before a PR.
+- [ ] After a change to metrics, run `python -m retention_radar.cli.docs_gen` and update `results/`. Not after a lakehouse run.
+- [ ] Engineering docs go under `docs/`, analysis under `results/`.
 
-## Related
-
-- [FOLDER_STRUCTURE.md](../FOLDER_STRUCTURE.md) · [ARCHITECTURE.md](../ARCHITECTURE.md) · [CONTRIBUTING.md](../../CONTRIBUTING.md) · [data-foundation-lakehouse.md](../data/data-foundation-lakehouse.md) · [../results/BENCHMARKS.md](../../results/BENCHMARKS.md)
+Related: [ARCHITECTURE.md](../ARCHITECTURE.md) · [CONTRIBUTING.md](../../CONTRIBUTING.md) ·
+[data-foundation-lakehouse.md](../data/data-foundation-lakehouse.md)
