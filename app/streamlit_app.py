@@ -430,7 +430,7 @@ def tab_benchmarks(metrics: dict):
         ("pr_curve.png", "Precision–Recall"),
         ("calibration_curve.png", "Reliability diagram"),
         ("threshold_f1.png", "Threshold vs F1 / precision / recall"),
-        ("confusion_matrix.png", "Confusion matrix @ 0.5"),
+        ("confusion_matrix.png", "Confusion matrix at τ"),
     ]:
         path = ARTIFACTS_DIR / fname
         if path.exists():

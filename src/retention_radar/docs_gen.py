@@ -308,7 +308,11 @@ def write_model_card(metrics: dict | None = None, path: Path | None = None) -> P
         f"| Best F1 threshold τ (chosen on validation) | `{_fmt_scalar(metrics.get('best_f1_threshold'), 2)}` |",
         f"| F1 at τ (validation) | `{_fmt_scalar(metrics.get('val_f1_at_threshold'))}` |",
         f"| F1 at τ (test, reported once) | `{_fmt_scalar(metrics.get('best_f1_at_threshold'))}` |",
-        f"| F1 @ 0.5 | `{_fmt(metrics.get('calibrated_test'), 'f1')}` |",
+        f"| Precision / recall at τ (test) | `{_fmt((metrics.get('test_at_tau') or {}), 'precision')}` / "
+        f"`{_fmt((metrics.get('test_at_tau') or {}), 'recall')}` |",
+        f"| Flagged at τ (test) | `{(metrics.get('test_at_tau') or {}).get('flagged', 'n/a')}` of "
+        f"`{(metrics.get('test_at_tau') or {}).get('n_test', 'n/a')}` |",
+        f"| F1 @ 0.5 (ladder comparison only) | `{_fmt(metrics.get('calibrated_test'), 'f1')}` |",
     ]
     lat = metrics.get("latency") or {}
     if lat.get("latency_ms_p50") is not None:
@@ -343,7 +347,7 @@ def write_model_card(metrics: dict | None = None, path: Path | None = None) -> P
         "| `artifacts/roc_curve.png` | ROC |",
         "| `artifacts/pr_curve.png` | Precision–Recall |",
         "| `artifacts/calibration_curve.png` | Reliability diagram |",
-        "| `artifacts/confusion_matrix.png` | Confusion @ 0.5 |",
+        "| `artifacts/confusion_matrix.png` | Confusion at τ (calibrated, test) |",
         "| `artifacts/threshold_f1.png` | Threshold vs F1 / precision / recall |",
         "| `results/plots/*.png` | Committed copies of the same plots |",
         "",
