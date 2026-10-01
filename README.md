@@ -132,6 +132,21 @@ uvicorn retention_radar.serving.api:app --app-dir src   # POST /v1/churn/score
 
 ---
 
+## Architecture
+
+Train writes one versioned bundle to `models/` (model, calibrator, feature list, feature stats with PSI bins, metrics with τ); every serving surface (CLI, batch, FastAPI, Streamlit) only loads it. Flow: generate or ingest → 22-feature contract → XGBoost + Optuna → isotonic calibration and τ on validation → test read once → decision packet (raw and calibrated score, band, SHAP drivers, suggested action) → human review log. Details: [docs/architecture.md](docs/architecture.md).
+
+## Results (seed 42, test split)
+
+| Metric | Value |
+|--------|-------|
+| Test AUC ladder | LogReg / CatBoost 0.872 · Optuna XGB 0.870 · RF 0.868 · LightGBM 0.865 · calibrated XGB 0.866 · dummy 0.500 |
+| Brier, raw → calibrated | 0.138 → 0.106 |
+| At τ = 0.34 | precision 0.577 · recall 0.628 · F1 0.602 · 208 of 1,000 flagged |
+| Warm single-record latency | p50 ≈ 2 ms (machine-dependent) |
+
+Source of truth: [`models/metrics.json`](models/metrics.json). Tables and notes: [results/benchmarks.md](results/benchmarks.md) · [docs/model-card.md](docs/model-card.md).
+
 ## Data paths
 
 | Path | How | Notes |

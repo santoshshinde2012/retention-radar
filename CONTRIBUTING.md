@@ -67,3 +67,16 @@ git checkout -- results/lakehouse_e2e_summary.json   # unless you mean to publis
 
 MIT © Santosh Shinde — see [LICENSE](LICENSE).
 
+## Lint and pre-commit
+
+```bash
+ruff check src/ tests/ app/
+pip install pre-commit && pre-commit install   # optional: runs ruff + JSON/YAML checks on commit
+```
+
+## Naming conventions
+
+- Python modules and packages: `snake_case.py`.
+- Docs: lowercase kebab-case (`docs/model-card.md`, `docs/guides/start-here.md`). Only the conventional root files are upper case (`README.md`, `CHANGELOG.md`, `CONTRIBUTING.md`, `LICENSE`).
+- Data and machine-readable outputs: `snake_case` (`models/feature_stats.json`, `results/example_decision_packet.json`).
+- Generic file names describe the role, not a person or a date (`example_account.json`, not a person's name). Record changes in `CHANGELOG.md`, not in dated files.

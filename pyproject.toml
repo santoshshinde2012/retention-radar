@@ -10,6 +10,21 @@ readme = "README.md"
 requires-python = ">=3.12"
 license = { text = "MIT" }
 authors = [{ name = "Santosh Shinde" }]
+keywords = ["churn", "xgboost", "calibration", "shap", "human-in-the-loop"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Repository = "https://github.com/santoshshinde2012/retention-radar"
+Changelog = "https://github.com/santoshshinde2012/retention-radar/blob/main/CHANGELOG.md"
+
+[project.optional-dependencies]
+# Runtime dependencies are pinned in requirements.txt (see README "Requirements").
+dev = ["pytest>=7.4", "ruff>=0.6", "pre-commit>=3"]
 
 [project.scripts]
 rr-train = "retention_radar.cli.train:main"
