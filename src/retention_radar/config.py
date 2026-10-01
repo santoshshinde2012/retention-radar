@@ -26,7 +26,6 @@ PROCESSED_DIR = DATA_DIR / "processed"  # CDS parity (features usually in-memory
 SEED_MODELS_DIR = PROJECT_ROOT / "models"
 DOCS_DIR = PROJECT_ROOT / "docs"
 RESEARCH_DIR = DOCS_DIR  # compat alias (teaching docs live under docs/)
-ARTICLES_DIR = PROJECT_ROOT / "articles"  # unused in this teaching repo
 SCHEMAS_DIR = PROJECT_ROOT / "configs" / "schemas"
 RESULTS_DIR = PROJECT_ROOT / "results"
 RESULTS_PLOTS_DIR = RESULTS_DIR / "plots"

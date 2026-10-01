@@ -26,7 +26,7 @@ This study ships an **honest bake-off ladder** on a synthetic AI-platform churn 
 | Family | Examples | Why deferred for *this* teaching arc |
 |--------|----------|--------------------------------------|
 | Tabular foundation / ICL | TabPFN, TabPFN-v2/v3, TabICL | Strong on **small** tables on TabArena-class boards; licensing / GPU / serve story does not fit beginner **CPU FOSS HITL packet** path |
-| Heavy tabular DL | RealMLP, FT-Transformer, TabM | Heavy deps and training story; not the DET / tree-ladder lesson |
+| Heavy tabular DL | RealMLP, FT-Transformer, TabM | Heavy deps and training story; outside the tree-ladder scope |
 | Survival | Cox PH, Random Survival Forest | Needs **time-to-event** label redesign; we keep a **binary snapshot** label |
 | Causal / uplift | Meta-learners, T-/S-/X-learners | Different question (treatment effect), not P(churn) ranking |
 | Soft-voting mega-ensemble | Average of all ladder models | Muddles ladder honesty; hides which inductive bias won |

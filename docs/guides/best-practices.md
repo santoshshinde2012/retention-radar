@@ -12,7 +12,7 @@ Short checklist for contributors and readers adapting this teaching repo.
 
 ## Dual-world data (synthetic vs lakehouse)
 
-- [ ] **Published article / model-card ladder** is the **synthetic** seed-42 run. Do not overwrite committed `models/` with a lakehouse retrain.
+- [ ] **Published model-card ladder** is the **synthetic** seed-42 run. Do not overwrite committed `models/` with a lakehouse retrain.
 - [ ] Feature SoR is [local-data-lakehouse](https://github.com/santoshshinde2012/local-data-lakehouse): `make churn-gold-local` (no Docker) or `make churn-e2e` (Spark). Sync with `./scripts/sync_lakehouse_exports.sh`.
 - [ ] `CHURN_DATA_SOURCE=auto|synthetic|lakehouse`. `./scripts/run_lakehouse_e2e.sh` writes under `artifacts/lakehouse_run/` via `RETENTION_RADAR_ARTIFACT_DIR` — committed `models/` / MODEL_CARD stay the published synthetic ladder.
 - [ ] Lakehouse Santosh is event-aggregated as-of **2024-03-02**. Scores differ from seed-42 Santosh **by design**. Do not mix the two in one caption.
@@ -57,11 +57,9 @@ Short checklist for contributors and readers adapting this teaching repo.
 - [ ] Optional thin FastAPI (`serving/api.py`) is teaching-only — **no auth**; `auto_action` stays `none`.
 - [ ] Batch scores + HITL review log cover predict→act; `cli.hitl_outcomes` closes the loop by joining reviews to later labels (descriptive — not an uplift estimate).
 
-## Articles (authored elsewhere)
+## Numbers in docs
 
-Articles for Medium / Data Engineer Things live in a separate **internal** workspace.
-This repo stays the public code / benchmarks / results home — do not add article drafts here.
-Seed-42 numbers in public docs must match `models/metrics.json`. Do not invent metrics.
+Seed-42 numbers in docs must match `models/metrics.json`. Do not invent metrics.
 
 ## CI & docs
 

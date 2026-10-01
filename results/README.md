@@ -2,7 +2,7 @@
 
 This folder is the **analysis home** for Retention Radar (seed **42** synthetic reference run).
 
-> **Naming note:** In cookiecutter-data-science and many production templates this role is called `reports/` (with figures under `reports/figures/`). We keep the name **`results/`** (and `results/plots/`) so public article dig-deeper URLs to `results/benchmarks.md` stay stable.
+> **Naming note:** In cookiecutter-data-science and many production templates this role is called `reports/` (with figures under `reports/figures/`). We keep the name **`results/`** (and `results/plots/`) so existing links into `results/` stay stable.
 
 | Path | Role |
 |------|------|
@@ -16,5 +16,4 @@ This folder is the **analysis home** for Retention Radar (seed **42** synthetic 
 **Runtime dumps** (gitignored): `artifacts/` after `./scripts/run_all.sh`.  
 Refresh committed plots: `make docs-results` (copies from `artifacts/` → `results/plots/`).
 
-**Articles** (Medium series): authored separately (**internal**); this repo is the public code / results home.  
 **Data foundation / SoR:** [local-data-lakehouse](https://github.com/santoshshinde2012/local-data-lakehouse)

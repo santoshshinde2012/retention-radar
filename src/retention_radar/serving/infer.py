@@ -27,7 +27,7 @@ def load_model_bundle(path: Path) -> dict:
     return joblib.load(path)
 
 
-# Back-compat alias: older notebooks / articles import ``load_payload``.
+# Back-compat alias: older notebooks and scripts import ``load_payload``.
 load_payload = load_model_bundle
 
 

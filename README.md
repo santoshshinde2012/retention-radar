@@ -14,14 +14,14 @@ It ranks quiet fade-out risk and returns a checklist for a human. It does **not*
 
 ## Start here
 
-Teaching trilogy hub (public FOSS only):
+Two public repos, one command:
 
 1. Clone **[retention-radar](https://github.com/santoshshinde2012/retention-radar)** + **[local-data-lakehouse](https://github.com/santoshshinde2012/local-data-lakehouse)**
 2. One synthetic command: `CHURN_DATA_SOURCE=synthetic ./scripts/run_all.sh`
 3. Optional lakehouse: `./scripts/run_lakehouse_e2e.sh ../local-data-lakehouse` (trains under `artifacts/lakehouse_run/` — committed `models/` untouched; refreshes `results/lakehouse_e2e_summary.json`)
 4. **Live demo:** TBD — Streamlit Community Cloud / HF Space ([deploy later](docs/guides/deploy-later.md))
 
-Full map: [docs/guides/start-here.md](docs/guides/start-here.md). Do **not** clone any private article workspace.
+Full map: [docs/guides/start-here.md](docs/guides/start-here.md).
 
 ## What this is
 
@@ -30,7 +30,7 @@ Full map: [docs/guides/start-here.md](docs/guides/start-here.md). Do **not** clo
 | FOSS teaching path: train → evaluate → serve | Production CRM or billing |
 | Synthetic users (seed **42**), no real PII | ROI or fairness claims |
 | HITL only (`auto_action: none`) | Auto account cancellation |
-| Public **code + benchmarks + results** | Medium article home (internal) |
+| Public **code + benchmarks + results** | Narrative write-ups |
 
 **One-record example (seed 42):** raw **0.043** → calibrated **0.016** → band **low** → HITL **monitor**.
 
@@ -44,7 +44,6 @@ Full map: [docs/guides/start-here.md](docs/guides/start-here.md). Do **not** clo
 |------|------|
 | **This repo** | Public code, benchmarks, and results |
 | [local-data-lakehouse](https://github.com/santoshshinde2012/local-data-lakehouse) | Data foundation (SILO · N=5000 gold) |
-| Articles | Written in a separate **internal** workspace (not a public clone target) |
 | [medallion-write-back-loop](https://github.com/santoshshinde2012/medallion-write-back-loop) | See also — teaching write-back loop (not wired here) |
 | [churn-vs-risk-poc](https://github.com/santoshshinde2012/churn-vs-risk-poc) | See also — churn vs risk POC (not wired here) |
 
@@ -175,7 +174,7 @@ Full map: [docs/folder-structure.md](docs/folder-structure.md)
 | [results/benchmarks.md](results/benchmarks.md) | Ladder, calibration, latency |
 | [results/example-account-analysis.md](results/example-account-analysis.md) | Single-record outcome |
 | [docs/model-card.md](docs/model-card.md) | Intended use + metrics |
-| [docs/guides/start-here.md](docs/guides/start-here.md) | Trilogy hub: clone two repos → one command |
+| [docs/guides/start-here.md](docs/guides/start-here.md) | Clone two repos → one command |
 | [docs/getting-started.md](docs/getting-started.md) | Short walkthrough |
 | [docs/architecture.md](docs/architecture.md) | Train ≠ serve design |
 | [docs/guides/algorithm-landscape.md](docs/guides/algorithm-landscape.md) | What we use vs defer |

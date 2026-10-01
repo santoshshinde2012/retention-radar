@@ -1,4 +1,4 @@
-"""Lock published seed-42 Santosh scores + ladder AUCs (teaching Medium contract).
+"""Lock published seed-42 Santosh scores + ladder AUCs (published seed-42 reference run).
 
 Reads committed (or CI-snapshotted) serve artifacts — never the smoke-retrain
 outputs. Set ``RETENTION_RADAR_CANARY_DIR`` to a directory containing the

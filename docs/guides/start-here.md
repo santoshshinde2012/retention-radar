@@ -1,6 +1,6 @@
-# Start here — Retention Radar teaching trilogy
+# Start here: Retention Radar
 
-Public FOSS path for the Medium / DET series. **Clone two public repos, run one synthetic command.** Do **not** clone any private article workspace.
+**Clone two public repos, run one synthetic command.**
 
 ## 1. Clone
 
@@ -22,7 +22,7 @@ Expect Santosh: raw ≈ **0.043** → calibrated ≈ **0.016** → band **low** 
 
 Cite [`models/metrics.json`](../../models/metrics.json) · [results/benchmarks.md](../../results/benchmarks.md).
 
-Verify the whole trilogy locally in one command (reproduce + tests + CLI/API/UI + lakehouse, committed files untouched):
+Verify the whole project locally in one command (reproduce + tests + CLI/API/UI + lakehouse, committed files untouched):
 
 ```bash
 make e2e-local   # picks up ../local-data-lakehouse automatically
@@ -83,10 +83,6 @@ make ui   # streamlit run app/streamlit_app.py — loads committed models only (
 
 **Live demo:** TBD — Streamlit Community Cloud / HF Space  
 (Exact deploy steps when ready: [deploy-later.md](deploy-later.md); full free-platform map: [e2e-free-platforms.md](e2e-free-platforms.md))
-
-## 5. Articles
-
-Narrative articles live in a **separate internal** workspace. This public repo is code + benchmarks + results only — never a private clone instruction for readers.
 
 ## See also (related teaching repos)
 

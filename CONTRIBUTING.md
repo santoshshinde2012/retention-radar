@@ -3,7 +3,7 @@
 Thanks for improving **Retention Radar**, a FOSS AI-platform churn teaching repo.  
 Repo: [https://github.com/santoshshinde2012/retention-radar](https://github.com/santoshshinde2012/retention-radar)
 
-Prefer focused PRs: code + benchmarks + results analysis. Articles are authored separately (internal); this repo is the public code home.
+Prefer focused PRs: code + benchmarks + results analysis.
 
 ## Setup
 
@@ -66,3 +66,4 @@ git checkout -- results/lakehouse_e2e_summary.json   # unless you mean to publis
 ## License
 
 MIT © Santosh Shinde — see [LICENSE](LICENSE).
+

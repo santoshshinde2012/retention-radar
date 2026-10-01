@@ -47,7 +47,6 @@ Synthetic remains the CI / offline fallback so `pytest` does not need **SILO** (
 
 - [data-dictionary.md](data-dictionary.md)
 - [e2e-free-platforms.md](../guides/e2e-free-platforms.md)
-- Articles: parts 01–08 Dig deeper / next-steps point here; part 02 is the SoR deep dive
 
 
 ## One-command E2E (best path)
@@ -78,9 +77,9 @@ One-command path used: `./scripts/run_lakehouse_e2e.sh /path/to/local-data-lakeh
 
 ### Dual-world honesty
 
-| Track | Purpose | Published article ladder? |
+| Track | Purpose | Published ladder? |
 |-------|---------|---------------------------|
-| **Synthetic** (`CHURN_DATA_SOURCE=synthetic`, seed 42) | Reproducible Medium / model-card numbers (LogReg ~0.872 … Optuna XGB ~0.870) | **Yes** — keep `models/*` committed from this path |
+| **Synthetic** (`CHURN_DATA_SOURCE=synthetic`, seed 42) | Reproducible model-card numbers (LogReg ~0.872 … Optuna XGB ~0.870) | **Yes** — keep `models/*` committed from this path |
 | **Lakehouse** (`CHURN_DATA_SOURCE=lakehouse` or `auto` with exports present) | Real SoR path: bronze→silver→gold→Radar | **No** — retrain locally; do **not** overwrite committed `models/metrics.json` when publishing articles |
 
 CI pins `CHURN_DATA_SOURCE=synthetic` so PRs stay deterministic.

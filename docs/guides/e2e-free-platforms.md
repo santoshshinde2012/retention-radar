@@ -212,7 +212,7 @@ When [`local-data-lakehouse`](https://github.com/santoshshinde2012/local-data-la
 
 That runs sample → gold CSV/JSON → sync into `data/external/` → train/eval/infer with `CHURN_DATA_SOURCE=lakehouse`.
 
-- **CI / Medium numbers** stay on synthetic seed 42 (`CHURN_DATA_SOURCE=synthetic` in GitHub Actions).
+- **CI and published numbers** stay on synthetic seed 42 (`CHURN_DATA_SOURCE=synthetic` in GitHub Actions).
 - Lakehouse retrain sets `RETENTION_RADAR_ARTIFACT_DIR=artifacts/lakehouse_run` so committed `models/` and `docs/model-card.md` stay untouched. The committed lakehouse source of truth is [the E2E summary](../../results/lakehouse_e2e_summary.json).
 - Contract + dual-world notes: [data-foundation-lakehouse.md](../data/data-foundation-lakehouse.md).
 
@@ -250,4 +250,4 @@ Notes: data is **synthetic**. Do not treat Santosh’s probability as real risk.
 | `python -m retention_radar.cli.drift_check` | `src/retention_radar/serving/drift.py` |
 | Streamlit | `app/streamlit_app.py` → serving packet + policy |
 
-Thin `src/retention_radar/cli/` entrypoints keep articles and CI stable. Full map: [folder-structure.md](../folder-structure.md).
+Thin `src/retention_radar/cli/` entrypoints keep docs and CI stable. Full map: [folder-structure.md](../folder-structure.md).

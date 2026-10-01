@@ -129,7 +129,7 @@ Notes:
 | E4 | PYTHONPATH=src / venv documented | ✅ |
 | E5 | Feature contract file (`feature_names.json`) | ✅ |
 | E6 | Schema file under `configs/schemas/` | ✅ |
-| E7 | Research spine + article links | ✅ |
+| E7 | Research spine + docs links | ✅ |
 | E8 | MIT license | ✅ |
 | E9 | CI on GitHub Actions | ✅ |
 | E10 | Model registry / versioned deploys | ⬜ |
