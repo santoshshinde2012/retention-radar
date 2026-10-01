@@ -58,7 +58,7 @@ def test_seed42_santosh_scores(canary_paths):
     assert abs(raw - 0.043) <= TOL_PROB, f"raw={raw}"
     assert abs(cal_f - 0.016) <= TOL_PROB, f"cal={cal_f}"
 
-    band = risk_band(cal_f)
+    band = risk_band(cal_f, 0.34)
     assert band == "low", band
     hitl = hitl_action(cal_f, threshold=0.34, band=band)
     assert hitl["auto_action"] == "none"

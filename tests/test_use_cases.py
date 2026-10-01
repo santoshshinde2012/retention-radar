@@ -53,7 +53,13 @@ def test_pack_covers_every_band_and_action(manifest):
         "retention outreach (human review)",
         "escalate",
     }
-    assert ("low", "nurture / check-in") in got and ("medium", "nurture / check-in") in got
+    # Bands are τ-aligned: each band implies one action (high splits outreach / escalate).
+    allowed = {
+        "low": {"monitor"},
+        "medium": {"nurture / check-in"},
+        "high": {"retention outreach (human review)", "escalate"},
+    }
+    assert all(a in allowed[b] for b, a in got), got
     for p in manifest["personas"]:
         assert "churned" not in p["record"]
         assert set(p["record"]) == set(config.INFERENCE_REQUIRED_KEYS)
