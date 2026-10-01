@@ -61,9 +61,9 @@ Method: `isotonic`.
 | Precision / recall at τ (test) | `0.5769` / `0.6283` |
 | Flagged at τ (test) | `208` of `1000` |
 | F1 @ 0.5 (ladder comparison only) | `0.6006` |
+| Warm latency p50 / p95 (ms) | `2.01` / `2.15` |
 
 Validation reuse: The 1,000-row validation split is used three times: Optuna model selection, isotonic calibration and the τ sweep (XGBoost's eval_set only logs; there is no early stopping). Validation metrics (val AUC, val F1 at τ) are therefore optimistic; only test metrics are reported as out-of-sample.
-| Warm latency p50 / p95 (ms) | `2.01` / `2.15` |
 
 ## Result plots
 

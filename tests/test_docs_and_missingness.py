@@ -107,3 +107,20 @@ def test_valid_santosh_row_has_no_nans():
     X = row_to_feature_frame(profile)
     assert not X.isna().any().any()
     assert len(X) == 1
+
+
+
+def test_markdown_tables_are_not_split_by_paragraphs():
+    """A table row right after a paragraph line renders as plain text on GitHub."""
+    from retention_radar import config as cfg
+
+    root = cfg.PROJECT_ROOT
+    paths = [root / "README.md", *sorted((root / "docs").rglob("*.md")), *sorted((root / "results").glob("*.md"))]
+    for path in paths:
+        fenced = False
+        lines = path.read_text(encoding="utf-8").splitlines()
+        for prev, line in zip(lines, lines[1:]):
+            if prev.startswith("```"):
+                fenced = not fenced
+            if not fenced and line.startswith("|") and prev.strip() and not prev.startswith("|"):
+                raise AssertionError(f"{path.name}: table row follows a paragraph: {prev[:60]!r}")

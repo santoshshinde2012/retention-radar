@@ -7,6 +7,7 @@
 ```bash
 git clone https://github.com/santoshshinde2012/retention-radar.git
 git clone https://github.com/santoshshinde2012/local-data-lakehouse.git
+git -C local-data-lakehouse checkout e0850bf   # export contract this repo reads (see CI)
 cd retention-radar
 python3.12 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt && pip install -e .

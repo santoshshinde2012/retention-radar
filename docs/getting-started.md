@@ -91,9 +91,9 @@ More: [folder-structure.md](folder-structure.md) · [architecture.md](architectu
 | Borderline: friction just under τ (reviewer overrides to outreach) | medium | nurture / check-in |
 | Payment failures plus support load | high | retention outreach (human review) |
 | Gone dark · Enterprise renewal at risk | high | escalate |
+| 4 invalid records (unknown plan, missing NPS, rate > 1, text in a number) | — | **hold: fix input data** (never scored or queued) |
 
 Bands share the τ-derived edges with the actions (low < τ/2 ≤ medium < τ ≤ high; escalate at p ≥ 0.60), so each band implies one action.
-| 4 invalid records (unknown plan, missing NPS, rate > 1, text in a number) | — | **hold: fix input data** (never scored or queued) |
 
 ```bash
 make use-cases   # weekly batch → ranked queue + rejects → packets → held records → reviews → day-30 outcomes
