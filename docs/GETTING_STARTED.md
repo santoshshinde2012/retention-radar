@@ -88,10 +88,12 @@ More: [FOLDER_STRUCTURE.md](FOLDER_STRUCTURE.md) · [ARCHITECTURE.md](ARCHITECTU
 | Scenario | Band | Suggested action |
 |----------|------|------------------|
 | Steady power user (Santosh) · Usage dip, still healthy | low | monitor |
-| New free trial hitting friction | low | nurture / check-in |
+| New free trial hitting friction | medium | nurture / check-in |
 | Borderline: friction just under τ (reviewer overrides to outreach) | medium | nurture / check-in |
-| Payment failures plus support load | medium | retention outreach (human review) |
+| Payment failures plus support load | high | retention outreach (human review) |
 | Gone dark · Enterprise renewal at risk | high | escalate |
+
+Bands share the τ-derived edges with the actions (low < τ/2 ≤ medium < τ ≤ high; escalate at p ≥ 0.60), so each band implies one action.
 | 4 invalid records (unknown plan, missing NPS, rate > 1, text in a number) | — | **hold: fix input data** (never scored or queued) |
 
 ```bash

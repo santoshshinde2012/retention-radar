@@ -142,7 +142,7 @@ retention-radar/
 | `models/feature_stats.json` | Outlier flags, drift reference, cohort-percentile fallback |
 | `models/metrics.json` | MODEL_CARD.md tables |
 | `artifacts/santosh_decision_packet.json` | Case study + CI canary |
-| Risk thresholds / bands | `infer.risk_band`, UI chips |
+| Risk thresholds / bands | `policy.risk_band(p, τ)` (τ-aligned edges), UI chips |
 | `MODEL_CARD.md` | Humans; fill metrics after `run_all` |
 
 ## Runtime views
@@ -190,7 +190,7 @@ The layout is a **teaching** SOLID sketch, not a claim that every file is a text
 | `serving/hitl_log.py` | Append HITL review CSV | New log fields via schema | — | Log ≠ outcome write-back | CLI appends only |
 | `serving/outcomes.py` | Join review log → later labels; per-band / per-action report | New summary cuts without touching the log | — | Report ≠ retrain trigger | CLI reads log + labels only |
 | `serving/api.py` | Thin FastAPI: score / batch / reviews | Query flags (shap/log) without retraining | — | No auth / no CRM | Uses packet validation + infer + policy + hitl_log |
-| `serving/drift.py` | Lite distribution check | — | — | Not a trainer | CLI only |
+| `serving/drift.py` | PSI drift check (SMD as context) | — | — | Not a trainer | CLI only |
 | `app/streamlit_app.py` | Serve-only adapter | UI can change without retraining | — | Forms ≠ Optuna | Calls serving helpers only |
 | `docs_gen.py` | Model card + dictionary from JSON/schema | New columns appear when config/schema grow | — | Docs ≠ train | Reads metrics + schema |
 

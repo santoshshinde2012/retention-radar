@@ -73,8 +73,8 @@ One-command path used: `./scripts/run_lakehouse_e2e.sh /path/to/local-data-lakeh
 | Gold export | `data/export/churn_user_features.csv` + `santosh_inference_record.json` |
 | Sync | → `data/external/` via `scripts/sync_lakehouse_exports.sh` |
 | Train (lake gold) | `n_train=3000` · train churn ≈ **0.17** · Optuna XGB val AUC ≈ **0.721** · calibrated test AUC ≈ **0.694** · best-F1 τ ≈ **0.17** |
-| Santosh (lake as-of) | raw ≈ **0.399** · calibrated ≈ **0.170** · band **low** · HITL nurture |
-| Drift lite | **ok** — `flagged=0/22`, max \|z\| ≈ 0.03 (gold CSV vs its own train `feature_stats.json`) |
+| Santosh (lake as-of) | raw ≈ **0.399** · calibrated ≈ **0.1696** (just under τ = 0.17) · HITL nurture · the 2026-09-25 run labelled the band **low** under the old fixed edges (0.30 / 0.60); with τ-aligned bands (medium is τ/2 ≤ p < τ) the same score is **medium**. The committed summary JSON keeps the run value until the lakehouse E2E is rerun. |
+| Drift | **ok** on the 2026-09-25 run, from the old abs-mean-z check (`flagged=0/22`, max ≈ 0.03). The check is PSI-based now; this row is pending a lakehouse E2E rerun. |
 
 ### Dual-world honesty
 

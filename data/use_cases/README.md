@@ -10,9 +10,9 @@ Real rows from the seed-42 synthetic data, one per HITL path, plus records the s
 |----------|--------|------------------|------|------------------|--------------|
 | **Steady power user (Santosh)** | [`records/steady_power_user.json`](records/steady_power_user.json) (`santosh_shinde`) | 0.043 → 0.016 | low | monitor | monitor |
 | **Usage dip, still healthy** | [`records/dip_but_healthy.json`](records/dip_but_healthy.json) (`user_00205`) | 0.086 → 0.016 | low | monitor | monitor |
-| **New free trial hitting friction** | [`records/new_trial_friction.json`](records/new_trial_friction.json) (`user_04890`) | 0.545 → 0.174 | low | nurture / check-in | nurture / check-in |
+| **New free trial hitting friction** | [`records/new_trial_friction.json`](records/new_trial_friction.json) (`user_00548`) | 0.573 → 0.263 | medium | nurture / check-in | nurture / check-in |
 | **Borderline: friction just under τ** | [`records/borderline_friction.json`](records/borderline_friction.json) (`user_00480`) | 0.639 → 0.312 | medium | nurture / check-in | retention outreach (human review) |
-| **Payment failures plus support load** | [`records/payment_friction.json`](records/payment_friction.json) (`user_00144`) | 0.682 → 0.432 | medium | retention outreach (human review) | retention outreach (human review) |
+| **Payment failures plus support load** | [`records/payment_friction.json`](records/payment_friction.json) (`user_00144`) | 0.682 → 0.432 | high | retention outreach (human review) | retention outreach (human review) |
 | **Gone dark** | [`records/gone_dark.json`](records/gone_dark.json) (`user_01527`) | 0.933 → 1.000 | high | escalate | escalate |
 | **Enterprise renewal at risk** | [`records/enterprise_renewal_risk.json`](records/enterprise_renewal_risk.json) (`user_04410`) | 0.854 → 0.620 | high | escalate | escalate |
 
@@ -20,7 +20,7 @@ Stories and top drivers:
 
 - **Steady power user (Santosh)** — On the pro plan 420 days, adoption 0.78, renewing in 21 days. 12% failed requests and 2 tickets in 90 days: friction the model does not worry about. Top drivers (SHAP, log-odds): `feature_adoption_score` -1.08, `support_tickets_last_90d` -0.40, `last_active_days_ago` -0.40.
 - **Usage dip, still healthy** — Session(s) this week: 1, against 7 in 30 days (engagement_trend 0.59), but adoption 0.51, NPS 9.7 and no failed payments. One quiet week is not churn risk; the queue stays calm. Top drivers (SHAP, log-odds): `feature_adoption_score` -0.56, `support_tickets_last_90d` -0.48, `last_active_days_ago` -0.39.
-- **New free trial hitting friction** — Free plan, 28 days old, already 4 support tickets. Low band, but above half of τ: a light check-in, not a sales call. Top drivers (SHAP, log-odds): `last_active_days_ago` -0.41, `feature_adoption_score` +0.27, `support_tickets_last_90d` +0.27.
+- **New free trial hitting friction** — Free plan, 40 days old, already 3 support tickets. Medium band (above half of τ, below τ): a light check-in rather than a sales call. Top drivers (SHAP, log-odds): `seat_utilization` +0.14, `ide_plugin_sessions_last_30d` +0.08, `models_used_count` +0.07.
 - **Borderline: friction just under τ** — 4 tickets and 24% failed requests: medium band but still below the best-F1 threshold. The policy says nurture; the reviewer upgrades to outreach because the tickets are about one bug. This is the human override the log exists for. Top drivers (SHAP, log-odds): `feature_adoption_score` +0.53, `last_active_days_ago` -0.26, `support_tickets_last_90d` +0.24.
 - **Payment failures plus support load** — 2 failed payments and 5 support tickets in 90 days on the enterprise plan. Above τ, so a human owns the outreach; nothing is sent automatically. Top drivers (SHAP, log-odds): `last_active_days_ago` +0.52, `agent_runs_last_30d` -0.35, `support_tickets_last_90d` +0.33.
 - **Gone dark** — Nothing in the last 30 days (no sessions, API calls, tokens or agent runs); last seen 40 days ago, with 5 tickets and 2 failed payments in 90 days. High band: escalate to the retention owner today. Top drivers (SHAP, log-odds): `feature_adoption_score` +0.68, `last_active_days_ago` +0.53, `engagement_trend` +0.31.
@@ -39,8 +39,8 @@ Stories and top drivers:
 
 | File | Use |
 |------|-----|
-| `weekly_batch.csv` | 211 rows = 206 test-split users (a seeded sample + every scenario) + Santosh + 4 invalid rows. Expected queue: escalate: 33, monitor: 142, nurture / check-in: 18, retention outreach (human review): 14. No label column, like production input. |
-| `review_decisions.csv` | 67 reviewer decisions (everything not on *monitor*, plus every scenario) at `2026-09-29T15:00:00Z`. Simulated reviewer: accepts the suggestion except the scenario overrides above. |
+| `weekly_batch.csv` | 211 rows = 206 test-split users (a seeded sample + every scenario) + Santosh + 4 invalid rows. Expected queue: escalate: 34, monitor: 143, nurture / check-in: 14, retention outreach (human review): 16. No label column, like production input. |
+| `review_decisions.csv` | 66 reviewer decisions (everything not on *monitor*, plus every scenario) at `2026-09-29T15:00:00Z`. Simulated reviewer: accepts the suggestion except the scenario overrides above. |
 | `labels_day30.csv` | Churn observed at `2026-10-28T00:00:00Z` for every valid batch user (the generator's ground truth, framed as a later outcome). |
 | `personas.json` | Machine-readable manifest: stories, expected outputs, drivers, records. |
 

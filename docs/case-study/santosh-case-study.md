@@ -159,13 +159,15 @@ Positive → toward churn; negative → toward retain (this run is protective-do
 
 Action ladder used by `python -m retention_radar.cli.single_record`:
 
-| Condition | Action |
-|-----------|--------|
-| risk band = high (P ≥ 0.60, checked first) | escalate (still HITL) |
-| P &lt; 0.5 × τ | monitor |
-| P &lt; τ | nurture / check-in |
-| otherwise (P ≥ τ) | retention outreach (human review) |
-| input fails validation | hold: fix input data (not scored) |
+Bands and actions share the same τ-derived edges (τ = 0.34), so a band always implies its action:
+
+| Condition | Band | Action |
+|-----------|------|--------|
+| P &lt; 0.5 × τ (0.17) | low | monitor |
+| 0.5 × τ ≤ P &lt; τ | medium | nurture / check-in |
+| τ ≤ P &lt; 0.60 | high | retention outreach (human review) |
+| P ≥ 0.60 | high | escalate (still HITL) |
+| input fails validation | none | hold: fix input data (not scored) |
 
 ---
 

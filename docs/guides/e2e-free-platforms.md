@@ -16,7 +16,7 @@ Related: [GETTING_STARTED.md](../GETTING_STARTED.md) · [FOLDER_STRUCTURE.md](..
 | Metrics | `python -m retention_radar.cli.evaluate` then `python -m retention_radar.cli.benchmark` | Plots + `models/metrics.json` |
 | Santosh packet | `python -m retention_radar.cli.single_record --user santosh` | Validate → score → SHAP → HITL |
 | Streamlit HITL | `streamlit run app/streamlit_app.py` | Serve-only Decision tab |
-| Drift | `python -m retention_radar.cli.drift_check` | Lite z-score vs `feature_stats.json` |
+| Drift | `python -m retention_radar.cli.drift_check` | PSI vs training-decile bins in `feature_stats.json` (plus SMD) |
 | Slices | `python -m retention_radar.cli.slice_metrics` | Educational `plan_tier` segments |
 | Explain | `python -m retention_radar.cli.explain` | XGB gain importance CSV |
 | Lakehouse gold | `./scripts/run_lakehouse_e2e.sh /path/to/local-data-lakehouse` | Same pipeline on bronze→gold export |

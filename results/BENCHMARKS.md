@@ -57,7 +57,7 @@ Numbers rounded from [`../models/metrics.json`](../models/metrics.json) (CatBoos
 |----------|-------|
 | Brier raw (test) | **0.138** |
 | Brier calibrated (test) | **0.106** |
-| Calibration method | isotonic (fit on validation) |
+| Calibration method | isotonic (fit on validation; the same split also picks the Optuna model and τ, so validation scores are optimistic) |
 | Best F1 threshold τ (swept on **validation**, then frozen) | **0.34** |
 | F1 at τ — validation | **0.699** |
 | F1 at τ — test (read once) | **0.602** |
