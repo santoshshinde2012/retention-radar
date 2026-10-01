@@ -28,8 +28,27 @@ warnings.filterwarnings("ignore", category=UserWarning)
 optuna.logging.set_verbosity(optuna.logging.WARNING)
 
 
+PSI_QUANTILES = [i / 10 for i in range(1, 10)]
+
+
+def psi_reference_bins(series) -> dict:
+    """Decile bin edges from the training column plus the exact training share per bin.
+
+    Edges are de-duplicated (count-like columns have many ties), and the reference
+    share is counted on the training data with the same edges, so ties are exact.
+    ``drift_check`` reuses these to compute a real PSI without the training table.
+    """
+    import numpy as np
+
+    values = series.to_numpy(dtype=float)
+    edges = sorted({float(v) for v in np.quantile(values, PSI_QUANTILES)})
+    idx = np.searchsorted(np.asarray(edges), values, side="right")
+    counts = np.bincount(idx, minlength=len(edges) + 1)
+    return {"edges": edges, "ref_frac": [float(c) / len(values) for c in counts]}
+
+
 def compute_feature_stats(X) -> dict:
-    """Percentiles / mean / std per training feature for outlier & cohort checks."""
+    """Percentiles / mean / std per training feature for outlier, cohort and drift checks."""
     stats = {}
     for col in X.columns:
         series = X[col].astype(float)
@@ -47,6 +66,7 @@ def compute_feature_stats(X) -> dict:
             "p75": float(qs.loc[0.75]),
             "p95": float(qs.loc[0.95]),
             "p99": float(qs.loc[0.99]),
+            "psi_bins": psi_reference_bins(series),
         }
     return stats
 

@@ -129,7 +129,7 @@ Notes:
 | E4 | PYTHONPATH=src / venv documented | ✅ |
 | E5 | Feature contract file (`feature_names.json`) | ✅ |
 | E6 | Schema file under `configs/schemas/` | ✅ |
-| E7 | Research spine + article links | ✅ |
+| E7 | Research spine + docs links | ✅ |
 | E8 | MIT license | ✅ |
 | E9 | CI on GitHub Actions | ✅ |
 | E10 | Model registry / versioned deploys | ⬜ |
@@ -140,7 +140,7 @@ Notes:
 
 Notes:
 - **E9** — `.github/workflows/ci.yml`: push/PR to `main`, Python 3.12, `N_USERS=800`, `N_OPTUNA_TRIALS=5`, seed-42 canary on the committed bundle → ruff (`src/ tests/ app/`) → `run_all.sh` (generate → train → evaluate → single_record) → pytest → strict drift_check. Local defaults remain 5000 users / 20 trials when env unset.
-- **E11** — `python -m retention_radar.cli.drift_check` compares CSV means to `models/feature_stats.json` (abs mean z-score). Writes `artifacts/drift_report.json`. **Exits 0 by default** (demo); `--strict` exits 1 only on severe drift. Wired non-fatally in `run_all.sh` before the Santosh decision packet (E2: script still ends with the packet). Not a production Evidently / GE monitor (enterprise).
+- **E11** — `python -m retention_radar.cli.drift_check` computes PSI per feature against training-decile bins in `models/feature_stats.json` (moderate ≥ 0.10, major ≥ 0.25), with standardised mean difference and an SE-based mean z as context. Writes `artifacts/drift_report.json`. **Exits 0 by default** (demo); `--strict` exits 1 only on severe drift. Wired non-fatally in `run_all.sh` before the Santosh decision packet (E2: script still ends with the packet). Not a production Evidently / GE monitor (enterprise).
 
 Enterprise deferred (still ⬜): **A28–A30, B14–B16, C14, D8, E10, E12**.
 
@@ -168,7 +168,7 @@ In-scope FOSS teaching goals for this case study are essentially complete; remai
 ```bash
 ./scripts/run_all.sh
 pytest -q
-python -m retention_radar.cli.single_record --user santosh --out artifacts/santosh_decision_packet.json
+python -m retention_radar.cli.single_record --user santosh --out artifacts/example_decision_packet.json
 python -m retention_radar.cli.single_record --dir /tmp/batch_jsons --out artifacts/batch_decision_packets.jsonl
 python -m retention_radar.cli.drift_check
 python -c "import app.streamlit_app"  # or: streamlit run app/streamlit_app.py

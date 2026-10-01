@@ -1,6 +1,6 @@
 # Architecture — Retention Radar (XGBoost AI Platform Churn)
 
-**Model card:** [MODEL_CARD.md](MODEL_CARD.md) · **Landscape:** [ALGORITHM_LANDSCAPE.md](guides/ALGORITHM_LANDSCAPE.md) · **Practices:** [BEST_PRACTICES.md](guides/BEST_PRACTICES.md) · **Lakehouse:** [data-foundation-lakehouse.md](data/data-foundation-lakehouse.md) · **Results:** [../results/BENCHMARKS.md](../results/BENCHMARKS.md)
+**Model card:** [model-card.md](model-card.md) · **Landscape:** [algorithm-landscape.md](guides/algorithm-landscape.md) · **Practices:** [best-practices.md](guides/best-practices.md) · **Lakehouse:** [data-foundation-lakehouse.md](data/data-foundation-lakehouse.md) · **Results:** [../results/benchmarks.md](../results/benchmarks.md)
 
 ## Purpose
 
@@ -57,7 +57,7 @@ flowchart LR
 
 - **Train** may write models, metrics, plots, calibrators.
 - **Serve** must not fit encoders, call Optuna, or regenerate labels.
-- Shared: feature name list (22), threshold/band config, version metadata, [MODEL_CARD.md](MODEL_CARD.md).
+- Shared: feature name list (22), threshold/band config, version metadata, [model-card.md](model-card.md).
 
 ## Module map
 
@@ -102,11 +102,11 @@ retention-radar/
 ├── src/retention_radar/cli/  # python -m retention_radar.cli.train, .infer, …
 ├── app/streamlit_app.py
 ├── scripts/run_all.sh
-├── data/raw/      # users.csv, santosh_shinde.json
+├── data/raw/      # users.csv, example_account.json
 ├── models/        # churn_xgb.joblib, calibrator, feature_names.json, metrics.json
-├── artifacts/     # plots + santosh_decision_packet.json
+├── artifacts/     # plots + example_decision_packet.json
 ├── docs/          # dictionary, checklist, lakehouse notes, result charts
-├── docs/ARCHITECTURE.md / docs/MODEL_CARD.md
+├── docs/architecture.md / docs/model-card.md
 ├── results/  # BENCHMARKS + plots + Santosh analysis
 ├── data/external/ # lakehouse gold sync (gitignored)
 └── scripts/       # run_all.sh + run_lakehouse_e2e.sh
@@ -118,7 +118,7 @@ retention-radar/
 
 | Stage | Responsibility | Typical outputs |
 |-------|----------------|-----------------|
-| Generate | Synthetic users + noisy `churned`; inject Santosh | `users.csv`, `santosh_shinde.json` |
+| Generate | Synthetic users + noisy `churned`; inject Santosh | `users.csv`, `example_account.json` |
 | Ingest / validate | Schema, ranges, label rate, hero row | Clean table + fail-fast errors |
 | Features | Select columns, encode `plan_tier` | `X`, `y` (22 model features) |
 | Train / tune | Stratified splits, imbalance, baselines, Optuna on **val** | Best params, fitted model |
@@ -130,7 +130,7 @@ retention-radar/
 | Use cases | Seed-42 holdout scenarios per HITL path + invalid records + weekly batch + reviews + day-30 labels | `data/use_cases/` (`make use-cases`) |
 | HITL log | Append review decisions | `cli.hitl_log` + configs/templates |
 | Outcomes | Join reviews → later labels | `cli.hitl_outcomes` → `hitl_outcomes.{csv,json}` |
-| Ops-lite | Drift, retrain, when not to ship | guides/BEST_PRACTICES.md |
+| Ops-lite | Drift, retrain, when not to ship | guides/best-practices.md |
 
 ## Key artifacts contract
 
@@ -140,10 +140,10 @@ retention-radar/
 | `models/calibrator.joblib` | calibrated `p` for bands |
 | `models/feature_names.json` | Transform order (22) for Santosh’s vector |
 | `models/feature_stats.json` | Outlier flags, drift reference, cohort-percentile fallback |
-| `models/metrics.json` | MODEL_CARD.md tables |
-| `artifacts/santosh_decision_packet.json` | Case study + CI canary |
-| Risk thresholds / bands | `infer.risk_band`, UI chips |
-| `MODEL_CARD.md` | Humans; fill metrics after `run_all` |
+| `models/metrics.json` | model-card.md tables |
+| `artifacts/example_decision_packet.json` | Case study + CI canary |
+| Risk thresholds / bands | `policy.risk_band(p, τ)` (τ-aligned edges), UI chips |
+| `model-card.md` | Humans; fill metrics after `run_all` |
 
 ## Runtime views
 
@@ -190,7 +190,7 @@ The layout is a **teaching** SOLID sketch, not a claim that every file is a text
 | `serving/hitl_log.py` | Append HITL review CSV | New log fields via schema | — | Log ≠ outcome write-back | CLI appends only |
 | `serving/outcomes.py` | Join review log → later labels; per-band / per-action report | New summary cuts without touching the log | — | Report ≠ retrain trigger | CLI reads log + labels only |
 | `serving/api.py` | Thin FastAPI: score / batch / reviews | Query flags (shap/log) without retraining | — | No auth / no CRM | Uses packet validation + infer + policy + hitl_log |
-| `serving/drift.py` | Lite distribution check | — | — | Not a trainer | CLI only |
+| `serving/drift.py` | PSI drift check (SMD as context) | — | — | Not a trainer | CLI only |
 | `app/streamlit_app.py` | Serve-only adapter | UI can change without retraining | — | Forms ≠ Optuna | Calls serving helpers only |
 | `docs_gen.py` | Model card + dictionary from JSON/schema | New columns appear when config/schema grow | — | Docs ≠ train | Reads metrics + schema |
 
@@ -200,6 +200,6 @@ Related: [src/retention_radar/protocols.py](../src/retention_radar/protocols.py)
 
 ## Related docs
 
-- [MODEL_CARD.md](MODEL_CARD.md) · [data-dictionary.md](data/data-dictionary.md) · [../results/](../results/)
-- [guides/BEST_PRACTICES.md](guides/BEST_PRACTICES.md) · [data/data-foundation-lakehouse.md](data/data-foundation-lakehouse.md)
+- [model-card.md](model-card.md) · [data-dictionary.md](data/data-dictionary.md) · [../results/](../results/)
+- [guides/best-practices.md](guides/best-practices.md) · [data/data-foundation-lakehouse.md](data/data-foundation-lakehouse.md)
 - [src/retention_radar/protocols.py](../src/retention_radar/protocols.py)

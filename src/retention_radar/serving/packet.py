@@ -2,7 +2,7 @@
 
 Examples:
     python -m retention_radar.cli.single_record --user santosh \\
-        --out artifacts/santosh_decision_packet.json
+        --out artifacts/example_decision_packet.json
 """
 
 from __future__ import annotations
@@ -341,10 +341,12 @@ def build_decision_packet(
     if calibrator is None:
         calibrator = load_calibrator(config.CALIBRATOR_PATH)
 
-    score = predict_user(payload, model_bundle, calibrator=calibrator, top_k=top_k)
+    threshold = float(metrics.get("best_f1_threshold", 0.5))
+    score = predict_user(
+        payload, model_bundle, calibrator=calibrator, top_k=top_k, threshold=threshold
+    )
     display = float(score["churn_probability"])
     band = score["risk_band"]
-    threshold = float(metrics.get("best_f1_threshold", 0.5))
     action = policy.decide(display, threshold, band)
     outliers = flag_outliers(payload, feature_stats)
     cohort = cohort_percentiles(payload)
@@ -509,9 +511,9 @@ def main(argv: list[str] | None = None) -> None:
     packet = build_decision_packet(payload, model_bundle=bundle, calibrator=calibrator)
 
     # Default name follows the record, so scoring another user never overwrites
-    # artifacts/santosh_decision_packet.json (which `make infer` and the docs use).
+    # artifacts/example_decision_packet.json (which `make infer` and the docs use).
     default_name = (
-        "santosh_decision_packet.json"
+        "example_decision_packet.json"
         if args.user
         else f"{(payload.get('user_id') if isinstance(payload, dict) else None) or json_path.stem}_decision_packet.json"
     )

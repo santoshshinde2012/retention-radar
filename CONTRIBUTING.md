@@ -3,7 +3,7 @@
 Thanks for improving **Retention Radar**, a FOSS AI-platform churn teaching repo.  
 Repo: [https://github.com/santoshshinde2012/retention-radar](https://github.com/santoshshinde2012/retention-radar)
 
-Prefer focused PRs: code + benchmarks + results analysis. Articles are authored separately (internal); this repo is the public code home.
+Prefer focused PRs: code + benchmarks + results analysis.
 
 ## Setup
 
@@ -35,7 +35,7 @@ Faster smoke (committed `models/` untouched): `RETENTION_RADAR_ARTIFACT_DIR=arti
 python -m retention_radar.cli.docs_gen
 ```
 
-Writes `docs/MODEL_CARD.md` and `docs/data/data-dictionary.md`.
+Writes `docs/model-card.md` and `docs/data/data-dictionary.md`.
 
 ## Tests
 
@@ -48,11 +48,11 @@ pytest -q
 **PRs should keep pytest green.** Pin `CHURN_DATA_SOURCE=synthetic` so a local
 `data/external/` lakehouse export cannot change what CI measures.
 
-Lakehouse E2E (optional; trains under `artifacts/lakehouse_run/`, but refreshes the committed `results/lakehouse-e2e-summary.json`):
+Lakehouse E2E (optional; trains under `artifacts/lakehouse_run/`, but refreshes the committed `results/lakehouse_e2e_summary.json`):
 
 ```bash
 ./scripts/run_lakehouse_e2e.sh /path/to/local-data-lakehouse
-git checkout -- results/lakehouse-e2e-summary.json   # unless you mean to publish it
+git checkout -- results/lakehouse_e2e_summary.json   # unless you mean to publish it
 ```
 
 ## Style notes
@@ -66,3 +66,17 @@ git checkout -- results/lakehouse-e2e-summary.json   # unless you mean to publis
 ## License
 
 MIT © Santosh Shinde — see [LICENSE](LICENSE).
+
+## Lint and pre-commit
+
+```bash
+ruff check src/ tests/ app/
+pip install pre-commit && pre-commit install   # optional: runs ruff + JSON/YAML checks on commit
+```
+
+## Naming conventions
+
+- Python modules and packages: `snake_case.py`.
+- Docs: lowercase kebab-case (`docs/model-card.md`, `docs/guides/start-here.md`). Only the conventional root files are upper case (`README.md`, `CHANGELOG.md`, `CONTRIBUTING.md`, `LICENSE`).
+- Data and machine-readable outputs: `snake_case` (`models/feature_stats.json`, `results/example_decision_packet.json`).
+- Generic file names describe the role, not a person or a date (`example_account.json`, not a person's name). Record changes in `CHANGELOG.md`, not in dated files.

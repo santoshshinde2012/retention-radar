@@ -8,7 +8,7 @@
 # isolated dir (diff vs models/metrics.json) → full pytest (incl. headless Streamlit
 # + API) → every serve surface on the committed bundle (infer, packet, batch,
 # HITL log, outcomes, drift, live API, live Streamlit) → optional lakehouse E2E
-# (diff vs results/lakehouse-e2e-summary.json) → git isolation check.
+# (diff vs results/lakehouse_e2e_summary.json) → git isolation check.
 # Outputs land in artifacts/local_e2e/ (gitignored).
 set -euo pipefail
 
@@ -172,22 +172,22 @@ if [[ -z "$LAKE" && -d "$ROOT/../local-data-lakehouse/scripts" ]]; then
   LAKE="$ROOT/../local-data-lakehouse"
 fi
 if [[ -n "$LAKE" && -d "$LAKE/scripts" ]]; then
-  LAKEHOUSE_SUMMARY_PATH="$OUT/lakehouse-e2e-summary.json" \
+  LAKEHOUSE_SUMMARY_PATH="$OUT/lakehouse_e2e_summary.json" \
     ./scripts/run_lakehouse_e2e.sh "$LAKE" > "$OUT/lakehouse.log" 2>&1 \
     || { tail -40 "$OUT/lakehouse.log"; exit 1; }
   if [[ -f "$LAKE/scripts/check_churn_export.py" ]]; then
     "$PY" "$LAKE/scripts/check_churn_export.py"
   fi
-  "$PY" - "$OUT/lakehouse-e2e-summary.json" <<'PY'
+  "$PY" - "$OUT/lakehouse_e2e_summary.json" <<'PY'
 import json, sys
 new = json.load(open(sys.argv[1]))
-ref = json.load(open("results/lakehouse-e2e-summary.json"))
+ref = json.load(open("results/lakehouse_e2e_summary.json"))
 keys = ["n_train", "n_test", "churn_rate_train", "best_optuna_auc_val",
         "calibrated_test_roc_auc", "best_f1_threshold", "santosh"]
 diff = {k: (ref.get(k), new.get(k)) for k in keys if ref.get(k) != new.get(k)}
 print("lakehouse summary:", {k: new.get(k) for k in keys})
 if diff:
-    sys.exit(f"lakehouse E2E differs from results/lakehouse-e2e-summary.json: {diff}")
+    sys.exit(f"lakehouse E2E differs from results/lakehouse_e2e_summary.json: {diff}")
 print("lakehouse E2E matches the committed summary")
 PY
   ok lakehouse

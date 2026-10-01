@@ -63,7 +63,7 @@ def test_hitl_policy_never_auto_acts():
     cases = [
         (0.01, 0.34, "low"),
         (0.20, 0.34, "medium"),
-        (0.50, 0.34, "medium"),
+        (0.50, 0.34, "high"),
         (0.80, 0.34, "high"),
     ]
     for prob, thr, band in cases:
@@ -74,9 +74,32 @@ def test_hitl_policy_never_auto_acts():
 
 
 def test_risk_band_cutoffs():
-    assert risk_band(0.10) == "low"
-    assert risk_band(0.45) == "medium"
-    assert risk_band(0.90) == "high"
+    assert risk_band(0.10, 0.34) == "low"
+    assert risk_band(0.25, 0.34) == "medium"
+    assert risk_band(0.45, 0.34) == "high"
+    assert risk_band(0.90, 0.34) == "high"
+
+
+def test_band_and_action_are_aligned_with_tau():
+    """Every band implies one action tier; escalate is the top of the high band."""
+    import pytest
+
+    tau = 0.34
+    grid = [i / 1000 for i in range(0, 1001)]
+    for p in grid:
+        band = risk_band(p, tau)
+        action = hitl_action(p, tau)["action"]
+        if band == "low":
+            assert action == "monitor" and p < tau / 2
+        elif band == "medium":
+            assert action == "nurture / check-in" and tau / 2 <= p < tau
+        else:
+            assert p >= tau
+            assert action == ("escalate" if p >= 0.60 else "retention outreach (human review)")
+    with pytest.raises(ValueError):
+        hitl_action(0.25, tau, "low")  # stale band edges must fail loud
+    with pytest.raises(ValueError):
+        risk_band(0.2, 1.5)
 
 
 def test_streamlit_scores_active_santosh():
@@ -94,7 +117,7 @@ def test_risk_band_rejects_non_finite():
 
     for bad in (math.nan, math.inf, -math.inf):
         with pytest.raises(ValueError):
-            risk_band(bad)
-    assert [risk_band(p) for p in (0.0, 0.2999, 0.30, 0.5999, 0.60, 1.0)] == [
+            risk_band(bad, 0.34)
+    assert [risk_band(p, 0.34) for p in (0.0, 0.1699, 0.17, 0.3399, 0.34, 1.0)] == [
         "low", "low", "medium", "medium", "high", "high",
     ]

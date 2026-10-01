@@ -3,11 +3,11 @@
 End-to-end walkthrough of one JSON record through the AI-platform **Retention Radar**:
 **validate → score (raw + calibrated) → explain → cohort compare → HITL decision**.
 
-**Reproduce:** `./scripts/run_all.sh` → `artifacts/santosh_decision_packet.json`  
+**Reproduce:** `./scripts/run_all.sh` → `artifacts/example_decision_packet.json`  
 **Seed:** 42 · **Synthetic only** — not a real person score.
 
 
-*Flight checklist: validate → score → explain → HITL decide — never auto-cancel. Full narrative: [../results/SANTOSH_ANALYSIS.md](../../results/SANTOSH_ANALYSIS.md).*
+*Flight checklist: validate → score → explain → HITL decide — never auto-cancel. Full narrative: [../results/example-account-analysis.md](../../results/example-account-analysis.md).*
 
 
 ```mermaid
@@ -62,7 +62,7 @@ Santosh’s low calibrated score sits in the context of these ranking/calibratio
 Santosh is the **hero inference user**: a Pro-plan power user with mild friction and a slightly cooling engagement trend — a **whisper**, not a slammed door. His profile is:
 
 - Row 0 of `data/raw/users.csv` (training population includes him)
-- Inference payload `data/raw/santosh_shinde.json` (no `churned` label)
+- Inference payload `data/raw/example_account.json` (no `churned` label)
 - Default form in Streamlit (**Decision** tab + what-if sliders)
 
 ---
@@ -107,7 +107,7 @@ Mild-whisper story: cooling trend + near renewal + one payment failure + 8 days 
 ## 3. Decision packet (reference run)
 
 ```bash
-python -m retention_radar.cli.single_record --user santosh --out artifacts/santosh_decision_packet.json
+python -m retention_radar.cli.single_record --user santosh --out artifacts/example_decision_packet.json
 ```
 
 ### Validation
@@ -159,13 +159,15 @@ Positive → toward churn; negative → toward retain (this run is protective-do
 
 Action ladder used by `python -m retention_radar.cli.single_record`:
 
-| Condition | Action |
-|-----------|--------|
-| risk band = high (P ≥ 0.60, checked first) | escalate (still HITL) |
-| P &lt; 0.5 × τ | monitor |
-| P &lt; τ | nurture / check-in |
-| otherwise (P ≥ τ) | retention outreach (human review) |
-| input fails validation | hold: fix input data (not scored) |
+Bands and actions share the same τ-derived edges (τ = 0.34), so a band always implies its action:
+
+| Condition | Band | Action |
+|-----------|------|--------|
+| P &lt; 0.5 × τ (0.17) | low | monitor |
+| 0.5 × τ ≤ P &lt; τ | medium | nurture / check-in |
+| τ ≤ P &lt; 0.60 | high | retention outreach (human review) |
+| P ≥ 0.60 | high | escalate (still HITL) |
+| input fails validation | none | hold: fix input data (not scored) |
 
 ---
 
@@ -198,7 +200,7 @@ Full dump: `models/metrics.json`. Always prefer a fresh run over prose.
 
 1. CLI packet (above)
 2. Streamlit → **Decision** tab: validation, raw vs cal, threshold, HITL, cohort bars, top drivers
-3. Docs: this case study + [single-record-checklist.md](single-record-checklist.md) · [../results/SANTOSH_ANALYSIS.md](../../results/SANTOSH_ANALYSIS.md)
+3. Docs: this case study + [single-record-checklist.md](single-record-checklist.md) · [../results/example-account-analysis.md](../../results/example-account-analysis.md)
 
 ---
 
@@ -213,7 +215,7 @@ Full dump: `models/metrics.json`. Always prefer a fresh run over prose.
 
 ## Related
 
-- [../results/SANTOSH_ANALYSIS.md](../../results/SANTOSH_ANALYSIS.md) — Single-record outcome (seed-42)  
-- [../results/BENCHMARKS.md](../../results/BENCHMARKS.md) — Published ladder tables  
-- [data-dictionary.md](../data/data-dictionary.md) · [MODEL_CARD.md](../MODEL_CARD.md)  
-- [ARCHITECTURE.md](../ARCHITECTURE.md) · [single-record-checklist.md](single-record-checklist.md)
+- [../results/example-account-analysis.md](../../results/example-account-analysis.md) — Single-record outcome (seed-42)  
+- [../results/benchmarks.md](../../results/benchmarks.md) — Published ladder tables  
+- [data-dictionary.md](../data/data-dictionary.md) · [model-card.md](../model-card.md)  
+- [architecture.md](../architecture.md) · [single-record-checklist.md](single-record-checklist.md)

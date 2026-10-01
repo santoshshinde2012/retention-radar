@@ -1,6 +1,6 @@
 # Algorithm landscape — what is on the ladder vs deferred
 
-Teaching decision for Retention Radar (2025–26). **Cite:** [`../../models/metrics.json`](../../models/metrics.json) · **Benchmarks:** [`../../results/BENCHMARKS.md`](../../results/BENCHMARKS.md)
+Teaching decision for Retention Radar (2025–26). **Cite:** [`../../models/metrics.json`](../../models/metrics.json) · **Benchmarks:** [`../../results/benchmarks.md`](../../results/benchmarks.md)
 
 This study ships an **honest bake-off ladder** on a synthetic AI-platform churn table (seed **42**, N=5000, 22 numeric features after plan encoding). The **serving / Santosh / SHAP hero stays Optuna-tuned XGBoost + isotonic calibration**, even when a peer edges AUC.
 
@@ -26,7 +26,7 @@ This study ships an **honest bake-off ladder** on a synthetic AI-platform churn 
 | Family | Examples | Why deferred for *this* teaching arc |
 |--------|----------|--------------------------------------|
 | Tabular foundation / ICL | TabPFN, TabPFN-v2/v3, TabICL | Strong on **small** tables on TabArena-class boards; licensing / GPU / serve story does not fit beginner **CPU FOSS HITL packet** path |
-| Heavy tabular DL | RealMLP, FT-Transformer, TabM | Heavy deps and training story; not the DET / tree-ladder lesson |
+| Heavy tabular DL | RealMLP, FT-Transformer, TabM | Heavy deps and training story; outside the tree-ladder scope |
 | Survival | Cox PH, Random Survival Forest | Needs **time-to-event** label redesign; we keep a **binary snapshot** label |
 | Causal / uplift | Meta-learners, T-/S-/X-learners | Different question (treatment effect), not P(churn) ranking |
 | Soft-voting mega-ensemble | Average of all ladder models | Muddles ladder honesty; hides which inductive bias won |
@@ -44,10 +44,10 @@ This study ships an **honest bake-off ladder** on a synthetic AI-platform churn 
 
 - Erickson et al., *TabArena: A Living Benchmark for Machine Learning on Tabular Data* (NeurIPS 2025 D&B; [arXiv:2506.16791](https://arxiv.org/abs/2506.16791)) — living Elo-style tabular board; CatBoost / LightGBM / XGBoost as conventional trees; neural and foundation models after ensembling.
 - Prokhorenkova et al., CatBoost (arXiv:1706.09516); Ke et al., LightGBM; Chen & Guestrin, XGBoost — the GBDT trilogy peers on this ladder.
-- Churn teaching practice: always publish Dummy + linear + tree peers before claiming booster success (see [`../results/BENCHMARKS.md`](../../results/BENCHMARKS.md)).
+- Churn teaching practice: always publish Dummy + linear + tree peers before claiming booster success (see [`../results/benchmarks.md`](../../results/benchmarks.md)).
 
 ## Related
 
-- [`MODEL_CARD.md`](../MODEL_CARD.md) — metrics table from `models/metrics.json`
-- [`BEST_PRACTICES.md`](BEST_PRACTICES.md) — dual-world synthetic vs lakehouse
-- [`ARCHITECTURE.md`](../ARCHITECTURE.md) — train ≠ serve
+- [`model-card.md`](../model-card.md) — metrics table from `models/metrics.json`
+- [`best-practices.md`](best-practices.md) — dual-world synthetic vs lakehouse
+- [`architecture.md`](../architecture.md) — train ≠ serve

@@ -2,7 +2,6 @@
 
 Teaching / ML use-case layout aligned with **cookiecutter-data-science** data layers and **src-layout** packaging.  
 **Code + benchmarks + results analysis** live here (public code home).  
-Articles are authored separately (**internal**); readers should not be pointed at an articles GitHub repo.  
 Data foundation / SoR → [local-data-lakehouse](https://github.com/santoshshinde2012/local-data-lakehouse).
 
 ```text
@@ -32,17 +31,17 @@ retention-radar/
 │   ├── processed/                   # CDS parity (features usually in-memory)
 │   └── external/                    # lakehouse gold sync
 ├── models/                          # seed-42 serve bundle (joblibs + metrics)
-├── results/                         # ≡ reports/ in CDS templates (name kept for dig-deeper URLs)
-│   ├── README.md, BENCHMARKS.md, SANTOSH_ANALYSIS.md
+├── results/                         # ≡ reports/ in CDS templates (name kept for stable links)
+│   ├── README.md, benchmarks.md, example-account-analysis.md
 │   └── plots/                       # ≡ reports/figures
 ├── artifacts/                       # runtime-only (.gitkeep; * gitignored)
 ├── notebooks/                       # exploration only; import package
 ├── docs/
 │   ├── README.md
-│   ├── GETTING_STARTED.md
-│   ├── FOLDER_STRUCTURE.md
-│   ├── ARCHITECTURE.md
-│   ├── MODEL_CARD.md
+│   ├── getting-started.md
+│   ├── folder-structure.md
+│   ├── architecture.md
+│   ├── model-card.md
 │   ├── guides/
 │   ├── data/
 │   └── case-study/
@@ -57,7 +56,7 @@ retention-radar/
 | **CDS data layers** | `data/{raw,interim,processed,external}/` with README |
 | **configs/** | JSON Schema + config home (not scattered at repo root) |
 | **notebooks/** | Exploration only — no production train/serve logic |
-| **results/** (not `reports/`) | Same role as CDS `reports/` + `reports/figures/` → `results/plots/`; **name kept** so public article dig-deeper links to `results/BENCHMARKS.md` stay valid |
+| **results/** (not `reports/`) | Same role as CDS `reports/` + `reports/figures/` → `results/plots/`; **name kept** so existing links into `results/` stay valid |
 | **Out of scope** | Airflow, DVC, MLflow, production auth / CRM write-back |
 | **Optional teaching serve** | Thin local FastAPI (`serving/api.py`) — no auth |
 
@@ -84,4 +83,4 @@ retention-radar/
 
 **Charts:** `artifacts/` is what evaluate writes at runtime. `results/plots/` is the committed pack. Refresh with `make docs-results`.
 
-More: [GETTING_STARTED.md](GETTING_STARTED.md) · [ARCHITECTURE.md](ARCHITECTURE.md) · [../results/README.md](../results/README.md)
+More: [getting-started.md](getting-started.md) · [architecture.md](architecture.md) · [../results/README.md](../results/README.md)

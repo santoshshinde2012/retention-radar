@@ -37,7 +37,7 @@ def test_bundle_scores_santosh_outside_repo_root(tmp_path):
 import json, sys
 assert {str(ROOT)!r} not in sys.path and '' not in sys.path[1:]
 from retention_radar.serving.packet import build_decision_packet
-p = build_decision_packet(json.load(open({str(ROOT / 'data/raw/santosh_shinde.json')!r})))
+p = build_decision_packet(json.load(open({str(ROOT / 'data/raw/example_account.json')!r})))
 print(round(p['scoring']['churn_probability_calibrated'], 6), p['hitl']['action'])
 """
     res = _run(code, tmp_path)

@@ -6,7 +6,7 @@ This is the act step of a predict → act → outcome loop. Outcome write-back
 
 Examples:
     python -m retention_radar.cli.hitl_log \\
-        --from-packet artifacts/santosh_decision_packet.json \\
+        --from-packet artifacts/example_decision_packet.json \\
         --reviewer santosh --action-taken monitor --notes "looks fine"
     # Bulk: import a reviewer-decisions CSV (user_id, reviewer, action_taken, notes,
     # timestamp) against a batch_score queue — e.g. an export from the CRM task list.

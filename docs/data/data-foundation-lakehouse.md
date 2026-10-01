@@ -16,7 +16,7 @@ bronze (users / daily usage / tickets / payments)
   → train / calibrate / Santosh infer / Streamlit
 ```
 
-Feature column contract matches `configs/schemas/user_record.schema.json` 1:1 (24 serve fields + `churned` on train). **Models consume gold features; algorithm choice lives in this repo** (see [ALGORITHM_LANDSCAPE.md](../guides/ALGORITHM_LANDSCAPE.md)) — not in the lakehouse.
+Feature column contract matches `configs/schemas/user_record.schema.json` 1:1 (24 serve fields + `churned` on train). **Models consume gold features; algorithm choice lives in this repo** (see [algorithm-landscape.md](../guides/algorithm-landscape.md)) — not in the lakehouse.
 
 ## Two ways to build gold
 
@@ -47,7 +47,6 @@ Synthetic remains the CI / offline fallback so `pytest` does not need **SILO** (
 
 - [data-dictionary.md](data-dictionary.md)
 - [e2e-free-platforms.md](../guides/e2e-free-platforms.md)
-- Articles: parts 01–08 Dig deeper / next-steps point here; part 02 is the SoR deep dive
 
 
 ## One-command E2E (best path)
@@ -73,17 +72,17 @@ One-command path used: `./scripts/run_lakehouse_e2e.sh /path/to/local-data-lakeh
 | Gold export | `data/export/churn_user_features.csv` + `santosh_inference_record.json` |
 | Sync | → `data/external/` via `scripts/sync_lakehouse_exports.sh` |
 | Train (lake gold) | `n_train=3000` · train churn ≈ **0.17** · Optuna XGB val AUC ≈ **0.721** · calibrated test AUC ≈ **0.694** · best-F1 τ ≈ **0.17** |
-| Santosh (lake as-of) | raw ≈ **0.399** · calibrated ≈ **0.170** · band **low** · HITL nurture |
-| Drift lite | **ok** — `flagged=0/22`, max \|z\| ≈ 0.03 (gold CSV vs its own train `feature_stats.json`) |
+| Santosh (lake as-of) | raw ≈ **0.399** · calibrated ≈ **0.1696** (just under τ = 0.17) · band **medium** · HITL nurture. Rerun on 2026-10-01 by the CI `e2e-local` job with τ-aligned bands; every other number matches the 2026-09-25 run, which labelled the band low under the old fixed edges (0.30 / 0.60). |
+| Drift | **ok** on the 2026-09-25 run, from the old abs-mean-z check (`flagged=0/22`, max ≈ 0.03). The check is PSI-based now; this row is pending a lakehouse E2E rerun. |
 
 ### Dual-world honesty
 
-| Track | Purpose | Published article ladder? |
+| Track | Purpose | Published ladder? |
 |-------|---------|---------------------------|
-| **Synthetic** (`CHURN_DATA_SOURCE=synthetic`, seed 42) | Reproducible Medium / model-card numbers (LogReg ~0.872 … Optuna XGB ~0.870) | **Yes** — keep `models/*` committed from this path |
+| **Synthetic** (`CHURN_DATA_SOURCE=synthetic`, seed 42) | Reproducible model-card numbers (LogReg ~0.872 … Optuna XGB ~0.870) | **Yes** — keep `models/*` committed from this path |
 | **Lakehouse** (`CHURN_DATA_SOURCE=lakehouse` or `auto` with exports present) | Real SoR path: bronze→silver→gold→Radar | **No** — retrain locally; do **not** overwrite committed `models/metrics.json` when publishing articles |
 
 CI pins `CHURN_DATA_SOURCE=synthetic` so PRs stay deterministic.
 
-Machine-readable summary and committed source of truth: [`results/lakehouse-e2e-summary.json`](../../results/lakehouse-e2e-summary.json). Full lakehouse `metrics.json` / joblibs land under ignored `artifacts/lakehouse_run/` (`RETENTION_RADAR_ARTIFACT_DIR`); they are not published and do not replace committed `models/`.
+Machine-readable summary and committed source of truth: [`results/lakehouse_e2e_summary.json`](../../results/lakehouse_e2e_summary.json). Full lakehouse `metrics.json` / joblibs land under ignored `artifacts/lakehouse_run/` (`RETENTION_RADAR_ARTIFACT_DIR`); they are not published and do not replace committed `models/`.
 

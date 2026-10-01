@@ -1,6 +1,6 @@
-# Start here — Retention Radar teaching trilogy
+# Start here: Retention Radar
 
-Public FOSS path for the Medium / DET series. **Clone two public repos, run one synthetic command.** Do **not** clone any private article workspace.
+**Clone two public repos, run one synthetic command.**
 
 ## 1. Clone
 
@@ -20,9 +20,9 @@ CHURN_DATA_SOURCE=synthetic ./scripts/run_all.sh
 
 Expect Santosh: raw ≈ **0.043** → calibrated ≈ **0.016** → band **low** → HITL **monitor** (`auto_action: none`).
 
-Cite [`models/metrics.json`](../../models/metrics.json) · [results/BENCHMARKS.md](../../results/BENCHMARKS.md).
+Cite [`models/metrics.json`](../../models/metrics.json) · [results/benchmarks.md](../../results/benchmarks.md).
 
-Verify the whole trilogy locally in one command (reproduce + tests + CLI/API/UI + lakehouse, committed files untouched):
+Verify the whole project locally in one command (reproduce + tests + CLI/API/UI + lakehouse, committed files untouched):
 
 ```bash
 make e2e-local   # picks up ../local-data-lakehouse automatically
@@ -36,7 +36,7 @@ Needs the lakehouse checkout beside this repo (or pass the path):
 ./scripts/run_lakehouse_e2e.sh ../local-data-lakehouse
 ```
 
-Lakehouse train/eval writes **only** under `artifacts/lakehouse_run/` (`RETENTION_RADAR_ARTIFACT_DIR`). Committed `models/` and `docs/MODEL_CARD.md` stay the published synthetic serve bundle. Dual-world cite: [`results/lakehouse-e2e-summary.json`](../../results/lakehouse-e2e-summary.json).
+Lakehouse train/eval writes **only** under `artifacts/lakehouse_run/` (`RETENTION_RADAR_ARTIFACT_DIR`). Committed `models/` and `docs/model-card.md` stay the published synthetic serve bundle. Dual-world cite: [`results/lakehouse_e2e_summary.json`](../../results/lakehouse_e2e_summary.json).
 
 
 ## 3b. Optional FOSS production-shaped path (local)
@@ -55,7 +55,7 @@ Append a HITL review-log row (predict → act):
 
 ```bash
 python -m retention_radar.cli.hitl_log \
-  --from-packet artifacts/santosh_decision_packet.json \
+  --from-packet artifacts/example_decision_packet.json \
   --reviewer you --action-taken monitor --notes "ok"
 ```
 
@@ -72,7 +72,7 @@ Thin local FastAPI (teaching-only, **no auth**). Preferred route `POST /v1/churn
 
 ```bash
 uvicorn retention_radar.serving.api:app --app-dir src --port 8000
-# curl -s localhost:8000/v1/churn/score -H 'content-type: application/json' -d @data/raw/santosh_shinde.json
+# curl -s localhost:8000/v1/churn/score -H 'content-type: application/json' -d @data/raw/example_account.json
 ```
 
 ## 4. UI / live demo
@@ -82,11 +82,7 @@ make ui   # streamlit run app/streamlit_app.py — loads committed models only (
 ```
 
 **Live demo:** TBD — Streamlit Community Cloud / HF Space  
-(Exact deploy steps when ready: [DEPLOY_LATER.md](DEPLOY_LATER.md); full free-platform map: [e2e-free-platforms.md](e2e-free-platforms.md))
-
-## 5. Articles
-
-Narrative articles live in a **separate internal** workspace. This public repo is code + benchmarks + results only — never a private clone instruction for readers.
+(Exact deploy steps when ready: [deploy-later.md](deploy-later.md); full free-platform map: [e2e-free-platforms.md](e2e-free-platforms.md))
 
 ## See also (related teaching repos)
 

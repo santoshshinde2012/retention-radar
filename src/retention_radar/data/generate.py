@@ -249,7 +249,7 @@ def inject_santosh(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def main(n_users: int | None = None) -> None:
-    """Write users.csv + santosh_shinde.json.
+    """Write users.csv + example_account.json.
 
     Size resolution (first wins):
       1. explicit ``n_users`` arg

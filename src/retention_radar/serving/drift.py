@@ -1,8 +1,19 @@
-"""Lite feature-drift check vs train reference stats (FOSS demo).
+"""Feature-drift check vs train reference stats (FOSS demo).
 
 Compares a new CSV (default: ``resolve_users_csv()``, so ``CHURN_DATA_SOURCE``
 picks lakehouse gold or synthetic ``data/raw/users.csv``) to
-``models/feature_stats.json`` using absolute mean z-scores per feature.
+``models/feature_stats.json``. Per feature it reports:
+
+- **PSI** (population stability index) over training-decile bins stored in
+  ``feature_stats.json["<col>"]["psi_bins"]``. Severity is driven by PSI with the
+  usual rule of thumb: < 0.10 stable, 0.10–0.25 moderate shift, ≥ 0.25 major shift.
+- **SMD** (standardised mean difference): ``|cur_mean - ref_mean| / ref_std``, i.e.
+  how many training standard deviations the mean moved. An effect size, not a test.
+- **mean z (SE)**: the same shift divided by the standard error
+  ``ref_std / sqrt(n_current)``. With thousands of rows this flags tiny, harmless
+  shifts, so it is reported for context and never drives severity.
+
+Older ``feature_stats.json`` files without ``psi_bins`` fall back to SMD.
 
 Exit codes
 ----------
@@ -12,7 +23,7 @@ and severity is ``severe``. Gate CI / pipelines with ``--strict``.
 Examples::
 
     python -m retention_radar.cli.drift_check
-    python -m retention_radar.cli.drift_check --strict --z-threshold 3.0
+    python -m retention_radar.cli.drift_check --strict
     python -m retention_radar.cli.drift_check --csv data/external/churn_user_features.csv
 """
 
@@ -35,6 +46,16 @@ def load_feature_stats(path: Path) -> dict:
         return json.load(f)
 
 
+def load_current_values(csv_path: Path) -> dict[str, list[float]]:
+    """Numeric values per model feature from the current CSV (NaNs dropped)."""
+    encoded = encode_plan_tier(pd.read_csv(csv_path))
+    return {
+        col: pd.to_numeric(encoded[col], errors="coerce").dropna().to_numpy()
+        for col in config.MODEL_FEATURE_COLUMNS
+        if col in encoded.columns
+    }
+
+
 def compute_current_stats(csv_path: Path) -> dict[str, dict]:
     df = pd.read_csv(csv_path)
     encoded = encode_plan_tier(df)
@@ -51,15 +72,47 @@ def compute_current_stats(csv_path: Path) -> dict[str, dict]:
     return out
 
 
+PSI_MODERATE = 0.10
+PSI_MAJOR = 0.25
+PSI_EPS = 1e-4
+
+
+def population_stability_index(values, edges: list[float], ref_frac: list[float]) -> float:
+    """PSI of ``values`` against training bins (``edges`` + exact training shares)."""
+    import numpy as np
+
+    arr = np.asarray(values, dtype=float)
+    if arr.size == 0:
+        return float("nan")
+    idx = np.searchsorted(np.asarray(edges, dtype=float), arr, side="right")
+    cur = np.bincount(idx, minlength=len(edges) + 1) / arr.size
+    ref = np.asarray(ref_frac, dtype=float)
+    cur = np.clip(cur, PSI_EPS, None)
+    ref = np.clip(ref, PSI_EPS, None)
+    return float(np.sum((cur - ref) * np.log(cur / ref)))
+
+
 def compare_stats(
     reference: dict,
     current: dict,
-    z_threshold: float = 3.0,
+    smd_threshold: float = 0.5,
+    current_values: dict | None = None,
 ) -> dict:
-    """Per-feature abs mean z-score vs train reference (PSI-lite proxy)."""
+    """Per-feature PSI (+ SMD and SE-based z for context) vs the train reference.
+
+    ``current_values`` maps feature → array of current values; it is needed for PSI.
+    Without it (or without ``psi_bins`` in the reference) severity falls back to SMD.
+    """
+    import math
+
     features = []
+    use_psi = current_values is not None and all(
+        "psi_bins" in reference.get(c, {}) for c in config.MODEL_FEATURE_COLUMNS if c in reference
+    )
     n_flagged = 0
-    max_abs_z = 0.0
+    n_major = 0
+    max_psi = 0.0
+    max_smd = 0.0
     for col in config.MODEL_FEATURE_COLUMNS:
         if col not in reference or col not in current:
             continue
@@ -68,57 +121,89 @@ def compare_stats(
         ref_mean = float(ref["mean"])
         ref_std = float(ref.get("std") or 0.0)
         cur_mean = float(cur["mean"])
+        n_cur = int(cur.get("count") or 0)
+        delta = cur_mean - ref_mean
         denom = ref_std if ref_std > 1e-9 else 1.0
-        z = (cur_mean - ref_mean) / denom
-        abs_z = abs(z)
-        flagged = abs_z >= z_threshold
-        if flagged:
-            n_flagged += 1
-        max_abs_z = max(max_abs_z, abs_z)
-        features.append(
-            {
-                "feature": col,
-                "ref_mean": ref_mean,
-                "ref_std": ref_std,
-                "cur_mean": cur_mean,
-                "cur_std": float(cur["std"]),
-                "abs_mean_z": round(abs_z, 4),
-                "mean_delta": round(cur_mean - ref_mean, 6),
-                "flagged": flagged,
-            }
-        )
-    features.sort(key=lambda r: r["abs_mean_z"], reverse=True)
+        smd = abs(delta) / denom
+        se = denom / math.sqrt(n_cur) if n_cur > 0 else float("nan")
+        mean_z_se = abs(delta) / se if n_cur > 0 else float("nan")
+        row = {
+            "feature": col,
+            "ref_mean": ref_mean,
+            "ref_std": ref_std,
+            "cur_mean": cur_mean,
+            "cur_std": float(cur["std"]),
+            "n_current": n_cur,
+            "mean_delta": round(delta, 6),
+            "smd": round(smd, 4),
+            "mean_z_se": round(mean_z_se, 2) if math.isfinite(mean_z_se) else None,
+        }
+        if use_psi:
+            bins = ref["psi_bins"]
+            psi = population_stability_index(current_values[col], bins["edges"], bins["ref_frac"])
+            row["psi"] = round(psi, 4)
+            flagged = psi >= PSI_MODERATE
+            n_major += int(psi >= PSI_MAJOR)
+            max_psi = max(max_psi, psi)
+        else:
+            flagged = smd >= smd_threshold
+        row["flagged"] = bool(flagged)
+        n_flagged += int(flagged)
+        max_smd = max(max_smd, smd)
+        features.append(row)
+
+    key = "psi" if use_psi else "smd"
+    features.sort(key=lambda r: r[key], reverse=True)
     severity = "ok"
-    if n_flagged >= 5 or max_abs_z >= z_threshold * 2:
-        severity = "severe"
-    elif n_flagged >= 1:
-        severity = "mild"
+    if use_psi:
+        if n_major >= 1 or n_flagged >= 5:
+            severity = "severe"
+        elif n_flagged >= 1:
+            severity = "mild"
+        note = (
+            f"PSI over training-decile bins (moderate ≥ {PSI_MODERATE}, major ≥ {PSI_MAJOR}); "
+            "SMD and SE-based mean z are context only. A teaching monitor, not "
+            "Evidently / Great Expectations."
+        )
+    else:
+        if n_flagged >= 5 or max_smd >= smd_threshold * 2:
+            severity = "severe"
+        elif n_flagged >= 1:
+            severity = "mild"
+        note = (
+            "No psi_bins in feature_stats.json (retrain to add them): severity from "
+            f"standardised mean difference ≥ {smd_threshold}."
+        )
     return {
+        "method": "psi" if use_psi else "smd",
         "n_features_compared": len(features),
         "n_flagged": n_flagged,
-        "max_abs_mean_z": round(max_abs_z, 4),
-        "z_threshold": z_threshold,
+        "n_major": n_major,
+        "max_psi": round(max_psi, 4) if use_psi else None,
+        "max_smd": round(max_smd, 4),
+        "psi_thresholds": {"moderate": PSI_MODERATE, "major": PSI_MAJOR},
+        "smd_threshold": smd_threshold,
         "severity": severity,
-        "note": (
-            "Lite abs-mean-z vs train feature_stats.json — not a production "
-            "PSI / Evidently / Great Expectations monitor."
-        ),
+        "note": note,
         "features": features,
     }
 
 
 def print_report(report: dict) -> None:
+    head = (
+        f"max PSI={report['max_psi']}" if report["method"] == "psi" else f"max SMD={report['max_smd']}"
+    )
     print(
-        f"Drift check: severity={report['severity']}  "
-        f"flagged={report['n_flagged']}/{report['n_features_compared']}  "
-        f"max|z|={report['max_abs_mean_z']}  threshold={report['z_threshold']}"
+        f"Drift check ({report['method']}): severity={report['severity']}  "
+        f"flagged={report['n_flagged']}/{report['n_features_compared']}  {head}"
     )
     print(report["note"])
-    print("Top |z| features:")
+    print("Top features:")
     for row in report["features"][:8]:
         flag = " *" if row["flagged"] else ""
+        psi = f"PSI={row['psi']:.3f}  " if "psi" in row else ""
         print(
-            f"  {row['feature']}: |z|={row['abs_mean_z']:.3f}  "
+            f"  {row['feature']}: {psi}SMD={row['smd']:.3f}  "
             f"ref_mean={row['ref_mean']:.4g}  cur_mean={row['cur_mean']:.4g}{flag}"
         )
 
@@ -140,7 +225,14 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help="Output drift report JSON",
     )
-    parser.add_argument("--z-threshold", type=float, default=3.0)
+    parser.add_argument(
+        "--smd-threshold",
+        "--z-threshold",  # deprecated alias: the old "z" was already a standardised mean difference
+        dest="smd_threshold",
+        type=float,
+        default=0.5,
+        help="SMD flag threshold, used only when feature_stats.json has no psi_bins",
+    )
     parser.add_argument(
         "--strict",
         action="store_true",
@@ -167,7 +259,12 @@ def main(argv: list[str] | None = None) -> int:
 
     reference = load_feature_stats(stats_path)
     current = compute_current_stats(csv_path)
-    report = compare_stats(reference, current, z_threshold=args.z_threshold)
+    report = compare_stats(
+        reference,
+        current,
+        smd_threshold=args.smd_threshold,
+        current_values=load_current_values(csv_path),
+    )
     report["reference_path"] = str(stats_path)
     report["csv_path"] = str(csv_path)
 

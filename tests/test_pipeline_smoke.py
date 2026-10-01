@@ -41,7 +41,7 @@ def tiny_data(tmp_path, monkeypatch):
     schemas.mkdir(parents=True)
 
     users_csv = raw / "users.csv"
-    santosh_json = raw / "santosh_shinde.json"
+    santosh_json = raw / "example_account.json"
     model_path = models / "churn_xgb.joblib"
     calibrator_path = models / "calibrator.joblib"
     metrics_path = models / "metrics.json"

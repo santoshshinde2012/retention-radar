@@ -2,7 +2,7 @@
 
 Examples:
     python -m retention_radar.cli.infer --user santosh
-    python -m retention_radar.cli.infer --json data/raw/santosh_shinde.json
+    python -m retention_radar.cli.infer --json data/raw/example_account.json
 """
 
 from __future__ import annotations
@@ -27,7 +27,7 @@ def load_model_bundle(path: Path) -> dict:
     return joblib.load(path)
 
 
-# Back-compat alias: older notebooks / articles import ``load_payload``.
+# Back-compat alias: older notebooks and scripts import ``load_payload``.
 load_payload = load_model_bundle
 
 
@@ -40,12 +40,22 @@ def resolve_user_json(user: str | None, json_path: str | None) -> Path:
     raise SystemExit("Provide --user santosh or --json path/to/user.json")
 
 
+def load_threshold(path: Path | None = None) -> float:
+    """τ (``best_f1_threshold``) from metrics.json; 0.5 only if no metrics exist yet."""
+    p = path or config.METRICS_PATH
+    if not p.exists():
+        return 0.5
+    with open(p, encoding="utf-8") as f:
+        return float(json.load(f).get("best_f1_threshold", 0.5))
+
+
 def predict_user(
     user_dict: dict,
     model_bundle: dict,
     calibrator=None,
     top_k: int = 5,
     explain: bool = True,
+    threshold: float | None = None,
 ) -> dict:
     """Score one user through the transformer + classifier + optional calibrator.
 
@@ -67,7 +77,7 @@ def predict_user(
         "churn_probability": display,
         "churn_probability_raw": raw_proba,
         "churn_probability_calibrated": cal_proba,
-        "risk_band": risk_band(display),
+        "risk_band": risk_band(display, threshold if threshold is not None else load_threshold()),
         "top_features": top,
     }
 

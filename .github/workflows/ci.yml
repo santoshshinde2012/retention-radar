@@ -62,7 +62,7 @@ jobs:
   e2e-local:
     # Same one-command path a reader runs: reproduce the published seed-42 ladder
     # exactly, full pytest, every serve surface (CLI, live API, live Streamlit),
-    # lakehouse gold E2E vs results/lakehouse-e2e-summary.json, isolation check.
+    # lakehouse gold E2E vs results/lakehouse_e2e_summary.json, isolation check.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

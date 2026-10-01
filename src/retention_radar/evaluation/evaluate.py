@@ -109,7 +109,7 @@ def main() -> None:
             print(f"  {k}: {v:.4f}")
         else:
             print(f"  {k}: {v}")
-    print("\nClassification report (calibrated probs @ 0.5):")
+    print("\nClassification report (calibrated probs @ 0.5, for ladder comparison):")
     print(classification_report(y_test, y_pred, digits=3))
 
     fig, ax = plt.subplots(figsize=(6, 5))
@@ -120,15 +120,6 @@ def main() -> None:
     fig.savefig(roc_path, dpi=120)
     plt.close(fig)
     print(f"Saved {roc_path}")
-
-    fig, ax = plt.subplots(figsize=(5, 4))
-    ConfusionMatrixDisplay.from_predictions(y_test, y_pred, ax=ax, cmap="Blues")
-    ax.set_title("Confusion Matrix (threshold=0.5)")
-    cm_path = config.ARTIFACTS_DIR / "confusion_matrix.png"
-    fig.tight_layout()
-    fig.savefig(cm_path, dpi=120)
-    plt.close(fig)
-    print(f"Saved {cm_path}")
 
     fig, ax = plt.subplots(figsize=(6, 5))
     PrecisionRecallDisplay.from_predictions(y_test, y_prob, ax=ax)
@@ -191,12 +182,35 @@ def main() -> None:
     metrics["val_f1_at_threshold"] = sweep["best_f1"]
     metrics["best_f1_at_threshold"] = test_f1_at_tau
 
+    # Operating-point metrics at τ (what the queue actually does). The *_at_0.5
+    # keys above stay for comparison with the ladder, which reports @0.5.
+    y_pred_tau = (y_prob >= tau).astype(int)
+    metrics["test_at_tau"] = {
+        "threshold": tau,
+        "accuracy": float(accuracy_score(y_test, y_pred_tau)),
+        "precision": float(precision_score(y_test, y_pred_tau, zero_division=0)),
+        "recall": float(recall_score(y_test, y_pred_tau, zero_division=0)),
+        "f1": test_f1_at_tau,
+        "flagged": int(y_pred_tau.sum()),
+        "flagged_share": float(y_pred_tau.mean()),
+        "n_test": int(len(y_pred_tau)),
+    }
+
+    fig, ax = plt.subplots(figsize=(5, 4))
+    ConfusionMatrixDisplay.from_predictions(y_test, y_pred_tau, ax=ax, cmap="Blues")
+    ax.set_title(f"Confusion Matrix (τ={tau:.2f}, calibrated, test)")
+    cm_path = config.ARTIFACTS_DIR / "confusion_matrix.png"
+    fig.tight_layout()
+    fig.savefig(cm_path, dpi=120)
+    plt.close(fig)
+    print(f"Saved {cm_path}")
+
     prec, rec, _ = precision_recall_curve(y_test, y_prob)
     metrics["pr_curve_points"] = int(len(prec))
 
     plan_tiers_test = df.loc[X_test.index, "plan_tier"]
     slice_block = slice_metrics_by_plan_tier(
-        y_test, y_prob, plan_tiers_test, threshold=0.5
+        y_test, y_prob, plan_tiers_test, threshold=tau
     )
     print_slice_report(slice_block)
 
@@ -213,6 +227,14 @@ def main() -> None:
     out["val_f1_at_threshold"] = sweep["best_f1"]
     out["best_f1_at_threshold"] = test_f1_at_tau
     out["slice_metrics_by_plan_tier"] = slice_block
+    out["test_at_tau"] = metrics["test_at_tau"]
+    out["validation_reuse"] = (
+        "The 1,000-row validation split is used three times: Optuna model selection, "
+        "isotonic calibration and the τ sweep (XGBoost's eval_set only logs; there is "
+        "no early stopping). Validation metrics "
+        "(val AUC, val F1 at τ) are therefore optimistic; only test metrics are "
+        "reported as out-of-sample."
+    )
     with open(config.METRICS_PATH, "w", encoding="utf-8") as f:
         json.dump(out, f, indent=2)
     print(f"Updated {config.METRICS_PATH}")

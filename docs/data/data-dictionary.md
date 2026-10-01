@@ -80,7 +80,7 @@ Order used at train / infer time:
 
 ## Santosh Shinde — feature contract (inference)
 
-Payload: `data/raw/santosh_shinde.json` (no `churned`).
+Payload: `data/raw/example_account.json` (no `churned`).
 
 | Field | Example value |
 |-------|----------------|
@@ -109,13 +109,13 @@ Payload: `data/raw/santosh_shinde.json` (no `churned`).
 | `ide_plugin_sessions_last_30d` | 28 |
 | `seat_utilization` | 0.72 |
 
-See also [santosh-case-study.md](../case-study/santosh-case-study.md) and [single-record-checklist.md](../case-study/single-record-checklist.md).
+See also [example-account-case-study.md](../case-study/example-account-case-study.md) and [single-record-checklist.md](../case-study/single-record-checklist.md).
 
 
 ## Related reading
 
-- [ARCHITECTURE.md](../ARCHITECTURE.md) — SOLID package map
-- [MODEL_CARD.md](../MODEL_CARD.md)
-- [Santosh case study](../case-study/santosh-case-study.md)
+- [architecture.md](../architecture.md) — SOLID package map
+- [model-card.md](../model-card.md)
+- [Santosh case study](../case-study/example-account-case-study.md)
 - [Single-record checklist](../case-study/single-record-checklist.md)
 - [Data foundation / lakehouse](data-foundation-lakehouse.md)

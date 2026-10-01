@@ -27,9 +27,12 @@ def slice_metrics_by_plan_tier(
     y_true,
     y_prob,
     plan_tiers,
-    threshold: float = 0.5,
+    threshold: float,
 ) -> dict[str, Any]:
-    """Compute per-plan_tier test metrics.
+    """Compute per-plan_tier test metrics at the serving threshold τ.
+
+    ``threshold`` is required: pass ``best_f1_threshold`` so precision / recall
+    describe the queue the service actually builds (not an arbitrary 0.5 cut).
 
     Returns a dict suitable for ``metrics.json["slice_metrics_by_plan_tier"]``.
     """
@@ -78,7 +81,7 @@ def slice_metrics_by_plan_tier(
 
 
 def print_slice_report(slice_block: dict) -> None:
-    print("\nSlice metrics by plan_tier (educational — not a fairness audit):")
+    print(f"\nSlice metrics by plan_tier at τ={slice_block.get('threshold')} (educational, not a fairness audit):")
     print(f"  disclaimer: {slice_block.get('disclaimer')}")
     for tier, block in (slice_block.get("by_plan_tier") or {}).items():
         auc = block.get("roc_auc")
@@ -115,12 +118,12 @@ def main() -> None:
     calibrator = load_calibrator(config.CALIBRATOR_PATH)
     y_prob = calibrator.transform(y_prob_raw) if calibrator is not None else y_prob_raw
     plan_tiers_test = df.loc[X_test.index, "plan_tier"]
-    block = slice_metrics_by_plan_tier(y_test, y_prob, plan_tiers_test, threshold=0.5)
-    print_slice_report(block)
-
     out: dict = {}
     if config.METRICS_PATH.exists():
         out = json.loads(config.METRICS_PATH.read_text(encoding="utf-8"))
+    tau = float(out.get("best_f1_threshold", 0.5))
+    block = slice_metrics_by_plan_tier(y_test, y_prob, plan_tiers_test, threshold=tau)
+    print_slice_report(block)
     out["slice_metrics_by_plan_tier"] = block
     config.METRICS_PATH.write_text(json.dumps(out, indent=2), encoding="utf-8")
     print(f"Updated {config.METRICS_PATH}")

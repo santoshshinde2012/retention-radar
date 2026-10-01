@@ -139,7 +139,7 @@ def score_payloads(
     records: list[dict[str, Any]] = []
     for i, payload in enumerate(payloads):
         display = float(display_arr[i])
-        band = risk_band(display)
+        band = risk_band(display, threshold)
         records.append(
             {
                 "user_id": str(payload.get("user_id", "")),

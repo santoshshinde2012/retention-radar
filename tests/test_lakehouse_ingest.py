@@ -43,7 +43,7 @@ def test_resolve_prefers_external_when_present(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "LAKEHOUSE_FEATURES_CSV", ext / "churn_user_features.csv")
     monkeypatch.setattr(config, "LAKEHOUSE_SANTOSH_JSON", ext / "santosh_inference_record.json")
     monkeypatch.setattr(config, "USERS_CSV", raw / "users.csv")
-    monkeypatch.setattr(config, "SANTOSH_JSON", raw / "santosh_shinde.json")
+    monkeypatch.setattr(config, "SANTOSH_JSON", raw / "example_account.json")
     monkeypatch.setattr(config, "CHURN_DATA_SOURCE", "auto")
 
     (ext / "churn_user_features.csv").write_text("user_id\n1\n")

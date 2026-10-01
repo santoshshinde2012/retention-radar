@@ -114,7 +114,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--reference-packet",
-        default=str(config.PROJECT_ROOT / "results" / "santosh_decision_packet.sample.json"),
+        default=str(config.PROJECT_ROOT / "results" / "example_decision_packet.json"),
     )
     parser.add_argument("--tol", type=float, default=1e-9)
     args = parser.parse_args(argv)
@@ -135,7 +135,7 @@ def main(argv: list[str] | None = None) -> int:
     candidate = json.loads(cand_path.read_text(encoding="utf-8"))
     diffs = compare_metrics(reference, candidate, args.tol)
 
-    packet_path = art / "santosh_decision_packet.json"
+    packet_path = art / "example_decision_packet.json"
     ref_packet_path = Path(args.reference_packet)
     if packet_path.exists() and ref_packet_path.exists():
         diffs += compare_packets(

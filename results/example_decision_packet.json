@@ -72,67 +72,78 @@
       "value": 38.0,
       "percentile": 93.18,
       "population_median": 17.0,
-      "population_mean": 19.2144
+      "population_mean": 19.2144,
+      "source": "users_csv"
     },
     "engagement_trend": {
       "value": 0.9474,
       "percentile": 47.4,
       "population_median": 0.97265,
-      "population_mean": 0.94295092
+      "population_mean": 0.94295092,
+      "source": "users_csv"
     },
     "feature_adoption_score": {
       "value": 0.78,
       "percentile": 98.9,
       "population_median": 0.45565,
-      "population_mean": 0.44362986
+      "population_mean": 0.44362986,
+      "source": "users_csv"
     },
     "failed_requests_rate": {
       "value": 0.12,
       "percentile": 23.44,
       "population_median": 0.18425,
-      "population_mean": 0.18868332000000002
+      "population_mean": 0.18868332000000002,
+      "source": "users_csv"
     },
     "last_active_days_ago": {
       "value": 8.0,
       "percentile": 11.46,
       "population_median": 21.0,
-      "population_mean": 21.5846
+      "population_mean": 21.5846,
+      "source": "users_csv"
     },
     "spend_usd_last_30d": {
       "value": 189.0,
       "percentile": 92.3,
       "population_median": 27.98,
-      "population_mean": 81.94564799999999
+      "population_mean": 81.94564799999999,
+      "source": "users_csv"
     },
     "days_until_renewal": {
       "value": 21.0,
       "percentile": 6.06,
       "population_median": 180.0,
-      "population_mean": 180.3994
+      "population_mean": 180.3994,
+      "source": "users_csv"
     },
     "agent_runs_last_30d": {
       "value": 52.0,
       "percentile": 97.02,
       "population_median": 27.0,
-      "population_mean": 27.53
+      "population_mean": 27.53,
+      "source": "users_csv"
     },
     "ide_plugin_sessions_last_30d": {
       "value": 28.0,
       "percentile": 94.06,
       "population_median": 17.0,
-      "population_mean": 16.4322
+      "population_mean": 16.4322,
+      "source": "users_csv"
     },
     "seat_utilization": {
       "value": 0.72,
       "percentile": 78.7,
       "population_median": 0.5983,
-      "population_mean": 0.5922132999999999
+      "population_mean": 0.5922132999999999,
+      "source": "users_csv"
     },
     "nps_score": {
       "value": 7.0,
       "percentile": 48.82,
       "population_median": 7.1,
-      "population_mean": 6.9744600000000005
+      "population_mean": 6.9744600000000005,
+      "source": "users_csv"
     }
   },
   "hitl": {

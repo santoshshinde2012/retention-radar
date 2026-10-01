@@ -26,7 +26,7 @@ def seed_fingerprints():
         seed / "feature_stats.json",
     ]
     docs = [
-        config.DOCS_DIR / "MODEL_CARD.md",
+        config.DOCS_DIR / "model-card.md",
         config.DOCS_DIR / "data" / "data-dictionary.md",
     ]
     present = [p for p in files + docs if p.exists()]
@@ -43,7 +43,7 @@ def test_apply_artifact_dir_redirects_model_and_docs(tmp_path, seed_fingerprints
         assert config.ARTIFACTS_DIR == lake
         assert config.MODEL_PATH == lake / "churn_xgb.joblib"
         assert config.METRICS_PATH == lake / "metrics.json"
-        assert config.MODEL_CARD_PATH == lake / "MODEL_CARD.md"
+        assert config.MODEL_CARD_PATH == lake / "model-card.md"
         assert config.DATA_DICTIONARY_PATH == lake / "data-dictionary.md"
         assert config.SEED_MODELS_DIR == config.PROJECT_ROOT / "models"
 
@@ -52,7 +52,7 @@ def test_apply_artifact_dir_redirects_model_and_docs(tmp_path, seed_fingerprints
         config.METRICS_PATH.write_text('{"source":"lakehouse"}\n', encoding="utf-8")
         config.MODEL_CARD_PATH.write_text("# lakehouse card\n", encoding="utf-8")
         config.DATA_DICTIONARY_PATH.write_text("# lakehouse dict\n", encoding="utf-8")
-        (lake / "santosh_decision_packet.json").write_text("{}\n", encoding="utf-8")
+        (lake / "example_decision_packet.json").write_text("{}\n", encoding="utf-8")
 
         assert config.MODEL_PATH.exists()
         assert not (config.SEED_MODELS_DIR / "churn_xgb.joblib").samefile(config.MODEL_PATH)
@@ -85,13 +85,13 @@ def test_restore_seed_paths_after_override(tmp_path):
     config.apply_artifact_dir("")
     assert config.MODELS_DIR == config.SEED_MODELS_DIR
     assert config.MODEL_PATH == config.SEED_MODELS_DIR / "churn_xgb.joblib"
-    assert config.MODEL_CARD_PATH == config.DOCS_DIR / "MODEL_CARD.md"
+    assert config.MODEL_CARD_PATH == config.DOCS_DIR / "model-card.md"
     assert config.ARTIFACTS_DIR == config.PROJECT_ROOT / "artifacts"
 
 
 def test_run_all_packet_follows_artifact_dir():
     """run_all.sh must not pin the Santosh packet to artifacts/ — lakehouse E2E
-    reads it from RETENTION_RADAR_ARTIFACT_DIR for results/lakehouse-e2e-summary.json."""
+    reads it from RETENTION_RADAR_ARTIFACT_DIR for results/lakehouse_e2e_summary.json."""
     script = (config.PROJECT_ROOT / "scripts" / "run_all.sh").read_text(encoding="utf-8")
     packet_lines = [
         ln for ln in script.splitlines()

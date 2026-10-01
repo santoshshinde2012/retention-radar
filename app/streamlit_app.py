@@ -356,7 +356,7 @@ def tab_decision(packet: dict, user_dict: dict, top):
 
     st.markdown(
         "Docs: [single-record checklist](../docs/case-study/single-record-checklist.md) · "
-        "[Santosh case study](../docs/case-study/santosh-case-study.md) · "
+        "[Santosh case study](../docs/case-study/example-account-case-study.md) · "
         "[use cases](../data/use_cases/README.md)"
     )
     with st.expander("Full decision packet JSON"):
@@ -406,10 +406,10 @@ Beginner tip: **AUC** ranks users; **Brier** checks if probabilities are honest;
             f"(raw: {metrics.get('brier_raw_test', 'n/a')})"
         )
     st.markdown(
-        "Docs: [model card](../docs/MODEL_CARD.md) · "
+        "Docs: [model card](../docs/model-card.md) · "
         "[data dictionary](../docs/data/data-dictionary.md) · "
-        "[architecture](../docs/ARCHITECTURE.md) · "
-        "[Santosh case](../docs/case-study/santosh-case-study.md)"
+        "[architecture](../docs/architecture.md) · "
+        "[Santosh case](../docs/case-study/example-account-case-study.md)"
     )
 
 
@@ -430,7 +430,7 @@ def tab_benchmarks(metrics: dict):
         ("pr_curve.png", "Precision–Recall"),
         ("calibration_curve.png", "Reliability diagram"),
         ("threshold_f1.png", "Threshold vs F1 / precision / recall"),
-        ("confusion_matrix.png", "Confusion matrix @ 0.5"),
+        ("confusion_matrix.png", "Confusion matrix at τ"),
     ]:
         path = ARTIFACTS_DIR / fname
         if path.exists():

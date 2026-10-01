@@ -26,14 +26,13 @@ PROCESSED_DIR = DATA_DIR / "processed"  # CDS parity (features usually in-memory
 SEED_MODELS_DIR = PROJECT_ROOT / "models"
 DOCS_DIR = PROJECT_ROOT / "docs"
 RESEARCH_DIR = DOCS_DIR  # compat alias (teaching docs live under docs/)
-ARTICLES_DIR = PROJECT_ROOT / "articles"  # unused in this teaching repo
 SCHEMAS_DIR = PROJECT_ROOT / "configs" / "schemas"
 RESULTS_DIR = PROJECT_ROOT / "results"
 RESULTS_PLOTS_DIR = RESULTS_DIR / "plots"
 
 # Key files (data paths are not redirected by artifact override)
 USERS_CSV = RAW_DIR / "users.csv"
-SANTOSH_JSON = RAW_DIR / "santosh_shinde.json"
+SANTOSH_JSON = RAW_DIR / "example_account.json"
 LAKEHOUSE_FEATURES_CSV = EXTERNAL_DIR / "churn_user_features.csv"
 LAKEHOUSE_SANTOSH_JSON = EXTERNAL_DIR / "santosh_inference_record.json"
 # auto | synthetic | lakehouse — auto prefers external lakehouse exports when present
@@ -56,7 +55,7 @@ def apply_artifact_dir(artifact_dir: str | Path | None = None) -> Path | None:
 
     When ``RETENTION_RADAR_ARTIFACT_DIR`` (or ``artifact_dir``) is set, train /
     evaluate / docs_gen write under that directory instead of committed
-    ``models/`` and published ``docs/MODEL_CARD.md`` / data-dictionary.
+    ``models/`` and published ``docs/model-card.md`` / data-dictionary.
     Pass ``None`` with env unset (or empty string) to restore seed defaults.
 
     Returns the resolved artifact root, or ``None`` when using seed paths.
@@ -74,13 +73,13 @@ def apply_artifact_dir(artifact_dir: str | Path | None = None) -> Path | None:
     if root is None:
         MODELS_DIR = SEED_MODELS_DIR
         ARTIFACTS_DIR = PROJECT_ROOT / "artifacts"
-        MODEL_CARD_PATH = DOCS_DIR / "MODEL_CARD.md"
+        MODEL_CARD_PATH = DOCS_DIR / "model-card.md"
         DATA_DICTIONARY_PATH = DOCS_DIR / "data" / "data-dictionary.md"
     else:
         root.mkdir(parents=True, exist_ok=True)
         MODELS_DIR = root
         ARTIFACTS_DIR = root
-        MODEL_CARD_PATH = root / "MODEL_CARD.md"
+        MODEL_CARD_PATH = root / "model-card.md"
         DATA_DICTIONARY_PATH = root / "data-dictionary.md"
 
     MODEL_PATH = MODELS_DIR / "churn_xgb.joblib"
@@ -109,7 +108,7 @@ def runtime_log_dir() -> Path:
     """
     override = os.environ.get("RETENTION_RADAR_LOG_DIR", "").strip()
     return Path(override).expanduser().resolve() if override else ARTIFACTS_DIR
-MODEL_CARD_PATH = DOCS_DIR / "MODEL_CARD.md"
+MODEL_CARD_PATH = DOCS_DIR / "model-card.md"
 DATA_DICTIONARY_PATH = DOCS_DIR / "data" / "data-dictionary.md"
 apply_artifact_dir()
 

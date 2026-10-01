@@ -59,7 +59,7 @@ python -m retention_radar.cli.drift_check || echo "drift_check skipped/failed (n
 echo "==> single_record santosh decision packet"
 # No --out: default resolves to config.ARTIFACTS_DIR, so RETENTION_RADAR_ARTIFACT_DIR
 # (lakehouse E2E) keeps its packet under artifacts/lakehouse_run/ instead of
-# overwriting the synthetic artifacts/santosh_decision_packet.json.
+# overwriting the synthetic artifacts/example_decision_packet.json.
 python -m retention_radar.cli.single_record --user santosh
 
 echo "==> done (Santosh decision packet written)"

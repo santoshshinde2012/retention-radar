@@ -4,7 +4,7 @@ Aligned with [cookiecutter-data-science](https://cookiecutter-data-science.drive
 
 | Layer | Path | Role |
 |-------|------|------|
-| **raw** | `raw/` | Immutable inputs: Santosh hero JSON (`santosh_shinde.json`), generated `users.csv` (gitignored) |
+| **raw** | `raw/` | Immutable inputs: Santosh hero JSON (`example_account.json`), generated `users.csv` (gitignored) |
 | **interim** | `interim/` | Intermediate transforms (empty in teaching path; CDS parity) |
 | **processed** | `processed/` | Model-ready tables if you materialize them locally (empty by default; features built in-memory) |
 | **external** | `external/` | Third-party / lakehouse gold sync (`churn_user_features.csv`, `santosh_inference_record.json`) |
