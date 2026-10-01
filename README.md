@@ -18,10 +18,10 @@ Teaching trilogy hub (public FOSS only):
 
 1. Clone **[retention-radar](https://github.com/santoshshinde2012/retention-radar)** + **[local-data-lakehouse](https://github.com/santoshshinde2012/local-data-lakehouse)**
 2. One synthetic command: `CHURN_DATA_SOURCE=synthetic ./scripts/run_all.sh`
-3. Optional lakehouse: `./scripts/run_lakehouse_e2e.sh ../local-data-lakehouse` (trains under `artifacts/lakehouse_run/` — committed `models/` untouched; refreshes `results/lakehouse-e2e-summary.json`)
-4. **Live demo:** TBD — Streamlit Community Cloud / HF Space ([deploy later](docs/guides/DEPLOY_LATER.md))
+3. Optional lakehouse: `./scripts/run_lakehouse_e2e.sh ../local-data-lakehouse` (trains under `artifacts/lakehouse_run/` — committed `models/` untouched; refreshes `results/lakehouse_e2e_summary.json`)
+4. **Live demo:** TBD — Streamlit Community Cloud / HF Space ([deploy later](docs/guides/deploy-later.md))
 
-Full map: [docs/guides/START_HERE.md](docs/guides/START_HERE.md). Do **not** clone any private article workspace.
+Full map: [docs/guides/start-here.md](docs/guides/start-here.md). Do **not** clone any private article workspace.
 
 ## What this is
 
@@ -34,7 +34,7 @@ Full map: [docs/guides/START_HERE.md](docs/guides/START_HERE.md). Do **not** clo
 
 **One-record example (seed 42):** raw **0.043** → calibrated **0.016** → band **low** → HITL **monitor**.
 
-**Honest ladder (test AUC):** LogReg / CatBoost **0.872** · Optuna XGB **0.870** · RF **0.868** · LightGBM **0.865**. Serving hero = **calibrated XGBoost**. Full tables: [`models/metrics.json`](models/metrics.json) · [results/BENCHMARKS.md](results/BENCHMARKS.md).
+**Honest ladder (test AUC):** LogReg / CatBoost **0.872** · Optuna XGB **0.870** · RF **0.868** · LightGBM **0.865**. Serving hero = **calibrated XGBoost**. Full tables: [`models/metrics.json`](models/metrics.json) · [results/benchmarks.md](results/benchmarks.md).
 
 ---
 
@@ -88,14 +88,14 @@ Then:
 | Step | Command / file |
 |------|----------------|
 | Cite metrics | [`models/metrics.json`](models/metrics.json) |
-| Read benchmarks | [results/BENCHMARKS.md](results/BENCHMARKS.md) |
+| Read benchmarks | [results/benchmarks.md](results/benchmarks.md) |
 | Score Santosh | `make infer` |
 | Walk every use case | `make use-cases` — [data/use_cases/](data/use_cases/README.md): weekly batch → ranked queue (+ rejects) → packets → held records → reviews → day-30 outcomes |
 | Batch scores | `python -m retention_radar.cli.batch_score --csv data/raw/users.csv` → ranked queue + `*_rejected.csv` (lakehouse gold after a sync: `--csv data/external/churn_user_features.csv`) |
 | HITL outcomes | after `make use-cases`: `python -m retention_radar.cli.hitl_outcomes --log artifacts/use_cases/hitl_review_log.csv --labels data/use_cases/labels_day30.csv` |
 | Thin local API | `uvicorn retention_radar.serving.api:app --app-dir src` → `POST /v1/churn/score`, `/v1/churn/batch`, `/v1/churn/reviews` |
 | Open UI | `make ui` (committed models only — no fit on load) |
-| Live demo | TBD — Streamlit Community Cloud / HF Space ([DEPLOY_LATER.md](docs/guides/DEPLOY_LATER.md)) |
+| Live demo | TBD — Streamlit Community Cloud / HF Space ([deploy-later.md](docs/guides/deploy-later.md)) |
 | Run tests | `make test` |
 | Verify everything locally | `make e2e-local` (~3 min on a laptop CPU; add the lakehouse by cloning it beside this repo) |
 
@@ -141,7 +141,7 @@ uvicorn retention_radar.serving.api:app --app-dir src   # POST /v1/churn/score
 | **Lakehouse gold** | `./scripts/run_lakehouse_e2e.sh /path/to/local-data-lakehouse` | Writes under `artifacts/lakehouse_run/` only (`RETENTION_RADAR_ARTIFACT_DIR`) |
 | **Sync only** | `./scripts/sync_lakehouse_exports.sh …/data/export` | No retrain |
 
-> **Isolation:** Lakehouse E2E sets `RETENTION_RADAR_ARTIFACT_DIR=artifacts/lakehouse_run` so train/eval/docs_gen never dirty committed `models/` or published `docs/MODEL_CARD.md`. Dual-world cite: [`results/lakehouse-e2e-summary.json`](results/lakehouse-e2e-summary.json).
+> **Isolation:** Lakehouse E2E sets `RETENTION_RADAR_ARTIFACT_DIR=artifacts/lakehouse_run` so train/eval/docs_gen never dirty committed `models/` or published `docs/model-card.md`. Dual-world cite: [`results/lakehouse_e2e_summary.json`](results/lakehouse_e2e_summary.json).
 
 Details: [docs/data/data-foundation-lakehouse.md](docs/data/data-foundation-lakehouse.md)
 
@@ -164,7 +164,7 @@ retention-radar/
 └── tests/
 ```
 
-Full map: [docs/FOLDER_STRUCTURE.md](docs/FOLDER_STRUCTURE.md)
+Full map: [docs/folder-structure.md](docs/folder-structure.md)
 
 ---
 
@@ -172,13 +172,13 @@ Full map: [docs/FOLDER_STRUCTURE.md](docs/FOLDER_STRUCTURE.md)
 
 | Doc | Purpose |
 |-----|---------|
-| [results/BENCHMARKS.md](results/BENCHMARKS.md) | Ladder, calibration, latency |
-| [results/SANTOSH_ANALYSIS.md](results/SANTOSH_ANALYSIS.md) | Single-record outcome |
-| [docs/MODEL_CARD.md](docs/MODEL_CARD.md) | Intended use + metrics |
-| [docs/guides/START_HERE.md](docs/guides/START_HERE.md) | Trilogy hub: clone two repos → one command |
-| [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) | Short walkthrough |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Train ≠ serve design |
-| [docs/guides/ALGORITHM_LANDSCAPE.md](docs/guides/ALGORITHM_LANDSCAPE.md) | What we use vs defer |
+| [results/benchmarks.md](results/benchmarks.md) | Ladder, calibration, latency |
+| [results/example-account-analysis.md](results/example-account-analysis.md) | Single-record outcome |
+| [docs/model-card.md](docs/model-card.md) | Intended use + metrics |
+| [docs/guides/start-here.md](docs/guides/start-here.md) | Trilogy hub: clone two repos → one command |
+| [docs/getting-started.md](docs/getting-started.md) | Short walkthrough |
+| [docs/architecture.md](docs/architecture.md) | Train ≠ serve design |
+| [docs/guides/algorithm-landscape.md](docs/guides/algorithm-landscape.md) | What we use vs defer |
 
 ---
 

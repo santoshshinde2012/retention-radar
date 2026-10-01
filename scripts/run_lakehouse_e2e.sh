@@ -5,7 +5,7 @@
 #
 # Isolation: sets RETENTION_RADAR_ARTIFACT_DIR=artifacts/lakehouse_run so train /
 # evaluate / docs_gen / packets NEVER overwrite committed seed-42 models/ or
-# published docs/MODEL_CARD.md / data-dictionary.md.
+# published docs/model-card.md / data-dictionary.md.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -41,7 +41,7 @@ echo "==> [radar] sync exports"
 ./scripts/sync_lakehouse_exports.sh "$LAKE/data/export"
 
 echo "==> [radar] full pipeline on lakehouse gold → ${RETENTION_RADAR_ARTIFACT_DIR}"
-echo "    (committed models/ + docs/MODEL_CARD.md left untouched)"
+echo "    (committed models/ + docs/model-card.md left untouched)"
 CHURN_DATA_SOURCE=lakehouse ./scripts/run_all.sh
 
 # Dual-world cite: refresh committed summary from this isolated run.
@@ -61,8 +61,8 @@ def _r4(x):
 
 art = Path("artifacts/lakehouse_run")
 metrics_path = art / "metrics.json"
-packet_path = art / "santosh_decision_packet.json"
-summary_path = Path(os.environ.get("LAKEHOUSE_SUMMARY_PATH", "results/lakehouse-e2e-summary.json"))
+packet_path = art / "example_decision_packet.json"
+summary_path = Path(os.environ.get("LAKEHOUSE_SUMMARY_PATH", "results/lakehouse_e2e_summary.json"))
 
 metrics = {}
 if metrics_path.exists():
@@ -111,7 +111,7 @@ summary = {
     "artifact_dir": str(art),
     "note": (
         "Lakehouse E2E writes only under artifacts/lakehouse_run/ via "
-        "RETENTION_RADAR_ARTIFACT_DIR. Committed models/ + docs/MODEL_CARD.md "
+        "RETENTION_RADAR_ARTIFACT_DIR. Committed models/ + docs/model-card.md "
         "are the published synthetic seed-42 ladder and must not be replaced."
     ),
 }

@@ -13,7 +13,7 @@
       "title": "Steady power user (Santosh)",
       "story": "On the pro plan 420 days, adoption 0.78, renewing in 21 days. 12% failed requests and 2 tickets in 90 days: friction the model does not worry about.",
       "source": {
-        "dataset": "data/raw/santosh_shinde.json",
+        "dataset": "data/raw/example_account.json",
         "split": "hero (injected)"
       },
       "expected": {

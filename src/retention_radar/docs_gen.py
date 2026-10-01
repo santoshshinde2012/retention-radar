@@ -158,7 +158,7 @@ def write_data_dictionary(path: Path | None = None) -> Path:
             "",
             "## Santosh Shinde — feature contract (inference)",
             "",
-            "Payload: `data/raw/santosh_shinde.json` (no `churned`).",
+            "Payload: `data/raw/example_account.json` (no `churned`).",
             "",
             "| Field | Example value |",
             "|-------|----------------|",
@@ -167,7 +167,7 @@ def write_data_dictionary(path: Path | None = None) -> Path:
             lines.append(f"| `{k}` | {v} |")
         lines += [
             "",
-            "See also [santosh-case-study.md](../case-study/santosh-case-study.md) and "
+            "See also [example-account-case-study.md](../case-study/example-account-case-study.md) and "
             "[single-record-checklist.md](../case-study/single-record-checklist.md).",
             "",
         ]
@@ -178,9 +178,9 @@ def write_data_dictionary(path: Path | None = None) -> Path:
         "",
         "## Related reading",
         "",
-        "- [ARCHITECTURE.md](../ARCHITECTURE.md) — SOLID package map",
-        "- [MODEL_CARD.md](../MODEL_CARD.md)",
-        "- [Santosh case study](../case-study/santosh-case-study.md)",
+        "- [architecture.md](../architecture.md) — SOLID package map",
+        "- [model-card.md](../model-card.md)",
+        "- [Santosh case study](../case-study/example-account-case-study.md)",
         "- [Single-record checklist](../case-study/single-record-checklist.md)",
         "- [Data foundation / lakehouse](data-foundation-lakehouse.md)",
         "",
@@ -363,13 +363,13 @@ def write_model_card(metrics: dict | None = None, path: Path | None = None) -> P
         "",
         "## Related reading",
         "",
-        "- [ARCHITECTURE.md](ARCHITECTURE.md) — SOLID package map",
+        "- [architecture.md](architecture.md) — SOLID package map",
         "- [data-dictionary.md](data/data-dictionary.md)",
-        "- [BEST_PRACTICES.md](guides/BEST_PRACTICES.md)",
-        "- [santosh-case-study.md](case-study/santosh-case-study.md)",
-        "- [ALGORITHM_LANDSCAPE.md](guides/ALGORITHM_LANDSCAPE.md) — what is on the ladder vs deferred",
-        "- [../results/BENCHMARKS.md](../results/BENCHMARKS.md)",
-        "- [../results/SANTOSH_ANALYSIS.md](../results/SANTOSH_ANALYSIS.md)",
+        "- [best-practices.md](guides/best-practices.md)",
+        "- [example-account-case-study.md](case-study/example-account-case-study.md)",
+        "- [algorithm-landscape.md](guides/algorithm-landscape.md) — what is on the ladder vs deferred",
+        "- [../results/benchmarks.md](../results/benchmarks.md)",
+        "- [../results/example-account-analysis.md](../results/example-account-analysis.md)",
         "",
     ]
     path.write_text("\n".join(lines), encoding="utf-8")

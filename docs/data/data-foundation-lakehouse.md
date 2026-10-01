@@ -16,7 +16,7 @@ bronze (users / daily usage / tickets / payments)
   → train / calibrate / Santosh infer / Streamlit
 ```
 
-Feature column contract matches `configs/schemas/user_record.schema.json` 1:1 (24 serve fields + `churned` on train). **Models consume gold features; algorithm choice lives in this repo** (see [ALGORITHM_LANDSCAPE.md](../guides/ALGORITHM_LANDSCAPE.md)) — not in the lakehouse.
+Feature column contract matches `configs/schemas/user_record.schema.json` 1:1 (24 serve fields + `churned` on train). **Models consume gold features; algorithm choice lives in this repo** (see [algorithm-landscape.md](../guides/algorithm-landscape.md)) — not in the lakehouse.
 
 ## Two ways to build gold
 
@@ -85,5 +85,5 @@ One-command path used: `./scripts/run_lakehouse_e2e.sh /path/to/local-data-lakeh
 
 CI pins `CHURN_DATA_SOURCE=synthetic` so PRs stay deterministic.
 
-Machine-readable summary and committed source of truth: [`results/lakehouse-e2e-summary.json`](../../results/lakehouse-e2e-summary.json). Full lakehouse `metrics.json` / joblibs land under ignored `artifacts/lakehouse_run/` (`RETENTION_RADAR_ARTIFACT_DIR`); they are not published and do not replace committed `models/`.
+Machine-readable summary and committed source of truth: [`results/lakehouse_e2e_summary.json`](../../results/lakehouse_e2e_summary.json). Full lakehouse `metrics.json` / joblibs land under ignored `artifacts/lakehouse_run/` (`RETENTION_RADAR_ARTIFACT_DIR`); they are not published and do not replace committed `models/`.
 

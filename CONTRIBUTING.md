@@ -35,7 +35,7 @@ Faster smoke (committed `models/` untouched): `RETENTION_RADAR_ARTIFACT_DIR=arti
 python -m retention_radar.cli.docs_gen
 ```
 
-Writes `docs/MODEL_CARD.md` and `docs/data/data-dictionary.md`.
+Writes `docs/model-card.md` and `docs/data/data-dictionary.md`.
 
 ## Tests
 
@@ -48,11 +48,11 @@ pytest -q
 **PRs should keep pytest green.** Pin `CHURN_DATA_SOURCE=synthetic` so a local
 `data/external/` lakehouse export cannot change what CI measures.
 
-Lakehouse E2E (optional; trains under `artifacts/lakehouse_run/`, but refreshes the committed `results/lakehouse-e2e-summary.json`):
+Lakehouse E2E (optional; trains under `artifacts/lakehouse_run/`, but refreshes the committed `results/lakehouse_e2e_summary.json`):
 
 ```bash
 ./scripts/run_lakehouse_e2e.sh /path/to/local-data-lakehouse
-git checkout -- results/lakehouse-e2e-summary.json   # unless you mean to publish it
+git checkout -- results/lakehouse_e2e_summary.json   # unless you mean to publish it
 ```
 
 ## Style notes

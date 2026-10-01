@@ -2,7 +2,7 @@
 
 Examples:
     python -m retention_radar.cli.infer --user santosh
-    python -m retention_radar.cli.infer --json data/raw/santosh_shinde.json
+    python -m retention_radar.cli.infer --json data/raw/example_account.json
 """
 
 from __future__ import annotations

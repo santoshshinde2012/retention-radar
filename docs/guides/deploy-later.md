@@ -29,7 +29,7 @@ Related: longer free-platform map in [e2e-free-platforms.md](e2e-free-platforms.
 8. Open the **Decision** tab → Santosh preset → confirm `Auto action: none` (serve-only; no fit on load).
 9. Copy the real `*.streamlit.app` URL and paste it into:
    - `README.md` (Live demo row)
-   - `docs/guides/START_HERE.md` (section 4)
+   - `docs/guides/start-here.md` (section 4)
    - optionally `docs/guides/e2e-free-platforms.md` where it says TBD
 
 ## After deploy — sanity checks

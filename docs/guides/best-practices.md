@@ -67,9 +67,9 @@ Seed-42 numbers in public docs must match `models/metrics.json`. Do not invent m
 
 - [ ] `pytest -q` green before PR (synthetic pipeline tests under `tests/`).
 - [ ] After metric-changing PRs, refresh guides via `python -m retention_radar.cli.docs_gen` — but not after a lakehouse smoke if you still publish the synthetic ladder.
-- [ ] Keep engineering docs under `docs/` (`ARCHITECTURE.md`, `MODEL_CARD.md`); analysis under `results/`.
+- [ ] Keep engineering docs under `docs/` (`architecture.md`, `model-card.md`); analysis under `results/`.
 - [ ] Free E2E path stays documented in [e2e-free-platforms.md](e2e-free-platforms.md).
 
 ## Related
 
-- [FOLDER_STRUCTURE.md](../FOLDER_STRUCTURE.md) · [ARCHITECTURE.md](../ARCHITECTURE.md) · [CONTRIBUTING.md](../../CONTRIBUTING.md) · [data-foundation-lakehouse.md](../data/data-foundation-lakehouse.md) · [../results/BENCHMARKS.md](../../results/BENCHMARKS.md)
+- [folder-structure.md](../folder-structure.md) · [architecture.md](../architecture.md) · [CONTRIBUTING.md](../../CONTRIBUTING.md) · [data-foundation-lakehouse.md](../data/data-foundation-lakehouse.md) · [../results/benchmarks.md](../../results/benchmarks.md)

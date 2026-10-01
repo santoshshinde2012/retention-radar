@@ -102,10 +102,10 @@ Committed copies live under `results/plots/` (runtime dumps in `artifacts/`).
 
 ## Related reading
 
-- [ARCHITECTURE.md](ARCHITECTURE.md) — SOLID package map
+- [architecture.md](architecture.md) — SOLID package map
 - [data-dictionary.md](data/data-dictionary.md)
-- [BEST_PRACTICES.md](guides/BEST_PRACTICES.md)
-- [santosh-case-study.md](case-study/santosh-case-study.md)
-- [ALGORITHM_LANDSCAPE.md](guides/ALGORITHM_LANDSCAPE.md) — what is on the ladder vs deferred
-- [../results/BENCHMARKS.md](../results/BENCHMARKS.md)
-- [../results/SANTOSH_ANALYSIS.md](../results/SANTOSH_ANALYSIS.md)
+- [best-practices.md](guides/best-practices.md)
+- [example-account-case-study.md](case-study/example-account-case-study.md)
+- [algorithm-landscape.md](guides/algorithm-landscape.md) — what is on the ladder vs deferred
+- [../results/benchmarks.md](../results/benchmarks.md)
+- [../results/example-account-analysis.md](../results/example-account-analysis.md)

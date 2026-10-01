@@ -19,7 +19,7 @@ from retention_radar.serving.hitl_log import (
 )
 
 FIXTURE_CSV = Path(__file__).resolve().parent / "fixtures" / "batch" / "tiny_features.csv"
-SANTOSH_JSON = config.PROJECT_ROOT / "data" / "raw" / "santosh_shinde.json"
+SANTOSH_JSON = config.PROJECT_ROOT / "data" / "raw" / "example_account.json"
 
 
 @pytest.fixture()

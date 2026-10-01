@@ -2,7 +2,7 @@
 
 Examples:
     python -m retention_radar.cli.single_record --user santosh \\
-        --out artifacts/santosh_decision_packet.json
+        --out artifacts/example_decision_packet.json
 """
 
 from __future__ import annotations
@@ -511,9 +511,9 @@ def main(argv: list[str] | None = None) -> None:
     packet = build_decision_packet(payload, model_bundle=bundle, calibrator=calibrator)
 
     # Default name follows the record, so scoring another user never overwrites
-    # artifacts/santosh_decision_packet.json (which `make infer` and the docs use).
+    # artifacts/example_decision_packet.json (which `make infer` and the docs use).
     default_name = (
-        "santosh_decision_packet.json"
+        "example_decision_packet.json"
         if args.user
         else f"{(payload.get('user_id') if isinstance(payload, dict) else None) or json_path.stem}_decision_packet.json"
     )

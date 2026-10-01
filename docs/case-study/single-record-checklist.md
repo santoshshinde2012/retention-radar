@@ -168,7 +168,7 @@ In-scope FOSS teaching goals for this case study are essentially complete; remai
 ```bash
 ./scripts/run_all.sh
 pytest -q
-python -m retention_radar.cli.single_record --user santosh --out artifacts/santosh_decision_packet.json
+python -m retention_radar.cli.single_record --user santosh --out artifacts/example_decision_packet.json
 python -m retention_radar.cli.single_record --dir /tmp/batch_jsons --out artifacts/batch_decision_packets.jsonl
 python -m retention_radar.cli.drift_check
 python -c "import app.streamlit_app"  # or: streamlit run app/streamlit_app.py

@@ -39,7 +39,7 @@ htmlcov/
 # Data (keep directory placeholders + documented samples)
 data/raw/*.csv
 data/raw/*.json
-!data/raw/santosh_shinde.json
+!data/raw/example_account.json
 !data/raw/.gitkeep
 
 data/interim/*

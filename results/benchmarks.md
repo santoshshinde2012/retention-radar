@@ -2,7 +2,7 @@
 
 How we measure success, what the reference run produced, and how to read the ladder honestly.
 
-**Cite:** [`../models/metrics.json`](../models/metrics.json) · **Card:** [`../docs/MODEL_CARD.md`](../docs/MODEL_CARD.md) · **Landscape:** [`../docs/guides/ALGORITHM_LANDSCAPE.md`](../docs/guides/ALGORITHM_LANDSCAPE.md) · **Santosh:** [`SANTOSH_ANALYSIS.md`](SANTOSH_ANALYSIS.md)
+**Cite:** [`../models/metrics.json`](../models/metrics.json) · **Card:** [`../docs/model-card.md`](../docs/model-card.md) · **Landscape:** [`../docs/guides/algorithm-landscape.md`](../docs/guides/algorithm-landscape.md) · **Santosh:** [`example-account-analysis.md`](example-account-analysis.md)
 
 ## Contents
 
@@ -132,7 +132,7 @@ Or, without touching committed files: `make reproduce` retrains into `artifacts/
 
 **Cite the JSON**, not this markdown alone: every Table A–D cell is a rounded view of [`../models/metrics.json`](../models/metrics.json).
 
-**Dual world:** lakehouse gold E2E writes under `artifacts/lakehouse_run/` via `RETENTION_RADAR_ARTIFACT_DIR` and is **not** the published ladder. See [`lakehouse-e2e-summary.json`](lakehouse-e2e-summary.json) and [docs/data/data-foundation-lakehouse.md](../docs/data/data-foundation-lakehouse.md). Committed `models/` stay seed-42.
+**Dual world:** lakehouse gold E2E writes under `artifacts/lakehouse_run/` via `RETENTION_RADAR_ARTIFACT_DIR` and is **not** the published ladder. See [`lakehouse_e2e_summary.json`](lakehouse_e2e_summary.json) and [docs/data/data-foundation-lakehouse.md](../docs/data/data-foundation-lakehouse.md). Committed `models/` stay seed-42.
 
 ---
 
@@ -141,9 +141,9 @@ Or, without touching committed files: `make reproduce` retrains into `artifacts/
 After a deliberate retrain on the synthetic path:
 
 1. Confirm `models/metrics.json` changed intentionally (diff AUC / Brier / τ).
-2. Regenerate prose artifacts: `python -m retention_radar.cli.docs_gen` → `docs/MODEL_CARD.md`, `docs/data/data-dictionary.md`.
+2. Regenerate prose artifacts: `python -m retention_radar.cli.docs_gen` → `docs/model-card.md`, `docs/data/data-dictionary.md`.
 3. Copy charts: `make docs-results`.
-4. Update **this file** (Tables A–D) and [`SANTOSH_ANALYSIS.md`](SANTOSH_ANALYSIS.md) so rounded numbers still match the JSON.
+4. Update **this file** (Tables A–D) and [`example-account-analysis.md`](example-account-analysis.md) so rounded numbers still match the JSON.
 5. Do **not** mix lakehouse E2E metrics into the published ladder without a separate section.
 
 ---

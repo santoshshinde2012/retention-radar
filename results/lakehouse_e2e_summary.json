@@ -16,5 +16,5 @@
     "hitl": "nurture / check-in"
   },
   "artifact_dir": "artifacts/lakehouse_run",
-  "note": "Lakehouse E2E writes only under artifacts/lakehouse_run/ via RETENTION_RADAR_ARTIFACT_DIR. Committed models/ + docs/MODEL_CARD.md are the published synthetic seed-42 ladder and must not be replaced."
+  "note": "Lakehouse E2E writes only under artifacts/lakehouse_run/ via RETENTION_RADAR_ARTIFACT_DIR. Committed models/ + docs/model-card.md are the published synthetic seed-42 ladder and must not be replaced."
 }

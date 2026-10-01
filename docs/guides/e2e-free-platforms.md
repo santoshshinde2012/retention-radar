@@ -5,7 +5,7 @@ You do **not** need Databricks, SageMaker, Vertex, a hosted MLflow cloud, Snowfl
 
 Synthetic data only. Seed **42**. HITL packets always set `auto_action: none`.
 
-Related: [GETTING_STARTED.md](../GETTING_STARTED.md) · [FOLDER_STRUCTURE.md](../FOLDER_STRUCTURE.md) · [ARCHITECTURE.md](../ARCHITECTURE.md)
+Related: [getting-started.md](../getting-started.md) · [folder-structure.md](../folder-structure.md) · [architecture.md](../architecture.md)
 
 ## What “E2E” means here
 
@@ -53,11 +53,11 @@ RETENTION_RADAR_ARTIFACT_DIR=artifacts/smoke N_USERS=800 N_OPTUNA_TRIALS=5 ./scr
 You should see:
 
 - `models/churn_xgb.joblib`, `models/calibrator.joblib`, `models/metrics.json`
-- `artifacts/*.png` and `artifacts/santosh_decision_packet.json`
+- `artifacts/*.png` and `artifacts/example_decision_packet.json`
 - pytest green
 - Streamlit **Decision** tab: Santosh band + HITL action, `auto_action: none`
 
-Cite **`models/metrics.json`** after a run. Narrative reference: [../results/BENCHMARKS.md](../../results/BENCHMARKS.md) (seed-42 ladder) — not a substitute for your file.
+Cite **`models/metrics.json`** after a run. Narrative reference: [../results/benchmarks.md](../../results/benchmarks.md) (seed-42 ladder) — not a substitute for your file.
 
 ---
 
@@ -77,7 +77,7 @@ On every push/PR to `main`, ubuntu-latest + Python 3.12:
 6. `pytest -q` (full suite on the freshly trained smoke bundle)
 7. `python -m retention_radar.cli.drift_check --strict --z-threshold 3.0`
 
-A second job, **`e2e-local`**, runs `make e2e-local` on Python 3.12 with local-data-lakehouse cloned beside it: exact reproduction of `models/metrics.json`, full pytest, live API + Streamlit, lakehouse gold E2E vs `results/lakehouse-e2e-summary.json`, and an isolation check.
+A second job, **`e2e-local`**, runs `make e2e-local` on Python 3.12 with local-data-lakehouse cloned beside it: exact reproduction of `models/metrics.json`, full pytest, live API + Streamlit, lakehouse gold E2E vs `results/lakehouse_e2e_summary.json`, and an isolation check.
 
 That is canary → lint → generate → train → metrics → packet → tests → drift (+ the reproduction / full-surface job). It does **not** start Streamlit (no GUI on Actions). Local or Community Cloud covers the UI.
 
@@ -133,7 +133,7 @@ git add models/churn_xgb.joblib models/calibrator.joblib \
         models/feature_names.json models/feature_stats.json models/metrics.json
 ```
 
-`data/raw/santosh_shinde.json` is already committed (hero preset). `users.csv` stays gitignored; cohort percentiles may be empty on Cloud — scoring and HITL still work.
+`data/raw/example_account.json` is already committed (hero preset). `users.csv` stays gitignored; cohort percentiles may be empty on Cloud — scoring and HITL still work.
 
 ### Deploy steps
 
@@ -181,7 +181,7 @@ python_version: 3.12
 ---
 ```
 
-4. Include `requirements.txt`, `app/streamlit_app.py`, `src/`, `models/` artifacts, `data/raw/santosh_shinde.json`, `docs/` (optional docs tabs).
+4. Include `requirements.txt`, `app/streamlit_app.py`, `src/`, `models/` artifacts, `data/raw/example_account.json`, `docs/` (optional docs tabs).
 5. No HF tokens required for a public Space serving local joblibs.
 
 If the Space UI asks for a Gradio SDK, pick Streamlit instead — this repo’s demo is Streamlit, not Gradio.
@@ -213,7 +213,7 @@ When [`local-data-lakehouse`](https://github.com/santoshshinde2012/local-data-la
 That runs sample → gold CSV/JSON → sync into `data/external/` → train/eval/infer with `CHURN_DATA_SOURCE=lakehouse`.
 
 - **CI / Medium numbers** stay on synthetic seed 42 (`CHURN_DATA_SOURCE=synthetic` in GitHub Actions).
-- Lakehouse retrain sets `RETENTION_RADAR_ARTIFACT_DIR=artifacts/lakehouse_run` so committed `models/` and `docs/MODEL_CARD.md` stay untouched. The committed lakehouse source of truth is [the E2E summary](../../results/lakehouse-e2e-summary.json).
+- Lakehouse retrain sets `RETENTION_RADAR_ARTIFACT_DIR=artifacts/lakehouse_run` so committed `models/` and `docs/model-card.md` stay untouched. The committed lakehouse source of truth is [the E2E summary](../../results/lakehouse_e2e_summary.json).
 - Contract + dual-world notes: [data-foundation-lakehouse.md](../data/data-foundation-lakehouse.md).
 
 ## 6. Checklist (print / tick)
@@ -226,7 +226,7 @@ Use this once locally **or** via CI + Cloud.
 - [ ] **Train** — `python -m retention_radar.cli.train` (seed 42; Optuna on val only)
 - [ ] **Metrics** — `python -m retention_radar.cli.evaluate` (ROC/PR/calibration/threshold plots)
 - [ ] Optional latency — `python -m retention_radar.cli.benchmark`
-- [ ] **Santosh packet** — `python -m retention_radar.cli.single_record --user santosh --out artifacts/santosh_decision_packet.json`
+- [ ] **Santosh packet** — `python -m retention_radar.cli.single_record --user santosh --out artifacts/example_decision_packet.json`
 - [ ] Packet `hitl.auto_action` is **`none`**
 - [ ] `pytest -q` green
 - [ ] **Streamlit HITL** — Decision tab scores Santosh; no fit on page load
@@ -234,7 +234,7 @@ Use this once locally **or** via CI + Cloud.
 - [ ] GitHub Actions run green (fork: enable Actions)
 - [ ] (Demo host) Streamlit Cloud or HF Space using **committed** `models/` — no Optuna in the cloud
 
-Notes: data is **synthetic**. Do not treat Santosh’s probability as real risk. Published [results/BENCHMARKS.md](../../results/BENCHMARKS.md) numbers are a reference full run; CI/Cloud may use a smaller bundle.
+Notes: data is **synthetic**. Do not treat Santosh’s probability as real risk. Published [results/benchmarks.md](../../results/benchmarks.md) numbers are a reference full run; CI/Cloud may use a smaller bundle.
 
 ---
 
@@ -250,4 +250,4 @@ Notes: data is **synthetic**. Do not treat Santosh’s probability as real risk.
 | `python -m retention_radar.cli.drift_check` | `src/retention_radar/serving/drift.py` |
 | Streamlit | `app/streamlit_app.py` → serving packet + policy |
 
-Thin `src/retention_radar/cli/` entrypoints keep articles and CI stable. Full map: [FOLDER_STRUCTURE.md](../FOLDER_STRUCTURE.md).
+Thin `src/retention_radar/cli/` entrypoints keep articles and CI stable. Full map: [folder-structure.md](../folder-structure.md).

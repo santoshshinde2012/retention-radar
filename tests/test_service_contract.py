@@ -169,7 +169,7 @@ def test_packet_dir_holds_unreadable_files_and_default_out_follows_user(tmp_path
     monkeypatch.setattr(config, "ARTIFACTS_DIR", tmp_path)
     packet_main(["--json", str(d / "a_good.json")])
     assert (tmp_path / f"{gone_dark['user_id']}_decision_packet.json").exists()
-    assert not (tmp_path / "santosh_decision_packet.json").exists()
+    assert not (tmp_path / "example_decision_packet.json").exists()
 
 
 @pytest.fixture()

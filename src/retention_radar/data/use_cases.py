@@ -229,7 +229,7 @@ def build_use_cases(out_dir: Path = USE_CASE_DIR) -> dict[str, Any]:
     for sc in SCENARIOS:
         if sc.select is None:
             record = {k: v for k, v in santosh_profile().items() if k != "churned"}
-            source = {"dataset": "data/raw/santosh_shinde.json", "split": "hero (injected)"}
+            source = {"dataset": "data/raw/example_account.json", "split": "hero (injected)"}
         else:
             cand = table[
                 sc.select(table)
