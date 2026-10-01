@@ -1,5 +1,5 @@
 {
-  "verified_at": "2026-09-25",
+  "verified_at": "2026-10-01",
   "source": "lakehouse gold N=5000 seed=42",
   "n_train": 3000,
   "n_test": 1000,
@@ -12,7 +12,7 @@
     "name": "Santosh Shinde",
     "p_churn_raw": 0.3991,
     "p_churn_calibrated": 0.1696,
-    "risk": "low",
+    "risk": "medium",
     "hitl": "nurture / check-in"
   },
   "artifact_dir": "artifacts/lakehouse_run",
