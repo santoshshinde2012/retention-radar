@@ -228,6 +228,13 @@ def main() -> None:
     out["best_f1_at_threshold"] = test_f1_at_tau
     out["slice_metrics_by_plan_tier"] = slice_block
     out["test_at_tau"] = metrics["test_at_tau"]
+    out["validation_reuse"] = (
+        "The 1,000-row validation split is used three times: Optuna model selection, "
+        "isotonic calibration and the τ sweep (XGBoost's eval_set only logs; there is "
+        "no early stopping). Validation metrics "
+        "(val AUC, val F1 at τ) are therefore optimistic; only test metrics are "
+        "reported as out-of-sample."
+    )
     with open(config.METRICS_PATH, "w", encoding="utf-8") as f:
         json.dump(out, f, indent=2)
     print(f"Updated {config.METRICS_PATH}")
