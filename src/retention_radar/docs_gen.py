@@ -314,8 +314,6 @@ def write_model_card(metrics: dict | None = None, path: Path | None = None) -> P
         f"`{(metrics.get('test_at_tau') or {}).get('n_test', 'n/a')}` |",
         f"| F1 @ 0.5 (ladder comparison only) | `{_fmt(metrics.get('calibrated_test'), 'f1')}` |",
     ]
-    if metrics.get("validation_reuse"):
-        lines += ["", f"Validation reuse: {metrics['validation_reuse']}"]
     lat = metrics.get("latency") or {}
     if lat.get("latency_ms_p50") is not None:
         lines.append(
@@ -323,6 +321,9 @@ def write_model_card(metrics: dict | None = None, path: Path | None = None) -> P
             f"`{_fmt_scalar(lat.get('latency_ms_p50'), 2)}` / "
             f"`{_fmt_scalar(lat.get('latency_ms_p95'), 2)}` |"
         )
+    # After the table: a paragraph between rows would end the Markdown table early.
+    if metrics.get("validation_reuse"):
+        lines += ["", f"Validation reuse: {metrics['validation_reuse']}"]
     lines += [
         "",
         "## Result plots",

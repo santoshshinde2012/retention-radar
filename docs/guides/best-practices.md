@@ -14,7 +14,7 @@ Short checklist for contributors and readers adapting this teaching repo.
 
 - [ ] **Published model-card ladder** is the **synthetic** seed-42 run. Do not overwrite committed `models/` with a lakehouse retrain.
 - [ ] Feature SoR is [local-data-lakehouse](https://github.com/santoshshinde2012/local-data-lakehouse): `make churn-gold-local` (no Docker) or `make churn-e2e` (Spark). Sync with `./scripts/sync_lakehouse_exports.sh`.
-- [ ] `CHURN_DATA_SOURCE=auto|synthetic|lakehouse`. `./scripts/run_lakehouse_e2e.sh` writes under `artifacts/lakehouse_run/` via `RETENTION_RADAR_ARTIFACT_DIR` — committed `models/` / MODEL_CARD stay the published synthetic ladder.
+- [ ] `CHURN_DATA_SOURCE=auto|synthetic|lakehouse`. `./scripts/run_lakehouse_e2e.sh` writes under `artifacts/lakehouse_run/` via `RETENTION_RADAR_ARTIFACT_DIR` — committed `models/` and `docs/model-card.md` stay the published synthetic ladder.
 - [ ] Lakehouse Santosh is event-aggregated as-of **2024-03-02**. Scores differ from seed-42 Santosh **by design**. Do not mix the two in one caption.
 
 ## Leakage & evaluation honesty
