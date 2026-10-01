@@ -47,6 +47,6 @@ class Calibrator(Protocol):
 class DecisionPolicy(Protocol):
     """HITL action mapping. Implementations must keep ``auto_action: none``."""
 
-    def decide(self, prob: float, threshold: float, band: str) -> dict[str, Any]:
+    def decide(self, prob: float, threshold: float, band: str | None = None) -> dict[str, Any]:
         """Return action, rationale, and auto_action fields."""
         ...

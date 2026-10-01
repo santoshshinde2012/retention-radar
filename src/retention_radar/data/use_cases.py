@@ -3,8 +3,8 @@
 Builds a small, reproducible set of **real seed-42 records** that walk the whole
 service. Every scenario row except the Santosh hero comes from the test split
 (never used for training, early stopping, calibration or τ); Santosh is the injected
-hero and sits in the validation split. The pack covers: one named scenario per HITL path (monitor / nurture in both bands /
-outreach / escalate), records that must be *held* by validation, a weekly batch to
+hero and sits in the validation split. The pack covers: one named scenario per HITL path (monitor / nurture /
+outreach / escalate; bands are τ-aligned, so each band implies its action), records that must be *held* by validation, a weekly batch to
 turn into a review queue, reviewer decisions, and churn labels observed 30 days
 later for the outcome report.
 
@@ -98,8 +98,8 @@ SCENARIOS: list[Scenario] = [
         "new_trial_friction",
         "New free trial hitting friction",
         "Free plan, {days_since_signup:.0f} days old, already {support_tickets_last_90d:.0f} support "
-        "tickets. Low band, but above half of τ: a light check-in, not a sales call.",
-        "low",
+        "tickets. Medium band (above half of τ, below τ): a light check-in rather than a sales call.",
+        "medium",
         NURTURE,
         lambda t: (t.days_since_signup <= 90)
         & (t.plan_tier == "free")
@@ -125,7 +125,7 @@ SCENARIOS: list[Scenario] = [
         "{payment_failures_last_90d:.0f} failed payments and {support_tickets_last_90d:.0f} support "
         "tickets in 90 days on the {plan_tier} plan. Above τ, so a human owns the outreach; nothing "
         "is sent automatically.",
-        "medium",
+        "high",
         OUTREACH,
         lambda t: (t.payment_failures_last_90d >= 2) & (t.support_tickets_last_90d >= 3),
         reviewer_note="billing fixed on call; outreach done",
@@ -198,10 +198,11 @@ def _load_bundle():
 
 
 def _score_one(record: dict, bundle, calibrator, metrics) -> dict[str, Any]:
-    res = predict_user(record, bundle, calibrator=calibrator, top_k=3)
+    tau = float(metrics.get("best_f1_threshold", 0.5))
+    res = predict_user(record, bundle, calibrator=calibrator, top_k=3, threshold=tau)
     p = float(res["churn_probability"])
-    band = risk_band(p)
-    action = hitl_action(p, float(metrics.get("best_f1_threshold", 0.5)), band)["action"]
+    band = risk_band(p, tau)
+    action = hitl_action(p, tau, band)["action"]
     return {
         "p_raw": round(float(res["churn_probability_raw"]), 6),
         "p_cal": round(p, 6),

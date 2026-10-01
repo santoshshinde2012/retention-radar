@@ -215,8 +215,10 @@ def score_payload(
     if not validation["ok"]:
         raise _hold_422(validation["errors"])
 
-    result = predict_user(record, bundle, calibrator=calibrator, explain=include_shap)
     threshold = float(metrics.get("best_f1_threshold", 0.5))
+    result = predict_user(
+        record, bundle, calibrator=calibrator, explain=include_shap, threshold=threshold
+    )
     p_raw = float(result["churn_probability_raw"])
     p_cal = float(
         result["churn_probability_calibrated"]
