@@ -130,30 +130,30 @@
     {
       "id": "new_trial_friction",
       "title": "New free trial hitting friction",
-      "story": "Free plan, 28 days old, already 4 support tickets. Low band, but above half of \u03c4: a light check-in, not a sales call.",
+      "story": "Free plan, 40 days old, already 3 support tickets. Medium band (above half of \u03c4, below \u03c4): a light check-in rather than a sales call.",
       "source": {
         "dataset": "seed-42 synthetic users.csv",
         "split": "test (holdout)",
-        "candidates_matching_filter": 2
+        "candidates_matching_filter": 4
       },
       "expected": {
-        "p_raw": 0.544511,
-        "p_cal": 0.173913,
-        "band": "low",
+        "p_raw": 0.572681,
+        "p_cal": 0.263158,
+        "band": "medium",
         "hitl_action": "nurture / check-in"
       },
       "top_drivers": [
         {
-          "feature": "last_active_days_ago",
-          "contribution": -0.413
+          "feature": "seat_utilization",
+          "contribution": 0.138
         },
         {
-          "feature": "feature_adoption_score",
-          "contribution": 0.273
+          "feature": "ide_plugin_sessions_last_30d",
+          "contribution": 0.078
         },
         {
-          "feature": "support_tickets_last_90d",
-          "contribution": 0.27
+          "feature": "models_used_count",
+          "contribution": 0.067
         }
       ],
       "reviewer": {
@@ -161,30 +161,30 @@
         "notes": "offered an onboarding session"
       },
       "record": {
-        "user_id": "user_04890",
-        "user_name": "Casey Wilson",
-        "days_since_signup": 28,
-        "sessions_last_7d": 2,
-        "sessions_last_30d": 10,
-        "avg_session_minutes": 23.8,
+        "user_id": "user_00548",
+        "user_name": "Taylor Davis",
+        "days_since_signup": 40,
+        "sessions_last_7d": 4,
+        "sessions_last_30d": 21,
+        "avg_session_minutes": 24.7,
         "models_used_count": 3,
-        "api_calls_last_30d": 90,
-        "tokens_consumed_last_30d": 12745,
-        "tools_used_count": 3,
-        "failed_requests_rate": 0.2157,
-        "support_tickets_last_90d": 4,
+        "api_calls_last_30d": 439,
+        "tokens_consumed_last_30d": 212342,
+        "tools_used_count": 4,
+        "failed_requests_rate": 0.2232,
+        "support_tickets_last_90d": 3,
         "plan_tier": "free",
         "payment_failures_last_90d": 1,
-        "feature_adoption_score": 0.3346,
-        "nps_score": 7.0,
-        "last_active_days_ago": 25,
-        "weekend_usage_ratio": 0.1679,
-        "engagement_trend": 0.7698,
+        "feature_adoption_score": 0.3934,
+        "nps_score": 6.9,
+        "last_active_days_ago": 29,
+        "weekend_usage_ratio": 0.0379,
+        "engagement_trend": 0.6773,
         "spend_usd_last_30d": 0.0,
-        "days_until_renewal": 23,
-        "agent_runs_last_30d": 12,
-        "ide_plugin_sessions_last_30d": 13,
-        "seat_utilization": 0.5681
+        "days_until_renewal": 37,
+        "agent_runs_last_30d": 16,
+        "ide_plugin_sessions_last_30d": 11,
+        "seat_utilization": 0.3568
       }
     },
     {
@@ -194,7 +194,7 @@
       "source": {
         "dataset": "seed-42 synthetic users.csv",
         "split": "test (holdout)",
-        "candidates_matching_filter": 45
+        "candidates_matching_filter": 80
       },
       "expected": {
         "p_raw": 0.638557,
@@ -259,7 +259,7 @@
       "expected": {
         "p_raw": 0.681749,
         "p_cal": 0.431818,
-        "band": "medium",
+        "band": "high",
         "hitl_action": "retention outreach (human review)"
       },
       "top_drivers": [
@@ -560,10 +560,10 @@
     "valid_rows": 207,
     "invalid_rows": 4,
     "expected_actions": {
-      "escalate": 33,
-      "monitor": 142,
-      "nurture / check-in": 18,
-      "retention outreach (human review)": 14
+      "escalate": 34,
+      "monitor": 143,
+      "nurture / check-in": 14,
+      "retention outreach (human review)": 16
     }
   }
 }

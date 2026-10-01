@@ -1,6 +1,6 @@
 # Model card — AI platform churn (XGBoost)
 
-_Generated: 2026-09-25 · seed=42_
+_Generated: 2026-09-30 · seed=42_
 
 ## Overview
 
@@ -58,7 +58,11 @@ Method: `isotonic`.
 | Best F1 threshold τ (chosen on validation) | `0.34` |
 | F1 at τ (validation) | `0.6987` |
 | F1 at τ (test, reported once) | `0.6015` |
-| F1 @ 0.5 | `0.6006` |
+| Precision / recall at τ (test) | `0.5769` / `0.6283` |
+| Flagged at τ (test) | `208` of `1000` |
+| F1 @ 0.5 (ladder comparison only) | `0.6006` |
+
+Validation reuse: The 1,000-row validation split is used three times: Optuna model selection, isotonic calibration and the τ sweep (XGBoost's eval_set only logs; there is no early stopping). Validation metrics (val AUC, val F1 at τ) are therefore optimistic; only test metrics are reported as out-of-sample.
 | Warm latency p50 / p95 (ms) | `2.01` / `2.15` |
 
 ## Result plots
@@ -85,7 +89,7 @@ Committed copies live under `results/plots/` (runtime dumps in `artifacts/`).
 | `artifacts/roc_curve.png` | ROC |
 | `artifacts/pr_curve.png` | Precision–Recall |
 | `artifacts/calibration_curve.png` | Reliability diagram |
-| `artifacts/confusion_matrix.png` | Confusion @ 0.5 |
+| `artifacts/confusion_matrix.png` | Confusion at τ (calibrated, test) |
 | `artifacts/threshold_f1.png` | Threshold vs F1 / precision / recall |
 | `results/plots/*.png` | Committed copies of the same plots |
 
