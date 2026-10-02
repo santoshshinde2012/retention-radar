@@ -178,6 +178,7 @@ retention-radar/
 
 | Doc | Purpose |
 |-----|---------|
+| [docs/e2e/lakehouse-consume.md](docs/e2e/lakehouse-consume.md) | End-to-end run against the local-data-lakehouse export (rows scored, actions, tests, bundle metrics) |
 | [docs/USE_CASE.md](docs/USE_CASE.md) | The use case, the evidence behind it, and what the synthetic data can and cannot show |
 | [results/benchmarks.md](results/benchmarks.md) | Ladder, calibration, operating point, policy, latency |
 | [results/WORKED_EXAMPLES.md](results/WORKED_EXAMPLES.md) | Maya and Arjun, end to end |
