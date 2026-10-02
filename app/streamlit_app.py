@@ -123,7 +123,7 @@ def _slider(preset_id: str, label: str, key: str, lo, hi, defaults: dict, fallba
     return st.slider(label, lo, hi, value, **kwargs)
 
 
-def collect_user_inputs(defaults: dict, preset_id: str = "hero_maya") -> dict:
+def collect_user_inputs(defaults: dict, preset_id: str = "hero_santosh") -> dict:
     st.sidebar.header("What-if")
     st.sidebar.caption("Pick a subscriber, then move sliders to see how risk and action change.")
     plan_tier = st.sidebar.selectbox(
@@ -180,8 +180,8 @@ def collect_user_inputs(defaults: dict, preset_id: str = "hero_maya") -> dict:
         st.caption(f"engagement_trend = {engagement_trend:.4f} (~1 steady, <1 fading)")
 
     return {
-        "user_id": defaults.get("user_id", "sub_maya"),
-        "user_name": defaults.get("user_name", "Maya (worked example)"),
+        "user_id": defaults.get("user_id", "sub_santosh"),
+        "user_name": defaults.get("user_name", "Santosh (worked example)"),
         "plan_tier": plan_tier,
         "renewals_completed": renewals_completed,
         "active_days_7d": active_days_7d,

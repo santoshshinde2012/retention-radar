@@ -259,10 +259,10 @@ ROUTE_CANCEL_FLOW = "cancel_flow"  # cancel already scheduled before T-7
 # Worked examples (scoring-time records, never in the training table)
 # ---------------------------------------------------------------------------
 HEROES = {
-    "maya": "maya.json",  # Pro, first renewal since the weekly-cap cut, rationing
+    "santosh": "santosh.json",  # Pro, first renewal since the weekly-cap cut, rationing
     "arjun": "arjun.json",  # steady Pro+ user; the one we deliberately leave alone
 }
-DEFAULT_HERO = "maya"
+DEFAULT_HERO = "santosh"
 
 # ---------------------------------------------------------------------------
 # Decision policy. Every number here is an ASSUMPTION until a holdout measures it.

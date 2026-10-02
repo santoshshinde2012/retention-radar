@@ -1,8 +1,8 @@
 """Single-record decision packet: validate → score → explain → cohort → decision.
 
 Examples:
-    python -m retention_radar.cli.single_record --user maya \\
-        --out artifacts/maya_decision_packet.json
+    python -m retention_radar.cli.single_record --user santosh \\
+        --out artifacts/santosh_decision_packet.json
 """
 
 from __future__ import annotations
@@ -519,7 +519,7 @@ def main(argv: list[str] | None = None) -> None:
     packet = build_decision_packet(payload, model_bundle=bundle, calibrator=calibrator)
 
     # Default name follows the record, so scoring one subscriber never overwrites
-    # another's packet (``make infer`` writes maya_decision_packet.json).
+    # another's packet (``make infer`` writes santosh_decision_packet.json).
     default_name = (
         f"{args.user.lower()}_decision_packet.json"
         if args.user

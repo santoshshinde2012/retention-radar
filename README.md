@@ -42,7 +42,7 @@ bill, the first renewal after a pricing change, a rival tool taking the work. So
 
 | Subscriber | Raw → calibrated P(lapse) | Band | Action |
 |------------|---------------------------|------|--------|
-| Maya: Pro, 4 cap hits in 14 days, 68% of requests on the cheap model, first renewal since the cap cut | 0.717 → **0.288** | medium | `limit_reset` (EV ≈ $5.20) |
+| Santosh: Pro, 4 cap hits in 14 days, 68% of requests on the cheap model, first renewal since the cap cut | 0.717 → **0.288** | medium | `limit_reset` (EV ≈ $5.20) |
 | Arjun: Pro+, 12 renewals, 66% of allowance used, no cap hits | 0.124 → **0.025** | low | `no_action` |
 
 **Honest ladder (test AUC, 7,329 T-7 rows, 9.6% base rate):** LogReg **0.781** · CatBoost
@@ -94,7 +94,7 @@ CHURN_DATA_SOURCE=synthetic ./scripts/run_all.sh
 |------|----------------|
 | Cite metrics | [`models/metrics.json`](models/metrics.json) |
 | Read benchmarks | [results/benchmarks.md](results/benchmarks.md) |
-| Score Maya | `make infer` → `artifacts/maya_decision_packet.json` |
+| Score Santosh | `make infer` → `artifacts/santosh_decision_packet.json` |
 | Walk one renewal day | `make use-cases`: [data/use_cases/](data/use_cases/README.md) daily T-7 batch → action queue (+ rejects) → packets → held records → send export → renewal outcomes + lift vs holdout |
 | Daily batch | `python -m retention_radar.cli.batch_score --csv data/raw/renewals_t7.csv` → ranked queue + `*_rejected.csv` |
 | Lift vs holdout | after `make use-cases`: `python -m retention_radar.cli.outcomes --log artifacts/use_cases/action_log.csv --labels data/use_cases/renewal_outcomes.csv` |
@@ -116,7 +116,7 @@ RETENTION_RADAR_ARTIFACT_DIR=artifacts/smoke N_USERS=800 N_OPTUNA_TRIALS=5 CHURN
 | `make setup` | Create venv and install |
 | `make run` | Synthetic full pipeline |
 | `make test` | Pytest (synthetic) |
-| `make infer` | Maya's decision packet |
+| `make infer` | Santosh's decision packet |
 | `make ui` | Streamlit UI |
 | `make api` | Thin local FastAPI (teaching; no auth) |
 | `make run-lakehouse` | Lakehouse E2E (needs a local-data-lakehouse checkout) |
@@ -180,7 +180,7 @@ retention-radar/
 |-----|---------|
 | [docs/USE_CASE.md](docs/USE_CASE.md) | The use case, the evidence behind it, and what the synthetic data can and cannot show |
 | [results/benchmarks.md](results/benchmarks.md) | Ladder, calibration, operating point, policy, latency |
-| [results/WORKED_EXAMPLES.md](results/WORKED_EXAMPLES.md) | Maya and Arjun, end to end |
+| [results/WORKED_EXAMPLES.md](results/WORKED_EXAMPLES.md) | Santosh and Arjun, end to end |
 | [results/lakehouse-consume-e2e.md](results/lakehouse-consume-e2e.md) | Radar main scoring the local-data-lakehouse export: 7,387 rows, actions, tests, CI |
 | [docs/model-card.md](docs/model-card.md) | Intended use + metrics |
 | [docs/guides/start-here.md](docs/guides/start-here.md) | Clone → one command → what to read |

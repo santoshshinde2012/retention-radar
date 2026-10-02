@@ -104,7 +104,7 @@ step 5 "full test suite (pipeline smoke, API, headless Streamlit, contracts)"
 ok pytest
 
 step 6 "use cases through every CLI surface (queue → packets → held → actions → outcomes)"
-"$PY" -m retention_radar.cli.infer --user maya
+"$PY" -m retention_radar.cli.infer --user santosh
 USE_CASE_OUT="$OUT/use_cases" ./scripts/run_use_cases.sh
 "$PY" -m retention_radar.cli.drift_check --strict --z-threshold 3.0 --out "$OUT/drift_report.json"
 ok use-cases
@@ -149,8 +149,8 @@ records = [{k: v for k, v in r.items() if v != ""} for r in rows]
 code, out = post("/v1/churn/batch", {"records": records})
 assert code == 200 and len(out["rejected"]) == manifest["daily_batch"]["invalid_rows"], out
 print(f"POST /v1/churn/batch → queue {len(out['queue'])}, rejected {len(out['rejected'])}, top {out['queue'][0]['action']}")
-maya = next(p for p in manifest["personas"] if p["id"] == "maya_capped_pro")["record"]["user_id"]
-code, out = post("/v1/churn/actions", {"user_id": maya, "executed_by": "local-e2e", "action_taken": "limit_reset"})
+santosh = next(p for p in manifest["personas"] if p["id"] == "santosh_capped_pro")["record"]["user_id"]
+code, out = post("/v1/churn/actions", {"user_id": santosh, "executed_by": "local-e2e", "action_taken": "limit_reset"})
 assert code == 200 and out["logged"]["action_suggested"] == "limit_reset", out
 print("POST /v1/churn/actions → logged against the service's own score")
 PY

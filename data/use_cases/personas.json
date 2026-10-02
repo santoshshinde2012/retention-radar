@@ -10,11 +10,11 @@
   },
   "personas": [
     {
-      "id": "maya_capped_pro",
-      "title": "Maya: capped on Pro, first renewal since the cut",
-      "story": "Pro, 3 renewals paid, and this is her first renewal since the weekly cap was cut. 4 cap hits in 14 days, 68% of requests on the cheaper model, 2 active days this week against 15 in 28. The policy picks the limit reset over a discount: her problem is the cap, not the price.",
+      "id": "santosh_capped_pro",
+      "title": "Santosh: capped on Pro, first renewal since the cut",
+      "story": "Pro, 3 renewals paid, and this is his first renewal since the weekly cap was cut. 4 cap hits in 14 days, 68% of requests on the cheaper model, 2 active days this week against 15 in 28. The policy picks the limit reset over a discount: his problem is the cap, not the price.",
       "source": {
-        "dataset": "data/raw/subscribers/maya.json",
+        "dataset": "data/raw/subscribers/santosh.json",
         "split": "worked example (scoring-time record, not in training)"
       },
       "expected": {
@@ -45,8 +45,8 @@
         "notes": "sent as suggested"
       },
       "record": {
-        "user_id": "sub_maya",
-        "user_name": "Maya (worked example)",
+        "user_id": "sub_santosh",
+        "user_name": "Santosh (worked example)",
         "plan_tier": "pro",
         "renewals_completed": 3,
         "active_days_7d": 2,

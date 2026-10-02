@@ -22,7 +22,7 @@ retention-radar/
 ├── app/streamlit_app.py
 ├── scripts/          # run_all, run_use_cases, run_lakehouse_e2e, sync_lakehouse_exports, run_local_e2e
 ├── data/
-│   ├── raw/          # renewals_t7.csv, renewals_all.csv (generated, gitignored); subscribers/maya.json, arjun.json
+│   ├── raw/          # renewals_t7.csv, renewals_all.csv (generated, gitignored); subscribers/santosh.json, arjun.json
 │   ├── use_cases/    # one renewal day: scenarios, invalid records, daily batch, send export, outcomes
 │   ├── external/     # lakehouse gold exports (gitignored)
 │   ├── interim/      # empty

@@ -35,9 +35,9 @@ pytestmark = pytest.mark.skipif(
 
 
 @pytest.fixture(scope="module")
-def maya():
+def santosh():
     m = load_manifest(MANIFEST)
-    return next(p for p in m["personas"] if p["id"] == "maya_capped_pro")["record"]
+    return next(p for p in m["personas"] if p["id"] == "santosh_capped_pro")["record"]
 
 
 BAD_VALUES = [
@@ -52,32 +52,32 @@ BAD_VALUES = [
 
 
 @pytest.mark.parametrize("field,value,needle", BAD_VALUES)
-def test_non_finite_bool_overflow_and_non_binary_are_held_everywhere(maya, field, value, needle):
-    rec = {**maya, field: value}
+def test_non_finite_bool_overflow_and_non_binary_are_held_everywhere(santosh, field, value, needle):
+    rec = {**santosh, field: value}
     v = validate_payload(normalize_record(rec)[0])
     assert not v["ok"] and any(needle in e for e in v["errors"]), v
     packet = build_decision_packet(rec)
     assert packet["scoring"] is None and packet["decision"]["action"] == HOLD_ACTION
-    valid, rejects = split_valid_payloads([rec, maya | {"user_id": "ok_user"}])
+    valid, rejects = split_valid_payloads([rec, santosh | {"user_id": "ok_user"}])
     assert [r["user_id"] for r in valid] == ["ok_user"] and len(rejects) == 1
 
 
-def test_one_contract_for_identities_enums_and_extras(maya):
-    rec = {**maya, "plan_tier": " Pro ", "user_id": f" {maya['user_id']} ", "churned": 1, "crm_id": 7}
+def test_one_contract_for_identities_enums_and_extras(santosh):
+    rec = {**santosh, "plan_tier": " Pro ", "user_id": f" {santosh['user_id']} ", "churned": 1, "crm_id": 7}
     payload, notes = normalize_record(rec)
-    assert payload["plan_tier"] == "pro" and payload["user_id"] == maya["user_id"]
+    assert payload["plan_tier"] == "pro" and payload["user_id"] == santosh["user_id"]
     assert set(payload) == set(config.INFERENCE_REQUIRED_KEYS)
     assert notes and "churned" in notes[0]
     packet = build_decision_packet(rec)  # extras ignored, not a hold
     assert packet["scoring"] is not None and "churned" not in packet["payload"]
     assert any("ignored fields" in w for w in packet["validation"]["warnings"])
-    valid, rejects = split_valid_payloads([rec, {**maya, "user_id": {"a": 1}}, None, "x"])
+    valid, rejects = split_valid_payloads([rec, {**santosh, "user_id": {"a": 1}}, None, "x"])
     assert len(valid) == 1 and [r["row_number"] for r in rejects] == [2, 3, 4]
 
 
-def test_duplicate_user_ids_are_rejected_and_block_action_attachment(maya):
-    other = {**maya, "limit_hits_14d": 0, "cheap_model_share_28d": 0.1}
-    valid, rejects = split_valid_payloads([maya, other])
+def test_duplicate_user_ids_are_rejected_and_block_action_attachment(santosh):
+    other = {**santosh, "limit_hits_14d": 0, "cheap_model_share_28d": 0.1}
+    valid, rejects = split_valid_payloads([santosh, other])
     assert len(valid) == 1 and "duplicate user_id" in rejects[0]["errors"]
     queue = [{"user_id": "u1", "p_cal": 0.3, "band": "high", "action": "limit_reset"},
              {"user_id": "u1", "p_cal": 0.02, "band": "low", "action": "no_action"}]
@@ -87,8 +87,8 @@ def test_duplicate_user_ids_are_rejected_and_block_action_attachment(maya):
     assert rows == [] and "more than once" in problems[0]
 
 
-def test_held_or_scoreless_records_cannot_be_logged(maya):
-    held = build_decision_packet({**maya, "suggestion_accept_rate_28d": None})
+def test_held_or_scoreless_records_cannot_be_logged(santosh):
+    held = build_decision_packet({**santosh, "suggestion_accept_rate_28d": None})
     for rec in (held, {"user_id": "u", "action": "limit_reset"}, {"user_id": "u", "p_cal": 0.4, "band": ""}):
         with pytest.raises(ValueError, match="no score"):
             row_from_score_record(rec, executed_by="lifecycle-tool", action_taken="limit_reset")
@@ -164,12 +164,12 @@ def test_empty_csv_fails_cleanly_and_clears_stale_queue(tmp_path):
     assert not out.exists() and not (tmp_path / "q_rejected.csv").exists()
 
 
-def test_packet_dir_holds_unreadable_files_and_default_out_follows_user(tmp_path, maya, monkeypatch):
+def test_packet_dir_holds_unreadable_files_and_default_out_follows_user(tmp_path, santosh, monkeypatch):
     from retention_radar.serving.packet import main as packet_main
 
     d = tmp_path / "records"
     d.mkdir()
-    (d / "a_good.json").write_text(json.dumps(maya))
+    (d / "a_good.json").write_text(json.dumps(santosh))
     (d / "b_broken.json").write_text("{not json")
     (d / "c_list.json").write_text("[1, 2]")
     packet_main(["--dir", str(d), "--out", str(tmp_path / "p.jsonl")])
@@ -178,8 +178,8 @@ def test_packet_dir_holds_unreadable_files_and_default_out_follows_user(tmp_path
 
     monkeypatch.setattr(config, "ARTIFACTS_DIR", tmp_path)
     packet_main(["--json", str(d / "a_good.json")])
-    assert (tmp_path / f"{maya['user_id']}_decision_packet.json").exists()
-    assert not (tmp_path / "maya_decision_packet.json").exists()
+    assert (tmp_path / f"{santosh['user_id']}_decision_packet.json").exists()
+    assert not (tmp_path / "santosh_decision_packet.json").exists()
 
 
 @pytest.fixture()
@@ -194,12 +194,12 @@ def client(tmp_path, monkeypatch):
     return TestClient(api_mod.app)
 
 
-def test_api_every_invalid_record_gets_the_hold_envelope(client, maya):
+def test_api_every_invalid_record_gets_the_hold_envelope(client, santosh):
     m = load_manifest(MANIFEST)
     bodies = [c["record"] for c in m["invalid_records"]] + [
-        {**maya, "limit_hits_14d": True},
-        {k: v for k, v in maya.items() if k != "user_id"},
-        {**maya, "user_name": ""},
+        {**santosh, "limit_hits_14d": True},
+        {k: v for k, v in santosh.items() if k != "user_id"},
+        {**santosh, "user_name": ""},
     ]
     for body in bodies:
         r = client.post("/v1/churn/score?log=false", json=body)
@@ -210,10 +210,10 @@ def test_api_every_invalid_record_gets_the_hold_envelope(client, maya):
         assert r.status_code == 422 and r.json()["detail"]["decision"]["action"] == HOLD_ACTION, raw
 
 
-def test_api_same_contract_as_batch(client, maya):
-    rec = {**maya, "plan_tier": " PRO ", "extra": 1}
+def test_api_same_contract_as_batch(client, santosh):
+    rec = {**santosh, "plan_tier": " PRO ", "extra": 1}
     one = client.post("/v1/churn/score?log=false", json=rec)
-    body = json.dumps({"records": [rec, None, 5, {**maya, "failed_requests_rate": float("inf")}]})
+    body = json.dumps({"records": [rec, None, 5, {**santosh, "failed_requests_rate": float("inf")}]})
     many = client.post("/v1/churn/batch?log=false", content=body, headers={"content-type": "application/json"})
     assert one.status_code == 200 and many.status_code == 200, (one.text, many.text)
     assert many.json()["queue"][0]["p_cal"] == one.json()["p_cal"]
@@ -221,17 +221,17 @@ def test_api_same_contract_as_batch(client, maya):
     assert [r["row_number"] for r in many.json()["rejected"]] == [2, 3, 4]
 
 
-def test_api_actions_strip_whitespace_survive_bad_log_lines_and_use_log_dir(client, maya, tmp_path):
-    assert client.post("/v1/churn/score", json=maya).status_code == 200
+def test_api_actions_strip_whitespace_survive_bad_log_lines_and_use_log_dir(client, santosh, tmp_path):
+    assert client.post("/v1/churn/score", json=santosh).status_code == 200
     log_dir = tmp_path / "logs" / "prediction_log"
     with open(next(log_dir.glob("scores_*.jsonl")), "a", encoding="utf-8") as f:
         f.write("\n{truncated\n")
-    r = client.post("/v1/churn/actions", json={"user_id": f" {maya['user_id']} ", "executed_by": " lifecycle-tool ",
+    r = client.post("/v1/churn/actions", json={"user_id": f" {santosh['user_id']} ", "executed_by": " lifecycle-tool ",
                                                "action_taken": "limit_reset"})
     assert r.status_code == 200, r.text
     assert r.json()["logged"]["executed_by"] == "lifecycle-tool"
     assert (tmp_path / "logs" / "action_log.csv").exists()
-    blank = client.post("/v1/churn/actions", json={"user_id": maya["user_id"], "executed_by": "   ",
+    blank = client.post("/v1/churn/actions", json={"user_id": santosh["user_id"], "executed_by": "   ",
                                                    "action_taken": "limit_reset"})
     assert blank.status_code == 422
 
@@ -239,24 +239,24 @@ def test_api_actions_strip_whitespace_survive_bad_log_lines_and_use_log_dir(clie
 def test_streamlit_what_if_sliders_stay_inside_the_contract():
     testing = pytest.importorskip("streamlit.testing.v1")
     at = testing.AppTest.from_file(str(config.PROJECT_ROOT / "app" / "streamlit_app.py"), default_timeout=120).run()
-    # Maya is the default preset. Push sliders to their extremes: the record must stay valid
+    # Santosh is the default preset. Push sliders to their extremes: the record must stay valid
     # (active days are clamped, engagement_trend is derived), so every tab still scores.
-    at.slider(key="hero_maya:active_days_28d").set_value(0).run()
-    at.slider(key="hero_maya:limit_hits_14d").set_value(20).run()
-    at.slider(key="hero_maya:allowance_used_pct").set_value(3.0).run()
+    at.slider(key="hero_santosh:active_days_28d").set_value(0).run()
+    at.slider(key="hero_santosh:limit_hits_14d").set_value(20).run()
+    at.slider(key="hero_santosh:allowance_used_pct").set_value(3.0).run()
     assert not at.exception, [e.value for e in at.exception]
     text = " ".join(m.value for m in at.markdown)
     assert "**Risk band:**" in text and HOLD_ACTION not in text
 
 
-def test_cli_wrappers_propagate_exit_codes(tmp_path, maya):
+def test_cli_wrappers_propagate_exit_codes(tmp_path, santosh):
     """`python -m retention_radar.cli.*` must return the module's exit code (CI relies on it)."""
     import os
     import subprocess
     import sys
 
     env = {**os.environ, "PYTHONPATH": str(config.PROJECT_ROOT / "src"), "CHURN_DATA_SOURCE": "synthetic"}
-    base = {k: maya[k] for k in config.INFERENCE_REQUIRED_KEYS}
+    base = {k: santosh[k] for k in config.INFERENCE_REQUIRED_KEYS}
     rows = [{**base, "user_id": f"u{i}"} for i in range(30)]
     drifted = pd.DataFrame(rows).assign(limit_hits_14d=40, active_days_28d=0, active_days_7d=0)
     drifted.to_csv(tmp_path / "drifted.csv", index=False)

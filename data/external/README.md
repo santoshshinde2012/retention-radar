@@ -15,7 +15,7 @@ They must follow the v2 renewal contract.
 # Train and score on them
 CHURN_DATA_SOURCE=lakehouse python -m retention_radar.cli.ingest
 CHURN_DATA_SOURCE=lakehouse python -m retention_radar.cli.train
-CHURN_DATA_SOURCE=lakehouse python -m retention_radar.cli.infer --user maya   # scores hero_inference_record.json
+CHURN_DATA_SOURCE=lakehouse python -m retention_radar.cli.infer --user santosh   # scores hero_inference_record.json
 ```
 
 `CHURN_DATA_SOURCE=auto` uses these files whenever they exist; `synthetic` ignores them.

@@ -39,7 +39,7 @@ Churn export contract OK (7387 renewals, 25 cols) → .../local-data-lakehouse/d
 | File | Content | sha256 |
 |---|---|---|
 | `churn_user_features.csv` | 7,387 renewals, 25 columns (22 T-7 features + ids + `churned`) | `742f9028e4216d32ad6029007ee3b57414d1772344005ea907a5e5cf80eba18d` |
-| `hero_inference_record.json` | `sub_maya`, 24 keys, no label | `49abdddc526827375b2f8d442fda6359cc2532353d528207545b204e3eb10878` |
+| `hero_inference_record.json` | `sub_santosh`, 24 keys, no label | `49abdddc526827375b2f8d442fda6359cc2532353d528207545b204e3eb10878` |
 | `churn_renewals_audit.csv` | Lakehouse-side audit (radar does not read it) | `e07dcfceb32c00a4b4ab34615ef7a9a40ea3ba165fa9468a6ab3db30cd5c12f2` |
 
 The features and hero hashes match the earlier Spark export at lakehouse `7f5fc43`, so the export is

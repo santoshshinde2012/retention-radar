@@ -1,7 +1,7 @@
 """Score a user JSON with the trained churn model.
 
 Examples:
-    python -m retention_radar.cli.infer --user maya
+    python -m retention_radar.cli.infer --user santosh
     python -m retention_radar.cli.infer --json data/raw/subscribers/arjun.json
 """
 
@@ -32,7 +32,7 @@ load_payload = load_model_bundle
 
 
 def resolve_user_json(user: str | None, json_path: str | None) -> Path:
-    """Resolve ``--user maya|arjun`` or ``--json path`` to a payload file."""
+    """Resolve ``--user santosh|arjun`` or ``--json path`` to a payload file."""
     if json_path:
         return Path(json_path)
     if user and user.lower() in config.HEROES:

@@ -12,7 +12,7 @@ service or credit card is needed. Related: [getting-started.md](../getting-start
 | Train | `python -m retention_radar.cli.train` | ladder, Optuna XGBoost, calibrator |
 | Evaluate | `python -m retention_radar.cli.evaluate` | plots, τ, `models/metrics.json` |
 | Latency | `python -m retention_radar.cli.benchmark` | latency block in `metrics.json` |
-| Packet | `python -m retention_radar.cli.single_record --user maya` | `artifacts/maya_decision_packet.json` |
+| Packet | `python -m retention_radar.cli.single_record --user santosh` | `artifacts/santosh_decision_packet.json` |
 | Drift | `python -m retention_radar.cli.drift_check` | z-scores against `feature_stats.json` |
 | Slices | `python -m retention_radar.cli.slice_metrics` | metrics by `plan_tier` |
 | Explain | `python -m retention_radar.cli.explain` | XGBoost gain importance |
@@ -44,7 +44,7 @@ RETENTION_RADAR_ARTIFACT_DIR=artifacts/smoke N_USERS=800 N_OPTUNA_TRIALS=5 \
 ```
 
 After a full run you should have `models/*.joblib`, `models/metrics.json`,
-`artifacts/*.png`, `artifacts/maya_decision_packet.json` and
+`artifacts/*.png`, `artifacts/santosh_decision_packet.json` and
 `artifacts/arjun_decision_packet.json`.
 
 ## 2. GitHub Actions
@@ -57,7 +57,7 @@ every push and pull request to `main` (ubuntu-latest, Python 3.12).
 1. Install requirements, the package and ruff.
 2. Copy the committed bundle to `.ci_seed42_fixtures/`.
 3. `pytest tests/test_seed42_canary.py tests/test_artifact_dir_isolation.py` on the
-   committed bundle (Maya and Arjun must score as published).
+   committed bundle (Santosh and Arjun must score as published).
 4. `ruff check src/ tests/ app/`.
 5. `./scripts/run_all.sh` with `N_USERS=800`, `N_OPTUNA_TRIALS=5`, into `artifacts/smoke/`.
 6. `pytest -q`.

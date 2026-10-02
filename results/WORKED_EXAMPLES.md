@@ -4,13 +4,13 @@ Two scoring-time records, seven days before renewal. No label: the renewal has n
 happened. Walkthrough: [`../docs/case-study/renewal-worked-examples.md`](../docs/case-study/renewal-worked-examples.md).
 
 ```bash
-python -m retention_radar.cli.single_record --user maya    # → artifacts/maya_decision_packet.json
+python -m retention_radar.cli.single_record --user santosh    # → artifacts/santosh_decision_packet.json
 python -m retention_radar.cli.single_record --user arjun
 ```
 
-Sample output: [`maya_decision_packet.sample.json`](maya_decision_packet.sample.json)
+Sample output: [`santosh_decision_packet.sample.json`](santosh_decision_packet.sample.json)
 
-| | Maya | Arjun |
+| | Santosh | Arjun |
 |--|------|-------|
 | Plan · renewals paid | Pro · 3 | Pro+ · 12 |
 | First renewal since the cap cut | yes | no |
@@ -25,9 +25,9 @@ Sample output: [`maya_decision_packet.sample.json`](maya_decision_packet.sample.
 | Validation | OK | OK; `ide_sessions_28d`=41 flagged above training p99 (40) |
 | `auto_action` | none | none |
 
-Maya's raw 0.717 is not a probability: training reweights lapses with `scale_pos_weight`
+Santosh's raw 0.717 is not a probability: training reweights lapses with `scale_pos_weight`
 (≈9.4), so raw scores run high. Platt calibration maps it to 0.288, about three times the
-9.6% base rate. The limit reset beats the discount because her trouble is the cap, and a
-reset costs about $2 whether or not she would have renewed anyway. An armed discount costs
+9.6% base rate. The limit reset beats the discount because his trouble is the cap, and a
+reset costs about $2 whether or not he would have renewed anyway. An armed discount costs
 nothing until someone clicks cancel, but then some subscribers who would have renewed take
 it too.

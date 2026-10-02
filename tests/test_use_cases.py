@@ -190,8 +190,8 @@ def test_api_batch_and_action_flow(client, manifest, tmp_path):
     assert len(body["queue"]) == db["valid_rows"] and len(body["rejected"]) == db["invalid_rows"]
     assert [q["rank"] for q in body["queue"][:3]] == [1, 2, 3]
 
-    maya = next(p for p in manifest["personas"] if p["id"] == "maya_capped_pro")["record"]["user_id"]
-    rv = client.post("/v1/churn/actions", json={"user_id": maya, "executed_by": "lifecycle-tool",
+    santosh = next(p for p in manifest["personas"] if p["id"] == "santosh_capped_pro")["record"]["user_id"]
+    rv = client.post("/v1/churn/actions", json={"user_id": santosh, "executed_by": "lifecycle-tool",
                                                 "action_taken": "limit_reset", "notes": "sent"})
     assert rv.status_code == 200, rv.text
     logged = rv.json()["logged"]

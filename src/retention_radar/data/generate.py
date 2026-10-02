@@ -266,17 +266,17 @@ def _with_trend(record: dict) -> dict:
     return record
 
 
-def maya_profile() -> dict:
+def santosh_profile() -> dict:
     """Pro subscriber, fourth renewal, the first since the weekly cap was cut.
 
-    She hit the cap four times in two weeks, moved most work to the cheaper
-    model, and her active days fell off while CLI sessions held up. Scored at
+    He hit the cap four times in two weeks, moved most work to the cheaper
+    model, and his active days fell off while CLI sessions held up. Scored at
     T-7; the renewal has not happened, so there is no label.
     """
     return _with_trend(
         {
-            "user_id": "sub_maya",
-            "user_name": "Maya (worked example)",
+            "user_id": "sub_santosh",
+            "user_name": "Santosh (worked example)",
             "plan_tier": "pro",
             "renewals_completed": 3,
             "active_days_7d": 2,
@@ -333,7 +333,7 @@ def arjun_profile() -> dict:
     )
 
 
-HERO_PROFILES = {"maya": maya_profile, "arjun": arjun_profile}
+HERO_PROFILES = {"santosh": santosh_profile, "arjun": arjun_profile}
 
 
 def write_heroes() -> None:

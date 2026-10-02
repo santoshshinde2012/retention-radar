@@ -52,7 +52,7 @@ def test_apply_artifact_dir_redirects_model_and_docs(tmp_path, seed_fingerprints
         config.METRICS_PATH.write_text('{"source":"lakehouse"}\n', encoding="utf-8")
         config.MODEL_CARD_PATH.write_text("# lakehouse card\n", encoding="utf-8")
         config.DATA_DICTIONARY_PATH.write_text("# lakehouse dict\n", encoding="utf-8")
-        (lake / "maya_decision_packet.json").write_text("{}\n", encoding="utf-8")
+        (lake / "santosh_decision_packet.json").write_text("{}\n", encoding="utf-8")
 
         assert config.MODEL_PATH.exists()
         assert not (config.SEED_MODELS_DIR / "churn_xgb.joblib").samefile(config.MODEL_PATH)

@@ -8,8 +8,8 @@
   "calibrated_test_roc_auc": 0.7261263955342901,
   "best_f1_threshold": 0.14,
   "worked_example": {
-    "user_id": "sub_maya",
-    "name": "Maya (worked example)",
+    "user_id": "sub_santosh",
+    "name": "Santosh (worked example)",
     "p_churn_raw": 0.7744,
     "p_churn_calibrated": 0.2101,
     "risk": "medium",

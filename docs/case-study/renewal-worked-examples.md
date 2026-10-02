@@ -3,14 +3,14 @@
 A walkthrough of the serve path for the two worked examples:
 **validate → score (raw + calibrated) → explain → compare to the cohort → decide**.
 
-Reproduce: `./scripts/run_all.sh` writes `artifacts/maya_decision_packet.json` and
+Reproduce: `./scripts/run_all.sh` writes `artifacts/santosh_decision_packet.json` and
 `artifacts/arjun_decision_packet.json`. Synthetic data, seed 42.
 
-## Maya
+## Santosh
 
-Pro plan, $20/month, three renewals paid. Her fourth renewal is the first since the weekly
-cap was cut. In the last 14 days she hit the cap four times (90th percentile). She now routes
-68% of requests to the cheaper model (96th percentile of the renewal table). She was active on 15 of the last
+Pro plan, $20/month, three renewals paid. His fourth renewal is the first since the weekly
+cap was cut. In the last 14 days he hit the cap four times (90th percentile). He now routes
+68% of requests to the cheaper model (96th percentile of the renewal table). He was active on 15 of the last
 28 days but only 2 of the last 7. CLI sessions (19) now outnumber IDE sessions (14).
 
 | Step | Result |
@@ -23,8 +23,8 @@ cap was cut. In the last 14 days she hit the cap four times (90th percentile). S
 | Executed by | the lifecycle tool, after a retention lead approved the playbook. `auto_action: none` |
 
 What the drivers do and do not say: four cap hits and rationing to the cheap model are the
-strongest pushes toward lapse in *this model's* view of her. That is not evidence that a limit reset will
-change her decision. The expected value of $5.20 uses an **assumed** 25% effect; only the
+strongest pushes toward lapse in *this model's* view of him. That is not evidence that a limit reset will
+change his decision. The expected value of $5.20 uses an **assumed** 25% effect; only the
 holdout can say whether the reset works.
 
 ## Arjun
@@ -60,7 +60,7 @@ churn from 6% to 10% (Ascarza, Iyengar & Schleicher, JMR 2016).
 }
 ```
 
-Full sample: [`results/maya_decision_packet.sample.json`](../../results/maya_decision_packet.sample.json).
+Full sample: [`results/santosh_decision_packet.sample.json`](../../results/santosh_decision_packet.sample.json).
 
 ## Six more scenarios
 

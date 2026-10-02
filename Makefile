@@ -25,7 +25,7 @@ lint:
 	$(PY) -m ruff check src/ tests/ app/
 
 infer:
-	$(PY) -m retention_radar.cli.single_record --user maya --out artifacts/maya_decision_packet.json
+	$(PY) -m retention_radar.cli.single_record --user santosh --out artifacts/santosh_decision_packet.json
 
 ui:
 	$(PY) -m streamlit run app/streamlit_app.py

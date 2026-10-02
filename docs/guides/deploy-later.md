@@ -12,7 +12,7 @@ Longer notes: [e2e-free-platforms.md](e2e-free-platforms.md).
 - The branch you deploy has the committed bundle (Cloud never trains):
   `models/churn_xgb.joblib`, `models/calibrator.joblib`, `models/feature_names.json`,
   `models/feature_stats.json`, `models/metrics.json`.
-- `data/raw/subscribers/maya.json` and `arjun.json` and `data/use_cases/` are committed
+- `data/raw/subscribers/santosh.json` and `arjun.json` and `data/use_cases/` are committed
   (sidebar presets).
 - `runtime.txt` says `python-3.12`; `packages.txt` installs `libgomp1` for XGBoost and LightGBM.
 
@@ -24,7 +24,7 @@ Longer notes: [e2e-free-platforms.md](e2e-free-platforms.md).
 4. Python version: 3.12.
 5. Leave Secrets empty.
 6. Deploy and wait for `pip install -r requirements.txt` to finish.
-7. Open the Decision tab with Maya selected. Expect calibrated 0.288, `limit_reset`, `Auto action: none`.
+7. Open the Decision tab with Santosh selected. Expect calibrated 0.288, `limit_reset`, `Auto action: none`.
 8. Put the `*.streamlit.app` URL in `README.md` and `docs/guides/start-here.md`.
 
 ## Checks after deploy
@@ -32,7 +32,7 @@ Longer notes: [e2e-free-platforms.md](e2e-free-platforms.md).
 | Check | Expect |
 |-------|--------|
 | App loads | No "Model not found" |
-| Maya and Arjun score | Same results as `make infer` locally |
+| Santosh and Arjun score | Same results as `make infer` locally |
 | No training on boot | The log shows no Optuna or `cli.train` |
 | Sidebar | Says the data is synthetic |
 

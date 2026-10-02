@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 
 from retention_radar import config
-from retention_radar.data.generate import generate_renewals, maya_profile
+from retention_radar.data.generate import generate_renewals, santosh_profile
 from retention_radar.data.ingest import (
     load_users,
     resolve_hero_json,
@@ -33,7 +33,7 @@ def test_resolve_prefers_external_when_present(tmp_path, monkeypatch):
 
     monkeypatch.setattr(config, "CHURN_DATA_SOURCE", "synthetic")
     assert resolve_users_csv() == raw / "renewals_t7.csv"
-    assert resolve_hero_json() == raw / "subscribers" / "maya.json"
+    assert resolve_hero_json() == raw / "subscribers" / "santosh.json"
     with pytest.raises(ValueError, match="Unknown worked example"):
         resolve_hero_json("santosh")
 
@@ -92,7 +92,7 @@ def test_load_users_from_lakehouse_shaped_export(tmp_path, monkeypatch):
 def test_unknown_plan_tier_fails_loud():
     from retention_radar.features.transform import encode_plan_tier
 
-    df = pd.DataFrame([maya_profile(), {**maya_profile(), "plan_tier": "pro_max"}])
+    df = pd.DataFrame([santosh_profile(), {**santosh_profile(), "plan_tier": "pro_max"}])
     with pytest.raises(ValueError, match="Unknown plan_tier"):
         encode_plan_tier(df)
 

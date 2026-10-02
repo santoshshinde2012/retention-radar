@@ -31,7 +31,7 @@
 
 | Doc | Purpose |
 |-----|---------|
-| [case-study/renewal-worked-examples.md](case-study/renewal-worked-examples.md) | Maya and Arjun through the serve path |
+| [case-study/renewal-worked-examples.md](case-study/renewal-worked-examples.md) | Santosh and Arjun through the serve path |
 | [case-study/single-record-checklist.md](case-study/single-record-checklist.md) | What one T-7 record goes through |
 
 ## Results (repo root)

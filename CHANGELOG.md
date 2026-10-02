@@ -52,10 +52,10 @@ where noted.
   `pause_offer`, `cancel_flow_discount`, `personal_email` for Ultra only), with a
   deterministic 10% holdout. Bands are low < 0.10 ≤ medium < 0.30 ≤ high. `auto_action` is
   always `none`; `hitl_required` is true only for `personal_email`.
-- Worked examples: Maya (Pro, capped, first renewal since the cap cut; 0.717 → 0.288,
+- Worked examples: Santosh (Pro, capped, first renewal since the cap cut; 0.717 → 0.288,
   medium, `limit_reset`) and Arjun (steady Pro+; 0.124 → 0.025, low, `no_action`) replace
-  the earlier single example. Files: `data/raw/subscribers/maya.json`, `arjun.json`;
-  `--user maya|arjun`; `make infer` writes `artifacts/maya_decision_packet.json`.
+  the earlier single example. Files: `data/raw/subscribers/santosh.json`, `arjun.json`;
+  `--user santosh|arjun`; `make infer` writes `artifacts/santosh_decision_packet.json`.
 - Renames: packet key `hitl` → `decision`; queue column `hitl_action` → `action`, plus
   `holdout`, `would_have_sent`, `expected_value_usd`; `serving/hitl_log.py` →
   `serving/action_log.py` and `cli.hitl_log` → `cli.action_log` (columns `user_id, p_cal,
@@ -69,14 +69,14 @@ where noted.
   invalid records, `daily_t7_batch.csv`, `actions_taken.csv` (send export) and
   `renewal_outcomes.csv` (simulated from the assumed playbook effects).
 - Results and docs: `results/SANTOSH_ANALYSIS.md` → `results/WORKED_EXAMPLES.md`;
-  `results/maya_decision_packet.sample.json`; `docs/case-study/renewal-worked-examples.md`;
+  `results/santosh_decision_packet.sample.json`; `docs/case-study/renewal-worked-examples.md`;
   new `docs/USE_CASE.md`; guides rewritten for the new use case. Notebook renamed to
   `notebooks/01_explore_renewals.ipynb`.
 - Lakehouse: the local-data-lakehouse export must now produce the v2 contract
   (`churn_user_features.csv` with the 24 fields + `churned`, and
   `hero_inference_record.json`), built from raw billing + usage events as of T-7.
   `results/lakehouse-e2e-summary.json` refreshed from that run: 7,387 renewals, calibrated
-  test AUC 0.726, Maya 0.210 → `limit_reset`.
+  test AUC 0.726, Santosh 0.210 → `limit_reset`.
 - Latency: warm single-row score + calibrate, p50 about 2.7 ms on a GitHub Actions runner.
 - New `python -m retention_radar.cli.analysis` (run by `run_all.sh`; committed copy
   `results/analysis.json`): paired bootstrap of logistic regression vs tuned XGBoost,

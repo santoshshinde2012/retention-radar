@@ -117,9 +117,9 @@ and reporting; they do not drive the decision.
 | `models/feature_names.json` | feature order |
 | `models/feature_stats.json` | outlier flags, drift reference, cohort-percentile fallback |
 | `models/metrics.json` | model card, UI, docs |
-| `results/maya_decision_packet.sample.json` | example packet |
+| `results/santosh_decision_packet.sample.json` | example packet |
 
-`tests/test_seed42_canary.py` scores Maya and Arjun against the committed bundle and
+`tests/test_seed42_canary.py` scores Santosh and Arjun against the committed bundle and
 fails if either result moves.
 
 ## Out of scope

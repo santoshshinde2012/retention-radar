@@ -23,7 +23,7 @@ billing and usage events, computing every feature as of each renewal's T-7 and d
 label from billing events. The last run, recorded in
 [`results/lakehouse_e2e_summary.json`](../../results/lakehouse_e2e_summary.json):
 7,387 renewals routed to the model (7.4% voluntary lapse), calibrated test AUC 0.726, and
-Maya's event-built record scored 0.774 raw → 0.210 calibrated, medium, `limit_reset`. Those
+Santosh's event-built record scored 0.774 raw → 0.210 calibrated, medium, `limit_reset`. Those
 numbers are a different world from the synthetic run and are not the published ladder.
 
 ## Path
@@ -49,8 +49,8 @@ The lakehouse owns the features. Model choice lives in this repo
 - `lakehouse`: require `data/external/churn_user_features.csv`.
 - `auto`: use `data/external/` if present, else synthetic.
 
-With `lakehouse` (or `auto` and an export present), `--user maya` scores
-`hero_inference_record.json` instead of `data/raw/subscribers/maya.json`.
+With `lakehouse` (or `auto` and an export present), `--user santosh` scores
+`hero_inference_record.json` instead of `data/raw/subscribers/santosh.json`.
 
 ## One command
 

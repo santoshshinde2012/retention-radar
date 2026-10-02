@@ -9,7 +9,7 @@ the holdout) lives in ``serving/outcomes.py`` (``python -m retention_radar.cli.o
 
 Examples:
     python -m retention_radar.cli.action_log \\
-        --from-packet artifacts/maya_decision_packet.json \\
+        --from-packet artifacts/santosh_decision_packet.json \\
         --executed-by lifecycle-tool --action-taken limit_reset
     # Bulk: import the messaging tool's send export (user_id, executed_by,
     # action_taken, notes, timestamp) against a batch_score queue.

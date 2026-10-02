@@ -3,7 +3,7 @@
 A small, reproducible slice of the renewal business, built from the seed-42
 cohort and the committed ``models/`` bundle:
 
-* Scenarios: the two worked examples (Maya, Arjun) plus one real test-split
+* Scenarios: the two worked examples (Santosh, Arjun) plus one real test-split
   subscriber per path through the policy (limit reset, pause offer, cancel-flow
   discount on a first renewal, overage shock, quiet-but-fine, holdout, the one
   Ultra subscriber who gets a person-written email).
@@ -76,17 +76,17 @@ class Scenario:
 
 SCENARIOS: list[Scenario] = [
     Scenario(
-        "maya_capped_pro",
-        "Maya: capped on Pro, first renewal since the cut",
-        "Pro, {renewals_completed:.0f} renewals paid, and this is her first renewal since the "
+        "santosh_capped_pro",
+        "Santosh: capped on Pro, first renewal since the cut",
+        "Pro, {renewals_completed:.0f} renewals paid, and this is his first renewal since the "
         "weekly cap was cut. {limit_hits_14d:.0f} cap hits in 14 days, {cheap_model_share_28d:.0%} "
         "of requests on the cheaper model, {active_days_7d:.0f} active days this week against "
-        "{active_days_28d:.0f} in 28. The policy picks the limit reset over a discount: her "
+        "{active_days_28d:.0f} in 28. The policy picks the limit reset over a discount: his "
         "problem is the cap, not the price.",
         "medium",
         "limit_reset",
         None,
-        hero="maya",
+        hero="santosh",
     ),
     Scenario(
         "arjun_steady_pro_plus",
@@ -347,7 +347,7 @@ def build_use_cases(out_dir: Path = USE_CASE_DIR) -> dict[str, Any]:
 
     # Renewal outcomes: generator ground truth + the simulated playbook effect.
     truth = users.set_index("user_id")[config.TARGET_COLUMN]
-    hero_truth = {"sub_maya": 1, "sub_arjun": 0}  # worked examples: illustrative outcomes
+    hero_truth = {"sub_santosh": 1, "sub_arjun": 0}  # worked examples: illustrative outcomes
     taken = {s["user_id"]: s["action_taken"] for s in sends}
     rng = np.random.default_rng(config.RANDOM_SEED)
     outcomes = []
@@ -482,7 +482,7 @@ def _readme(manifest: dict[str, Any], n_sends: int) -> str:
         "subscribers whose renewal is seven days out, what the policy suggests for each, "
         "what the messaging tool actually sent, and whether each subscriber renewed. "
         "Scenario rows are real **test-split** rows (never used for training, calibration "
-        "or τ); Maya and Arjun are worked examples scored at T-7. Expected results are what "
+        "or τ); Santosh and Arjun are worked examples scored at T-7. Expected results are what "
         f"the committed `models/` bundle returns (τ = {tau}); "
         "`python -m retention_radar.cli.build_use_cases --check` re-verifies them. "
         "Synthetic data only, no real PII.",
@@ -548,7 +548,7 @@ def _readme(manifest: dict[str, Any], n_sends: int) -> str:
         "python -m retention_radar.cli.outcomes --log artifacts/use_cases/action_log.csv \\",
         "  --labels data/use_cases/renewal_outcomes.csv --out artifacts/use_cases/outcomes.csv",
         "curl -s localhost:8000/v1/churn/score -H 'content-type: application/json' \\",
-        "  -d @data/use_cases/records/maya_capped_pro.json",
+        "  -d @data/use_cases/records/santosh_capped_pro.json",
         "```",
         "",
     ]
