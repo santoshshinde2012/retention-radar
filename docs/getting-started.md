@@ -1,11 +1,11 @@
-# Getting started — 10-minute Retention Radar path
+# Getting started
 
-Human-in-the-loop churn ranking for a fictional AI platform. Synthetic data only (seed **42**). No real PII. Scores go to a human (`auto_action: none`).
+Retention Radar scores paying subscribers of a monthly AI coding assistant plan seven
+days before renewal (T-7) and suggests one approved playbook, a holdout, or nothing.
+The data is synthetic (seed 42). The service never sends anything: `auto_action` is
+always `none`. Background: [USE_CASE.md](USE_CASE.md).
 
-**This repo** = public source code + benchmarks + results analysis.  
-**Data SoR / foundation:** [local-data-lakehouse](https://github.com/santoshshinde2012/local-data-lakehouse)
-
-## 1. Clone and install
+## 1. Install
 
 ```bash
 git clone https://github.com/santoshshinde2012/retention-radar.git
@@ -14,98 +14,101 @@ python3.12 -m venv .venv
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 pip install -e .
-# If you skip editable install:
-# export PYTHONPATH="$(pwd)/src"
 ```
 
-Requires **Python 3.12+**. The committed seed-42 bundle was trained with XGBoost **3.4.1** (needs Python 3.12) and scikit-learn **1.9.1**; `requirements.txt` pins both so a local retrain reproduces `models/metrics.json` exactly (`make reproduce` checks it). Or run `make setup` (venv + requirements + editable install).
+Python 3.12 or newer is required. The committed bundle was trained with XGBoost 3.4.1 and
+scikit-learn 1.9.1; `requirements.txt` pins both so a retrain reproduces
+`models/metrics.json` (`make reproduce` checks this). `make setup` does the same install.
 
-**macOS note:** XGBoost / LightGBM need OpenMP (CatBoost is usually fine via pip). If `pip install` or import fails with `libomp`, install once:
+On macOS, if XGBoost or LightGBM fail to import with a `libomp` error: `brew install libomp`.
+
+Environment variables are listed in [`.env.example`](../.env.example)
+(`CHURN_DATA_SOURCE`, `N_USERS`, `N_OPTUNA_TRIALS`).
+
+## 2. Run the pipeline
 
 ```bash
-brew install libomp
+CHURN_DATA_SOURCE=synthetic ./scripts/run_all.sh
 ```
 
-Env template: [`.env.example`](../.env.example) (`CHURN_DATA_SOURCE`, `N_USERS`, `N_OPTUNA_TRIALS`).
+Generate → ingest → train → evaluate → slices → explain → benchmark → drift check →
+decision packets for Maya and Arjun. Without `RETENTION_RADAR_ARTIFACT_DIR` it retrains
+into `models/` and replaces the committed bundle. For a fast smoke run that leaves
+`models/` alone:
 
-## 1b. Verify everything end to end (one command)
+```bash
+RETENTION_RADAR_ARTIFACT_DIR=artifacts/smoke N_USERS=800 N_OPTUNA_TRIALS=5 \
+  CHURN_DATA_SOURCE=synthetic ./scripts/run_all.sh
+```
+
+Cite `models/metrics.json`. Explanation of the numbers: [results/benchmarks.md](../results/benchmarks.md).
+
+## 3. Score one subscriber
+
+```bash
+make infer
+# same as:
+python -m retention_radar.cli.single_record --user maya --out artifacts/maya_decision_packet.json
+```
+
+Maya: calibrated P(lapse) 0.288, band medium, action `limit_reset`. `--user arjun` gives
+0.025, low, `no_action`. Walkthrough: [results/WORKED_EXAMPLES.md](../results/WORKED_EXAMPLES.md).
+
+## 4. UI and tests
+
+```bash
+make ui     # Streamlit, committed models only
+make test   # pytest with CHURN_DATA_SOURCE=synthetic
+```
+
+## 5. Verify everything
 
 ```bash
 make e2e-local
 ```
 
-Runs, in order: environment check (Python 3.12 + pinned libs) → ruff → seed-42 canary → **exact reproduction** of `models/metrics.json` in an isolated `artifacts/local_e2e/repro/` → full pytest (including headless Streamlit and the API) → every serve surface on the committed bundle (infer, decision packet, batch score, HITL log, HITL outcomes, strict drift, live `uvicorn`, live Streamlit) → lakehouse gold E2E compared with [`results/lakehouse_e2e_summary.json`](../results/lakehouse_e2e_summary.json) when [local-data-lakehouse](https://github.com/santoshshinde2012/local-data-lakehouse) is cloned beside this repo (or `LAKEHOUSE_ROOT=...`) → a check that committed `models/`, `docs/`, `results/`, `data/raw/` were not modified. About 3 minutes on a laptop CPU; the same target runs in CI.
+In order: environment check, ruff, the seed-42 check on the committed bundle, exact reproduction of
+`models/metrics.json` in `artifacts/local_e2e/repro/`, full pytest, the use-case pack
+through every CLI, a live `uvicorn` and a live Streamlit server, the lakehouse path when
+[local-data-lakehouse](https://github.com/santoshshinde2012/local-data-lakehouse) is
+cloned beside this repo (or `LAKEHOUSE_ROOT=...`), and a check that committed `models/`,
+`docs/`, `results/` and `data/raw/` were not modified. CI runs the same target.
 
-## 2. Run the full pipeline
+## 6. One renewal day, end to end
 
-```bash
-chmod +x scripts/run_all.sh
-CHURN_DATA_SOURCE=synthetic ./scripts/run_all.sh
-```
-
-Faster smoke (committed `models/` untouched): `RETENTION_RADAR_ARTIFACT_DIR=artifacts/smoke N_USERS=800 N_OPTUNA_TRIALS=5 ./scripts/run_all.sh`. Without `RETENTION_RADAR_ARTIFACT_DIR`, `run_all.sh` retrains **into** `models/` and replaces the published bundle.
-
-Cite **`models/metrics.json`**. Narrative: [results/benchmarks.md](../results/benchmarks.md).
-
-## 3. Score Santosh
+[`data/use_cases/`](../data/use_cases/README.md) is one day of T-7 renewals built from
+test-split subscribers: eight scenarios (one per path through the policy), four invalid
+records, a daily batch, the messaging tool's send export and the renewal outcomes.
 
 ```bash
-make infer
-# equivalent:
-# PYTHONPATH=src python -m retention_radar.cli.single_record --user santosh --out artifacts/example_decision_packet.json
+make use-cases
 ```
 
-Expect raw ≈ **0.043**, calibrated ≈ **0.016**, band **low**, HITL **monitor** (`auto_action: none`). See [results/example-account-analysis.md](../results/example-account-analysis.md).
+| Step | Command |
+|------|---------|
+| Batch → action queue | `python -m retention_radar.cli.batch_score --csv data/use_cases/daily_t7_batch.csv --out artifacts/use_cases/queue.csv` (invalid rows go to `queue_rejected.csv`) |
+| One decision packet | `python -m retention_radar.cli.single_record --json data/use_cases/records/overage_shock.json` (exit 1 and `hold: fix input data` for invalid input) |
+| Import what was sent | `python -m retention_radar.cli.action_log --from-scores artifacts/use_cases/queue.csv --decisions data/use_cases/actions_taken.csv --log artifacts/use_cases/action_log.csv` |
+| Lift vs holdout | `python -m retention_radar.cli.outcomes --log artifacts/use_cases/action_log.csv --labels data/use_cases/renewal_outcomes.csv` |
+| API | `uvicorn retention_radar.serving.api:app --app-dir src` → `POST /v1/churn/score`, `/v1/churn/batch`, `/v1/churn/actions` |
+| UI | `make ui`, then pick a subscriber in the sidebar |
 
-## 4. UI and tests
+The action log records what was actually done, including holdout rows and suppressed
+sends. `cli.outcomes` joins it to renewal outcomes observed after the action and reports
+lapse rate per band and lift per playbook against the holdout, with a Newcombe interval.
+It gives no verdict while either group has fewer than 30 subscribers. In the pack, the
+outcomes are simulated from the playbook effects assumed in `config.PLAYBOOKS`, so the
+lift it reports is not evidence that any playbook works.
 
-```bash
-streamlit run app/streamlit_app.py
-# or: make ui
-
-CHURN_DATA_SOURCE=synthetic PYTHONPATH=src pytest -q
-# or: make test
-```
-
-## Dual path: synthetic vs lakehouse
+## Data sources
 
 | Path | Command |
 |------|---------|
-| Synthetic (default / CI) | `CHURN_DATA_SOURCE=synthetic ./scripts/run_all.sh` |
-| Lakehouse gold | `./scripts/run_lakehouse_e2e.sh /path/to/local-data-lakehouse` |
+| Synthetic (default, CI) | `CHURN_DATA_SOURCE=synthetic ./scripts/run_all.sh` |
+| Lakehouse | `./scripts/run_lakehouse_e2e.sh /path/to/local-data-lakehouse` (needs its v2 renewal export) |
 
-Lakehouse E2E sets `RETENTION_RADAR_ARTIFACT_DIR=artifacts/lakehouse_run` so committed `models/` and `docs/model-card.md` stay untouched. Dual-world cite: [`results/lakehouse_e2e_summary.json`](../results/lakehouse_e2e_summary.json).
+The lakehouse run writes only under `artifacts/lakehouse_run/`. Details:
+[data/data-foundation-lakehouse.md](data/data-foundation-lakehouse.md).
 
-Sync only: `./scripts/sync_lakehouse_exports.sh /path/to/local-data-lakehouse/data/export`
-
-More: [folder-structure.md](folder-structure.md) · [architecture.md](architecture.md) · [e2e-free-platforms.md](guides/e2e-free-platforms.md) · [../README.md](../README.md)
-
-## The service end to end, on real use-case data
-
-[`data/use_cases/`](../data/use_cases/README.md) holds real seed-42 records for every serving path (test-split rows, plus the Santosh hero from the validation split), with the result the committed bundle gives each one:
-
-| Scenario | Band | Suggested action |
-|----------|------|------------------|
-| Steady power user (Santosh) · Usage dip, still healthy | low | monitor |
-| New free trial hitting friction | medium | nurture / check-in |
-| Borderline: friction just under τ (reviewer overrides to outreach) | medium | nurture / check-in |
-| Payment failures plus support load | high | retention outreach (human review) |
-| Gone dark · Enterprise renewal at risk | high | escalate |
-| 4 invalid records (unknown plan, missing NPS, rate > 1, text in a number) | — | **hold: fix input data** (never scored or queued) |
-
-Bands share the τ-derived edges with the actions (low < τ/2 ≤ medium < τ ≤ high; escalate at p ≥ 0.60), so each band implies one action.
-
-```bash
-make use-cases   # weekly batch → ranked queue + rejects → packets → held records → reviews → day-30 outcomes
-```
-
-| Piece | Command |
-|-------|---------|
-| Batch → review queue | `python -m retention_radar.cli.batch_score --csv data/use_cases/weekly_batch.csv --out artifacts/use_cases/queue.csv` → sorted by calibrated risk (`rank` 1 first), invalid rows in `queue_rejected.csv` |
-| One decision packet | `python -m retention_radar.cli.single_record --json data/use_cases/records/gone_dark.json` → `artifacts/<user_id>_decision_packet.json` (exit 1 + `hold` for invalid input) |
-| HITL review log | one row: `python -m retention_radar.cli.hitl_log --from-packet artifacts/example_decision_packet.json --reviewer you --action-taken monitor` · bulk (all-or-nothing, re-runs skip already-logged reviews): `--from-scores artifacts/use_cases/queue.csv --decisions data/use_cases/review_decisions.csv --log artifacts/use_cases/hitl_review_log.csv` |
-| Outcome write-back | `python -m retention_radar.cli.hitl_outcomes --log artifacts/use_cases/hitl_review_log.csv --labels data/use_cases/labels_day30.csv` |
-| Thin local API | `uvicorn retention_radar.serving.api:app --app-dir src` → `POST /v1/churn/score` (422 + hold reason for invalid input), `POST /v1/churn/batch`, `POST /v1/churn/reviews` |
-| UI | `make ui` → sidebar **Use case** picker loads each scenario exactly as the API scores it |
-
-This is the **predict → act → outcome** loop: scores, human review rows and later labels are first-class. **Outcome write-back** joins review rows to labels observed after the review (`user_id, churned[, observed_at]`) and reports observed churn per band and per action taken. It is descriptive, not an uplift estimate. `auto_action` stays `none`. Live Streamlit demo URL: **TBD**.
+More: [folder-structure.md](folder-structure.md) · [architecture.md](architecture.md) ·
+[guides/e2e-free-platforms.md](guides/e2e-free-platforms.md)

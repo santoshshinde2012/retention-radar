@@ -1,4 +1,80 @@
-## Unreleased
+# Changelog
+
+## 2026-10-02 — v2 on main (local-first lakehouse stack)
+
+Radar `main` still read the v1 export (`santosh_inference_record.json`, 22 generic SaaS features),
+which local-data-lakehouse no longer writes. The v2 reader (PR #18) was closed unmerged, so `main`
+could not consume the lakehouse export at all. This release puts v2 on top of `main` (#19, #20):
+
+- Reader and model: the v2 contract (`churn_user_features.csv` with the 22 T-7 features, and
+  `hero_inference_record.json`) and the Linux-trained seed-42 v2 bundle, unchanged from `953af3a`.
+- Kept from #19 / #20: real PSI drift (it falls back to SMD when a bundle's `feature_stats.json`
+  has no `psi_bins`, which is the case for the committed v2 bundle), slice metrics at τ, the
+  lowercase file names (every v2 reference is updated), pre-commit and `pyproject.toml` metadata.
+- Superseded by v2: #19's τ-tied risk bands and `hitl_action`. v2's expected-value playbook policy
+  with fixed band edges (0.10 / 0.30) and a 10% holdout replaces them, and `test_at_tau` is not in
+  the v2 `metrics.json`.
+
+## 2026-09-30 — coding-assistant renewals (v2)
+
+The use case changed. The repo now scores renewals of a monthly AI coding assistant plan
+instead of generic AI-platform churn. Every model, number and file name below replaces
+its earlier counterpart; nothing from the earlier setup is kept for compatibility except
+where noted.
+
+- Use case: a self-serve AI coding assistant (IDE extension + CLI agent) on monthly plans,
+  Pro $20, Pro+ $60, Ultra $200. Teams plans are out of scope and held by validation.
+  Sources and reasoning: `docs/USE_CASE.md`.
+- Data: one row per paying subscriber seven days before renewal (T-7). New 24-field
+  contract (22 features + `user_id`, `user_name`) covering tenure, habit, usage against the
+  cap, quality and surface. `data/raw/users.csv` → `data/raw/renewals_t7.csv`; new
+  `data/raw/renewals_all.csv` keeps every renewal with `outcome` and `route`.
+- Label: `churned` = voluntary lapse. Failed cards go to dunning and cancels scheduled
+  before T-7 go to the cancel flow; both are excluded from the model table.
+- Cohort: `N_USERS` default 8000 → 7,329 model rows, 9.6% base rate, split 4,397 / 1,466 / 1,466.
+- Ladder (test AUC): LogReg 0.781, CatBoost 0.765, RF 0.758, Optuna XGBoost 0.757,
+  LightGBM 0.736, default XGBoost 0.729, Dummy 0.500. The committed bundle is trained on
+  Linux x86-64, where `make reproduce` matches it exactly.
+- Calibration: Platt (sigmoid) replaces isotonic. Isotonic gave a staircase that tied most
+  of the queue and returned P = 0.000 for some subscribers. Test Brier 0.163 raw → 0.079
+  calibrated (0.087 for always predicting the base rate). τ = 0.16.
+- Policy: `serving/policy.py` now picks, per subscriber above τ, the approved playbook in
+  `config.PLAYBOOKS` with the highest expected value (`in_app_usage_tips`, `limit_reset`,
+  `pause_offer`, `cancel_flow_discount`, `personal_email` for Ultra only), with a
+  deterministic 10% holdout. Bands are low < 0.10 ≤ medium < 0.30 ≤ high. `auto_action` is
+  always `none`; `hitl_required` is true only for `personal_email`.
+- Worked examples: Maya (Pro, capped, first renewal since the cap cut; 0.717 → 0.288,
+  medium, `limit_reset`) and Arjun (steady Pro+; 0.124 → 0.025, low, `no_action`) replace
+  the earlier single example. Files: `data/raw/subscribers/maya.json`, `arjun.json`;
+  `--user maya|arjun`; `make infer` writes `artifacts/maya_decision_packet.json`.
+- Renames: packet key `hitl` → `decision`; queue column `hitl_action` → `action`, plus
+  `holdout`, `would_have_sent`, `expected_value_usd`; `serving/hitl_log.py` →
+  `serving/action_log.py` and `cli.hitl_log` → `cli.action_log` (columns `user_id, p_cal,
+  band, action_suggested, holdout, would_have_sent, executed_by, action_taken, notes,
+  timestamp`); `cli.hitl_outcomes` → `cli.outcomes`, which now reports lift per playbook
+  against the holdout with a Newcombe interval and no verdict under 30 per group;
+  `POST /v1/churn/reviews` → `POST /v1/churn/actions` (`user_id, executed_by,
+  action_taken, notes`); `configs/action_log.schema.json`, `configs/templates/action_log.csv`.
+  `HitlDecisionPolicy` and `hitl_action` remain as import aliases.
+- Use-case pack: `data/use_cases/` rebuilt as one renewal day: eight scenarios, four
+  invalid records, `daily_t7_batch.csv`, `actions_taken.csv` (send export) and
+  `renewal_outcomes.csv` (simulated from the assumed playbook effects).
+- Results and docs: `results/SANTOSH_ANALYSIS.md` → `results/WORKED_EXAMPLES.md`;
+  `results/maya_decision_packet.sample.json`; `docs/case-study/renewal-worked-examples.md`;
+  new `docs/USE_CASE.md`; guides rewritten for the new use case. Notebook renamed to
+  `notebooks/01_explore_renewals.ipynb`.
+- Lakehouse: the local-data-lakehouse export must now produce the v2 contract
+  (`churn_user_features.csv` with the 24 fields + `churned`, and
+  `hero_inference_record.json`), built from raw billing + usage events as of T-7.
+  `results/lakehouse-e2e-summary.json` refreshed from that run: 7,387 renewals, calibrated
+  test AUC 0.726, Maya 0.210 → `limit_reset`.
+- Latency: warm single-row score + calibrate, p50 about 2.7 ms on a GitHub Actions runner.
+- New `python -m retention_radar.cli.analysis` (run by `run_all.sh`; committed copy
+  `results/analysis.json`): paired bootstrap of logistic regression vs tuned XGBoost,
+  isotonic vs Platt, deciles/quintiles, and holdout sizes for a 9:1 split.
+- `scripts/run_local_e2e.sh`: works with macOS bash 3.2 (no negative array index).
+
+## Between 0.1.0 and 2026-09-30
 
 - chore(naming): consistent file names. Docs are lowercase kebab-case, data and machine-readable outputs are snake_case, and generic files no longer carry a person's name: `results/santosh_decision_packet.sample.json` → `results/example_decision_packet.json`, `artifacts/santosh_decision_packet.json` → `artifacts/example_decision_packet.json`, `data/raw/santosh_shinde.json` → `data/raw/example_account.json`, `results/SANTOSH_ANALYSIS.md` → `results/example-account-analysis.md`, `docs/case-study/santosh-case-study.md` → `docs/case-study/example-account-case-study.md`, `notebooks/01_explore_santosh.ipynb` → `notebooks/01_explore_example_account.ipynb`, `results/lakehouse-e2e-summary.json` → `results/lakehouse_e2e_summary.json`, `results/BENCHMARKS.md` → `results/benchmarks.md`, and `docs/{ARCHITECTURE,FOLDER_STRUCTURE,GETTING_STARTED,MODEL_CARD}.md` and `docs/guides/{ALGORITHM_LANDSCAPE,BEST_PRACTICES,DEPLOY_LATER,START_HERE}.md` → lowercase kebab-case. Every reference in code, tests, scripts, CI and docs is updated. The lakehouse export name `santosh_inference_record.json` is unchanged because it is produced by local-data-lakehouse. The CLI shortcut `--user santosh` still works.
 - docs: the repo describes the project only; references to external write-ups are removed. README gains Architecture and Results sections; CONTRIBUTING gains lint / pre-commit and naming conventions; `pyproject.toml` gains URLs, classifiers and a `dev` extra; optional `.pre-commit-config.yaml` (ruff, JSON / YAML checks). Unused `config.ARTICLES_DIR` removed.
@@ -38,8 +114,6 @@
 - Restructure to production folder layout: only `src/retention_radar/` under `src/`, CLI under `retention_radar.cli`, nested `docs/{guides,data,case-study}/`, runtime-only `artifacts/`.
 - Add CatBoost (default) to the honest bake-off ladder; keep calibrated Optuna XGBoost as serving hero.
 - Document algorithm landscape (IN vs DEFER: TabPFN, survival, conformal, uplift, …).
-
-# Changelog
 
 ## 0.1.0 — 2026-09-15
 

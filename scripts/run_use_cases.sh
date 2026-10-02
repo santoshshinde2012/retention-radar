@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Walk the whole service on the seed-42 use-case pack (data/use_cases/):
-#   weekly batch → ranked review queue (+ rejects) → decision packets per scenario
-#   → invalid records held → reviewer decisions imported → day-30 outcome report.
+# Walk one day of the renewal business on the seed-42 use-case pack (data/use_cases/):
+#   daily T-7 batch → ranked action queue (+ rejects) → decision packet per scenario
+#   → invalid records held → send export imported → renewal outcomes + lift vs holdout.
 # Outputs: artifacts/use_cases/ (gitignored). Committed bundle only; nothing retrains.
 #
 #   make use-cases        # or: ./scripts/run_use_cases.sh
@@ -26,14 +26,14 @@ echo "==> [1/6] pack still matches the committed bundle"
 "$PY" -m retention_radar.cli.build_use_cases --check
 
 echo
-echo "==> [2/6] weekly batch → ranked review queue (invalid rows rejected, not scored)"
-"$PY" -m retention_radar.cli.batch_score --csv "$UC/weekly_batch.csv" \
+echo "==> [2/6] daily T-7 batch → ranked action queue (invalid rows rejected, not scored)"
+"$PY" -m retention_radar.cli.batch_score --csv "$UC/daily_t7_batch.csv" \
   --out "$OUT/queue.csv" --jsonl "$OUT/queue.jsonl" --scored-at "$SCORED_AT"
 echo "Top of the queue:"
-head -6 "$OUT/queue.csv" | cut -d, -f1-6
+head -6 "$OUT/queue.csv" | cut -d, -f1-8
 
 echo
-echo "==> [3/6] one decision packet per scenario (validate → score → explain → HITL)"
+echo "==> [3/6] one decision packet per scenario (validate → score → explain → action)"
 "$PY" -m retention_radar.cli.single_record --dir "$UC/records" --out "$OUT/packets.jsonl"
 
 echo
@@ -41,14 +41,14 @@ echo "==> [4/6] invalid records are held for data fixes"
 "$PY" -m retention_radar.cli.single_record --dir "$UC/invalid" --out "$OUT/held_packets.jsonl"
 
 echo
-echo "==> [5/6] reviewer decisions → HITL review log (score fields come from the queue)"
-"$PY" -m retention_radar.cli.hitl_log --from-scores "$OUT/queue.csv" \
-  --decisions "$UC/review_decisions.csv" --log "$OUT/hitl_review_log.csv"
+echo "==> [5/6] send export → action log (score + holdout fields come from the queue)"
+"$PY" -m retention_radar.cli.action_log --from-scores "$OUT/queue.csv" \
+  --decisions "$UC/actions_taken.csv" --log "$OUT/action_log.csv"
 
 echo
-echo "==> [6/6] day-30 labels → outcome report"
-"$PY" -m retention_radar.cli.hitl_outcomes --log "$OUT/hitl_review_log.csv" \
-  --labels "$UC/labels_day30.csv" --out "$OUT/hitl_outcomes.csv"
+echo "==> [6/6] renewal outcomes → calibration by band + lift vs holdout"
+"$PY" -m retention_radar.cli.outcomes --log "$OUT/action_log.csv" \
+  --labels "$UC/renewal_outcomes.csv" --out "$OUT/outcomes.csv"
 
 echo
 echo "==> use-case walk complete → $OUT"

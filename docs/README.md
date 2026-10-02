@@ -1,37 +1,39 @@
-# Retention Radar — documentation index
+# Documentation
 
 ## Start here
 
 | Doc | Purpose |
 |-----|---------|
-| [getting-started.md](getting-started.md) | 10-minute local path |
-| [folder-structure.md](folder-structure.md) | Production folder map |
-| [architecture.md](architecture.md) | SOLID train ≠ serve |
-| [model-card.md](model-card.md) | Intended use + seed-42 metrics |
+| [USE_CASE.md](USE_CASE.md) | What is modelled, why, and the sources behind it |
+| [guides/start-here.md](guides/start-here.md) | Clone, run one command, what to read next |
+| [getting-started.md](getting-started.md) | Install, run, score, walk one renewal day |
+| [folder-structure.md](folder-structure.md) | Where things live |
+| [architecture.md](architecture.md) | Train and serve boundary, module map |
+| [model-card.md](model-card.md) | Intended use and seed-42 metrics |
 
 ## Guides
 
 | Doc | Purpose |
 |-----|---------|
-| [guides/best-practices.md](guides/best-practices.md) | Ops-lite checklist |
-| [guides/algorithm-landscape.md](guides/algorithm-landscape.md) | Ladder IN vs deferred |
-| [guides/deploy-later.md](guides/deploy-later.md) | Streamlit Community Cloud steps (URL still TBD) |
-| [guides/e2e-free-platforms.md](guides/e2e-free-platforms.md) | Free CI / Cloud deploy |
+| [guides/best-practices.md](guides/best-practices.md) | Checklist for changes to this repo |
+| [guides/algorithm-landscape.md](guides/algorithm-landscape.md) | Models on the ladder and models left out |
+| [guides/deploy-later.md](guides/deploy-later.md) | Streamlit Community Cloud steps |
+| [guides/e2e-free-platforms.md](guides/e2e-free-platforms.md) | Running everything on free platforms |
 
 ## Data
 
 | Doc | Purpose |
 |-----|---------|
-| [data/data-dictionary.md](data/data-dictionary.md) | Feature dtypes / ranges |
-| [data/data-foundation-lakehouse.md](data/data-foundation-lakehouse.md) | Dual-world lakehouse SoR |
+| [data/data-dictionary.md](data/data-dictionary.md) | The 24-field record: types, ranges, meaning |
+| [data/data-foundation-lakehouse.md](data/data-foundation-lakehouse.md) | Building the same table from events in local-data-lakehouse |
 
 ## Case study
 
 | Doc | Purpose |
 |-----|---------|
-| [case-study/example-account-case-study.md](case-study/example-account-case-study.md) | Santosh hero walkthrough |
-| [case-study/single-record-checklist.md](case-study/single-record-checklist.md) | Single-record / HITL checklist |
+| [case-study/renewal-worked-examples.md](case-study/renewal-worked-examples.md) | Maya and Arjun through the serve path |
+| [case-study/single-record-checklist.md](case-study/single-record-checklist.md) | What one T-7 record goes through |
 
 ## Results (repo root)
 
-Committed analysis lives under [`../results/`](../results/) — benchmarks, Santosh analysis, and plots.
+[`../results/`](../results/): benchmarks, worked examples, plots.

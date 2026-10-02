@@ -1,121 +1,125 @@
 # Data dictionary
 
 Auto-generated from `src/retention_radar/config.py`, `configs/schemas/user_record.schema.json`, and `src/retention_radar/data/generate.py`.
-Synthetic AI-platform churn dataset — no real PII.
+One row per paying subscriber of a monthly AI coding assistant plan, snapshotted seven days before renewal (T-7). Synthetic, no real PII.
 
-_Generated: 2026-09-15 · seed=42_
+## Label and routing
+
+- `churned` = 1 when the subscriber **voluntarily** let the plan lapse at this renewal.
+- Renewals that lapsed because the card failed and retries ran out are routed to **dunning** and excluded (a payments problem, not a behaviour signal).
+- Subscribers who had already scheduled a cancel before T-7 are routed to the **cancel flow** and excluded (the outcome is decided; keeping them would leak it).
+- `data/raw/renewals_all.csv` keeps every renewal with `outcome` and `route` for audit.
+
+_Generated: 2026-09-30 · seed=42_
 
 ## Missingness policy
 
 - **Synthetic generator:** every feature is populated; **no NaNs by design** (see `src/retention_radar/data/generate.py`).
 - **Train / serve:** `prepare_xy` and `row_to_feature_frame` **fail loud** if any model feature is NaN after encoding. There is no silent impute.
-- **Recommended real-data pattern:** add missingness indicators (e.g. `nps_missing`) and fit an imputer **on train only**, persist it beside the model, then apply the same transform at serve. Do not impute from a single Streamlit row.
+- **Recommended real-data pattern:** add missingness indicators (e.g. `accept_rate_missing` for users who turned inline suggestions off) and fit an imputer **on train only**, persist it beside the model, then apply the same transform at serve. Do not impute from a single Streamlit row.
 
 ## Columns
 
 | Column | Role | Dtype | Range | Nullable | Description |
 |--------|------|-------|-------|----------|-------------|
-| `user_id` | id | `string` | minLength=1 | no (required on serve) | Stable synthetic user identifier. |
-| `user_name` | id | `string` | minLength=1 | no (required on serve) | Display name (synthetic; Santosh is the hero profile). |
-| `days_since_signup` | feature | `number` | [1, 2000] | no (required on serve) | Days since account creation. |
-| `sessions_last_7d` | feature | `number` | [0, 60] | no (required on serve) | Product sessions in the last 7 days. |
-| `sessions_last_30d` | feature | `number` | [0, 200] | no (required on serve) | Product sessions in the last 30 days. |
-| `avg_session_minutes` | feature | `number` | [0.5, 240] | no (required on serve) | Average session length in minutes. |
-| `models_used_count` | feature | `number` | [0, 30] | no (required on serve) | Distinct AI models the user has invoked. |
-| `api_calls_last_30d` | feature | `number` | [0, 100000] | no (required on serve) | API calls in the last 30 days. |
-| `tokens_consumed_last_30d` | feature | `number` | [0, 50000000] | no (required on serve) | Token usage in the last 30 days. |
-| `tools_used_count` | feature | `number` | [0, 40] | no (required on serve) | Distinct tools / integrations used. |
-| `failed_requests_rate` | feature | `number` | [0, 1] | no (required on serve) | Fraction of failed requests (0–1). |
-| `support_tickets_last_90d` | feature | `number` | [0, 50] | no (required on serve) | Support tickets opened in last 90 days. |
-| `plan_tier` | feature | `string` | enum: free, starter, pro, enterprise | no (required on serve) | Subscription tier: free | starter | pro | enterprise. |
-| `payment_failures_last_90d` | feature | `number` | [0, 20] | no (required on serve) | Failed payment attempts in last 90 days. |
-| `feature_adoption_score` | feature | `number` | [0, 1] | no (required on serve) | 0–1 score of how broadly features are used. |
-| `nps_score` | feature | `number` | [0, 10] | no (required on serve) | Net Promoter Score style rating (0–10). |
-| `last_active_days_ago` | feature | `number` | [0, 365] | no (required on serve) | Days since last observed activity. |
-| `weekend_usage_ratio` | feature | `number` | [0, 1] | no (required on serve) | Share of usage that happens on weekends (0–1). |
-| `engagement_trend` | feature | `number` | [0, 5] | no (required on serve) | sessions_last_7d / max(1, sessions_last_30d/4); ≈1 stable, <1 cooling, >1 accelerating. |
-| `spend_usd_last_30d` | feature | `number` | [0, 100000] | no (required on serve) | Synthetic monthly spend in USD (last 30 days). |
-| `days_until_renewal` | feature | `number` | [0, 730] | no (required on serve) | Days until next billing / renewal (B2B-ish). |
-| `agent_runs_last_30d` | feature | `number` | [0, 5000] | no (required on serve) | Agent / automation runs in the last 30 days (AI-native). |
-| `ide_plugin_sessions_last_30d` | feature | `number` | [0, 500] | no (required on serve) | IDE plugin sessions in the last 30 days. |
-| `seat_utilization` | feature | `number` | [0, 1] | no (required on serve) | 0–1 seats used vs seats provisioned (team signal). |
-| `plan_tier_code` | feature | `integer` | 0–3 (free…enterprise) | no (derived at transform) | Ordinal encoding of plan_tier (free=0 … enterprise=3). |
-| `churned` | target | `integer (0/1)` | 0 or 1 | no in training CSV; omitted on serve | Binary label: 1 = churned, 0 = retained (training only). |
+| `user_id` | id | `string` | minLength=1 | no (required on serve) | Stable synthetic subscriber id (not a feature). |
+| `user_name` | id | `string` | minLength=1 | no (required on serve) | Display name for the worked examples (not a feature). |
+| `plan_tier` | feature | `string` | enum: pro, pro_plus, ultra | no (required on serve) | Monthly plan: pro ($20) | pro_plus ($60) | ultra ($200). |
+| `renewals_completed` | feature | `number` | [0, 60] | no (required on serve) | Monthly renewals already paid. 0 = this is the first renewal (the cliff). |
+| `active_days_7d` | feature | `number` | [0, 7] | no (required on serve) | Days with any coding activity in the 7 days before T-7 (0-7). |
+| `active_days_28d` | feature | `number` | [0, 28] | no (required on serve) | Days with any coding activity in the 28 days before T-7 (0-28). |
+| `engagement_trend` | feature | `number` | [0.0, 4.0] | no (required on serve) | active_days_7d / max(1, active_days_28d / 4): ~1 steady, <1 fading. |
+| `last_active_days_ago` | feature | `number` | [0, 90] | no (required on serve) | Days since the last coding activity, measured at T-7. |
+| `agent_requests_28d` | feature | `number` | [0, 50000] | no (required on serve) | Agent / chat requests sent to frontier models in 28 days. |
+| `allowance_used_pct` | feature | `number` | [0.0, 3.0] | no (required on serve) | Share of the plan's included usage consumed in 28 days (can exceed 1 with overage). |
+| `limit_hits_14d` | feature | `number` | [0, 60] | no (required on serve) | Times a 5-hour or weekly usage cap blocked a request in 14 days. |
+| `cheap_model_share_28d` | feature | `number` | [0.0, 1.0] | no (required on serve) | Share of requests routed to a cheaper / auto model (rationing signal). |
+| `overage_usd_28d` | feature | `number` | [0.0, 5000.0] | no (required on serve) | Usage billed above the plan in 28 days (USD). |
+| `overage_toggled_off` | feature | `number` | enum: 0, 1 | no (required on serve) | 1 if paid overage was switched off or capped after being on. |
+| `suggestion_accept_rate_28d` | feature | `number` | [0.0, 1.0] | no (required on serve) | Accepted / shown inline suggestions in 28 days. |
+| `accept_rate_change` | feature | `number` | [0.0, 3.0] | no (required on serve) | Accept rate this 28 days / previous 28 days (1 = unchanged). |
+| `agent_task_success_rate` | feature | `number` | [0.0, 1.0] | no (required on serve) | Agent tasks that ended with the change kept (not reverted) in 28 days. |
+| `failed_requests_rate` | feature | `number` | [0.0, 1.0] | no (required on serve) | Share of requests that errored or timed out in 28 days. |
+| `incident_exposed_28d` | feature | `number` | enum: 0, 1 | no (required on serve) | 1 if the subscriber had requests during a declared incident window. |
+| `support_tickets_90d` | feature | `number` | [0, 50] | no (required on serve) | Support tickets opened in 90 days. |
+| `ide_sessions_28d` | feature | `number` | [0, 500] | no (required on serve) | IDE-extension sessions in 28 days. |
+| `cli_sessions_28d` | feature | `number` | [0, 500] | no (required on serve) | CLI-agent sessions in 28 days. |
+| `weekend_usage_ratio` | feature | `number` | [0.0, 1.0] | no (required on serve) | Share of activity on weekends (side-project signal). |
+| `first_renewal_after_pricing_change` | feature | `number` | enum: 0, 1 | no (required on serve) | 1 if this is the subscriber's first renewal since the last limit / pricing change. |
+| `plan_tier_code` | feature | `integer` | 0–2 (pro, pro_plus, ultra) | no (derived at transform) | Ordinal encoding of plan_tier (pro=0, pro_plus=1, ultra=2). |
+| `churned` | target | `integer (0/1)` | 0 or 1 | no in training CSV; omitted on serve (renewal is ahead) | Label: 1 = voluntarily let the plan lapse at this renewal (training only). |
 
 ## Model feature vector (encoded)
 
 Order used at train / infer time:
 
-1. `days_since_signup`
-2. `sessions_last_7d`
-3. `sessions_last_30d`
-4. `avg_session_minutes`
-5. `models_used_count`
-6. `api_calls_last_30d`
-7. `tokens_consumed_last_30d`
-8. `tools_used_count`
-9. `failed_requests_rate`
-10. `support_tickets_last_90d`
-11. `plan_tier_code`
-12. `payment_failures_last_90d`
-13. `feature_adoption_score`
-14. `nps_score`
-15. `last_active_days_ago`
-16. `weekend_usage_ratio`
-17. `engagement_trend`
-18. `spend_usd_last_30d`
-19. `days_until_renewal`
-20. `agent_runs_last_30d`
-21. `ide_plugin_sessions_last_30d`
-22. `seat_utilization`
+1. `plan_tier_code`
+2. `renewals_completed`
+3. `active_days_7d`
+4. `active_days_28d`
+5. `engagement_trend`
+6. `last_active_days_ago`
+7. `agent_requests_28d`
+8. `allowance_used_pct`
+9. `limit_hits_14d`
+10. `cheap_model_share_28d`
+11. `overage_usd_28d`
+12. `overage_toggled_off`
+13. `suggestion_accept_rate_28d`
+14. `accept_rate_change`
+15. `agent_task_success_rate`
+16. `failed_requests_rate`
+17. `incident_exposed_28d`
+18. `support_tickets_90d`
+19. `ide_sessions_28d`
+20. `cli_sessions_28d`
+21. `weekend_usage_ratio`
+22. `first_renewal_after_pricing_change`
 
 ## Plan tier encoding
 
 | Tier | Code |
 |------|------|
-| `free` | 0 |
-| `starter` | 1 |
-| `pro` | 2 |
-| `enterprise` | 3 |
+| `pro` | 0 |
+| `pro_plus` | 1 |
+| `ultra` | 2 |
 
-## Santosh Shinde — feature contract (inference)
+## Worked examples (scoring-time records, no label)
 
-Payload: `data/raw/example_account.json` (no `churned`).
+| Field | maya | arjun |
+|-------|---|---|
+| `user_id` | sub_maya | sub_arjun |
+| `user_name` | Maya (worked example) | Arjun (worked example) |
+| `plan_tier` | pro | pro_plus |
+| `renewals_completed` | 3 | 12 |
+| `active_days_7d` | 2 | 5 |
+| `active_days_28d` | 15 | 20 |
+| `engagement_trend` | 0.5333 | 1.0 |
+| `last_active_days_ago` | 2 | 0 |
+| `agent_requests_28d` | 470 | 910 |
+| `allowance_used_pct` | 1.02 | 0.66 |
+| `limit_hits_14d` | 4 | 0 |
+| `cheap_model_share_28d` | 0.68 | 0.18 |
+| `overage_usd_28d` | 0.0 | 0.0 |
+| `overage_toggled_off` | 0 | 0 |
+| `suggestion_accept_rate_28d` | 0.29 | 0.33 |
+| `accept_rate_change` | 0.96 | 1.03 |
+| `agent_task_success_rate` | 0.58 | 0.69 |
+| `failed_requests_rate` | 0.05 | 0.03 |
+| `incident_exposed_28d` | 1 | 1 |
+| `support_tickets_90d` | 0 | 1 |
+| `ide_sessions_28d` | 14 | 41 |
+| `cli_sessions_28d` | 19 | 12 |
+| `weekend_usage_ratio` | 0.21 | 0.12 |
+| `first_renewal_after_pricing_change` | 1 | 0 |
 
-| Field | Example value |
-|-------|----------------|
-| `user_id` | santosh_shinde |
-| `user_name` | Santosh Shinde |
-| `days_since_signup` | 420 |
-| `sessions_last_7d` | 9 |
-| `sessions_last_30d` | 38 |
-| `avg_session_minutes` | 28.5 |
-| `models_used_count` | 7 |
-| `api_calls_last_30d` | 1850 |
-| `tokens_consumed_last_30d` | 420000 |
-| `tools_used_count` | 8 |
-| `failed_requests_rate` | 0.12 |
-| `support_tickets_last_90d` | 2 |
-| `plan_tier` | pro |
-| `payment_failures_last_90d` | 1 |
-| `feature_adoption_score` | 0.78 |
-| `nps_score` | 7.0 |
-| `last_active_days_ago` | 8 |
-| `weekend_usage_ratio` | 0.22 |
-| `engagement_trend` | 0.9474 |
-| `spend_usd_last_30d` | 189.0 |
-| `days_until_renewal` | 21 |
-| `agent_runs_last_30d` | 52 |
-| `ide_plugin_sessions_last_30d` | 28 |
-| `seat_utilization` | 0.72 |
-
-See also [example-account-case-study.md](../case-study/example-account-case-study.md) and [single-record-checklist.md](../case-study/single-record-checklist.md).
+Payloads: `data/raw/subscribers/*.json`. Walkthrough: [renewal-worked-examples.md](../case-study/renewal-worked-examples.md).
 
 
 ## Related reading
 
 - [architecture.md](../architecture.md) — SOLID package map
 - [model-card.md](../model-card.md)
-- [Santosh case study](../case-study/example-account-case-study.md)
+- [Worked examples](../case-study/renewal-worked-examples.md)
 - [Single-record checklist](../case-study/single-record-checklist.md)
 - [Data foundation / lakehouse](data-foundation-lakehouse.md)

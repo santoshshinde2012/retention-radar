@@ -1,13 +1,16 @@
 """Thin local FastAPI serve path (teaching only — no auth).
 
-Routes (all HITL: ``auto_action`` is always ``none``):
+The production shape is the daily T-7 batch (``cli.batch_score``); this API is
+for scoring one subscriber on demand, e.g. when they open the cancel page.
+``auto_action`` is always ``none``: the service returns a suggested action; a
+lifecycle tool or a person executes it.
 
-- ``POST /v1/churn/score``   one 24-field record → score, band, suggested action,
-  rationale (``?shap=true`` adds top drivers). Invalid records → 422 with the
-  hold reason; they are never scored. Conceptual alias: ``POST /v1/churn:score``.
+- ``POST /v1/churn/score``   one 24-field record → score, band, action, holdout
+  flag, rationale (``?shap=true`` adds top drivers). Invalid records → 422 with
+  the hold reason; they are never scored. Conceptual alias: ``POST /v1/churn:score``.
 - ``POST /v1/churn/batch``   ``{"records": [...]}`` → queue sorted by risk + rejects.
-- ``POST /v1/churn/reviews`` a human decision on a user the service scored; score
-  fields come from the service's own prediction log, never from the client.
+- ``POST /v1/churn/actions`` log what was actually done for a subscriber the service
+  scored; score fields come from the service's own prediction log, never the client.
 - ``GET  /healthz``
 
 Run locally:
@@ -30,27 +33,27 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 
 from retention_radar import config
+from retention_radar.serving.action_log import (
+    DEFAULT_LOG_PATH,
+    append_action_row,
+    row_from_score_record,
+)
 from retention_radar.serving.batch_score import (
     load_metrics,
     resolve_model_version,
     score_payloads,
     split_valid_payloads,
 )
-from retention_radar.serving.hitl_log import (
-    DEFAULT_LOG_PATH,
-    append_hitl_row,
-    row_from_score_record,
-)
 from retention_radar.serving.infer import predict_user
 from retention_radar.serving.packet import normalize_record, validate_payload
-from retention_radar.serving.policy import HitlDecisionPolicy, validation_hold
+from retention_radar.serving.policy import RenewalDecisionPolicy, validation_hold
 from retention_radar.training.calibrate import load_calibrator
 
 app = FastAPI(
     title="Retention Radar (teaching)",
     description=(
-        "Thin local churn-ranking service. Teaching-only — **no auth**. "
-        "Scores go to a human (`auto_action: none`). "
+        "Renewal-risk scoring for a monthly AI coding assistant plan. Teaching-only, **no auth**. "
+        "Returns a suggested action; never executes it (`auto_action: none`). "
         "Preferred path: ``POST /v1/churn/score``. "
         "Conceptual GCP-style name: ``POST /v1/churn:score`` (same contract)."
     ),
@@ -70,28 +73,28 @@ class ChurnScoreRequest(BaseModel):
 
     user_id: str = Field(..., min_length=1)
     user_name: str = Field(..., min_length=1)
-    days_since_signup: float
-    sessions_last_7d: float
-    sessions_last_30d: float
-    avg_session_minutes: float
-    models_used_count: float
-    api_calls_last_30d: float
-    tokens_consumed_last_30d: float
-    tools_used_count: float
-    failed_requests_rate: float
-    support_tickets_last_90d: float
     plan_tier: str
-    payment_failures_last_90d: float
-    feature_adoption_score: float
-    nps_score: float
-    last_active_days_ago: float
-    weekend_usage_ratio: float
+    renewals_completed: float
+    active_days_7d: float
+    active_days_28d: float
     engagement_trend: float
-    spend_usd_last_30d: float
-    days_until_renewal: float
-    agent_runs_last_30d: float
-    ide_plugin_sessions_last_30d: float
-    seat_utilization: float
+    last_active_days_ago: float
+    agent_requests_28d: float
+    allowance_used_pct: float
+    limit_hits_14d: float
+    cheap_model_share_28d: float
+    overage_usd_28d: float
+    overage_toggled_off: float
+    suggestion_accept_rate_28d: float
+    accept_rate_change: float
+    agent_task_success_rate: float
+    failed_requests_rate: float
+    incident_exposed_28d: float
+    support_tickets_90d: float
+    ide_sessions_28d: float
+    cli_sessions_28d: float
+    weekend_usage_ratio: float
+    first_renewal_after_pricing_change: float
 
 
 class ChurnScoreResponse(BaseModel):
@@ -99,7 +102,10 @@ class ChurnScoreResponse(BaseModel):
     p_raw: float
     p_cal: float
     band: str
-    hitl_action: str
+    action: str
+    holdout: bool = False
+    would_have_sent: Optional[str] = None
+    expected_value_usd: Optional[float] = None
     rationale: str
     best_f1_threshold: float
     model_version: str
@@ -123,11 +129,11 @@ class BatchResponse(BaseModel):
     rejected: List[Dict[str, Any]]
 
 
-class ReviewRequest(BaseModel):
+class ActionRequest(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
 
     user_id: str = Field(..., min_length=1)
-    reviewer: str = Field(..., min_length=1)
+    executed_by: str = Field(..., min_length=1)
     action_taken: str = Field(..., min_length=1)
     notes: str = ""
 
@@ -174,7 +180,7 @@ def _latest_logged_score(user_id: str) -> dict[str, Any] | None:
                 try:
                     rec = json.loads(line)
                 except json.JSONDecodeError:
-                    continue  # a truncated line (crash / full disk) must not block reviews
+                    continue  # a truncated line (crash / full disk) must not block action logging
                 if isinstance(rec, dict) and rec.get("user_id") == user_id:
                     latest = rec
         if latest is not None:
@@ -183,7 +189,7 @@ def _latest_logged_score(user_id: str) -> dict[str, Any] | None:
 
 
 def _hold_422(errors: list[str]) -> HTTPException:
-    return HTTPException(status_code=422, detail={"errors": errors, "hitl": validation_hold(errors)})
+    return HTTPException(status_code=422, detail={"errors": errors, "decision": validation_hold(errors)})
 
 
 @app.exception_handler(RequestValidationError)
@@ -195,7 +201,7 @@ async def _request_validation_handler(request: Request, exc: RequestValidationEr
         f"{'.'.join(str(p) for p in e.get('loc', [])[1:]) or 'body'}: {e.get('msg')}"
         for e in exc.errors()
     ]
-    return JSONResponse(status_code=422, content={"detail": {"errors": errors, "hitl": validation_hold(errors)}})
+    return JSONResponse(status_code=422, content={"detail": {"errors": errors, "decision": validation_hold(errors)}})
 
 
 def score_payload(
@@ -215,10 +221,8 @@ def score_payload(
     if not validation["ok"]:
         raise _hold_422(validation["errors"])
 
+    result = predict_user(record, bundle, calibrator=calibrator, explain=include_shap)
     threshold = float(metrics.get("best_f1_threshold", 0.5))
-    result = predict_user(
-        record, bundle, calibrator=calibrator, explain=include_shap, threshold=threshold
-    )
     p_raw = float(result["churn_probability_raw"])
     p_cal = float(
         result["churn_probability_calibrated"]
@@ -226,15 +230,18 @@ def score_payload(
         else result["churn_probability"]
     )
     band = result["risk_band"]
-    hitl = HitlDecisionPolicy().decide(p_cal, threshold, band)
+    decision = RenewalDecisionPolicy().decide(p_cal, threshold, band, record)
 
     out: dict[str, Any] = {
         "user_id": result.get("user_id"),
         "p_raw": round(p_raw, 6),
         "p_cal": round(p_cal, 6),
         "band": band,
-        "hitl_action": hitl["action"],
-        "rationale": hitl["rationale"],
+        "action": decision["action"],
+        "holdout": bool(decision["holdout"]),
+        "would_have_sent": decision.get("would_have_sent"),
+        "expected_value_usd": decision.get("expected_value_usd"),
+        "rationale": decision["rationale"],
         "best_f1_threshold": threshold,
         "model_version": resolve_model_version(metrics),
         "scored_at": _now(),
@@ -271,7 +278,7 @@ def churn_score(
     shap: bool = Query(False, description="Include top SHAP / driver features"),
     log: bool = Query(True, description="Append JSONL under <log dir>/prediction_log/"),
 ) -> dict[str, Any]:
-    """Score one user. Alias concept: ``POST /v1/churn:score`` (same body)."""
+    """Score one subscriber. Alias concept: ``POST /v1/churn:score`` (same body)."""
     return score_payload(body, include_shap=shap, log_prediction=log)
 
 
@@ -280,7 +287,7 @@ def churn_batch(
     body: BatchRequest,
     log: bool = Query(True, description="Append each scored row to the prediction log"),
 ) -> dict[str, Any]:
-    """Score many users → queue sorted by calibrated risk (rank 1 first) + rejects."""
+    """Score many subscribers → queue sorted by calibrated risk (rank 1 first) + rejects."""
     try:
         bundle, calibrator, metrics = _load_serve_bundle()
     except FileNotFoundError as exc:
@@ -303,9 +310,9 @@ def churn_batch(
     }
 
 
-@app.post("/v1/churn/reviews")
-def churn_review(body: ReviewRequest) -> dict[str, Any]:
-    """Log a human decision for a user this service already scored (HITL review log)."""
+@app.post("/v1/churn/actions")
+def churn_action(body: ActionRequest) -> dict[str, Any]:
+    """Log what was actually done for a subscriber this service already scored."""
     scored = _latest_logged_score(body.user_id)
     if scored is None:
         raise HTTPException(
@@ -314,11 +321,11 @@ def churn_review(body: ReviewRequest) -> dict[str, Any]:
         )
     row = row_from_score_record(
         scored,
-        reviewer=body.reviewer.strip(),
+        executed_by=body.executed_by.strip(),
         action_taken=body.action_taken.strip(),
         notes=body.notes.strip(),
     )
-    path = append_hitl_row(config.runtime_log_dir() / DEFAULT_LOG_PATH.name, row)
+    path = append_action_row(config.runtime_log_dir() / DEFAULT_LOG_PATH.name, row)
     return {"logged": row, "log_path": str(path), "auto_action": "none"}
 
 

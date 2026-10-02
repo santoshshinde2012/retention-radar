@@ -1,40 +1,54 @@
 # Retention Radar
 
-Human-in-the-loop churn ranking for a fictional AI platform.
+Renewal-risk scoring for a monthly AI coding assistant plan (Pro $20 · Pro+ $60 · Ultra $200).
 
-It ranks quiet fade-out risk and returns a checklist for a human. It does **not** auto-cancel anyone.
+Seven days before each renewal, every paying subscriber is scored for the chance they
+voluntarily let the plan lapse. The score picks one human-approved playbook (a limit
+reset, a pause offer, a cancel-flow discount, or for Ultra a personal email), keeps a 10%
+holdout so the playbook's lift can be measured, or does nothing. The service suggests;
+it never sends (`auto_action: none`).
 
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)](runtime.txt)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Live demo](https://img.shields.io/badge/live%20demo-TBD-lightgrey.svg)](docs/guides/e2e-free-platforms.md)
 
 **Repo:** [santoshshinde2012/retention-radar](https://github.com/santoshshinde2012/retention-radar)
 
 ---
 
-## Start here
+## Why this use case
 
-Two public repos, one command:
+AI coding assistants spent 2025–26 changing the deal under their subscribers: request
+caps became usage-based pricing, weekly limits arrived and were cut again, quality
+incidents came and went, and most developers ended up paying for two or three tools. In
+ChartMogul's December 2025 retention report, AI-native products under $50/month kept
+**23%** of their revenue over a year. At $20/month nobody reads a subscriber's profile,
+so the score has to drive automated, measurable actions. That is what this repo builds.
 
-1. Clone **[retention-radar](https://github.com/santoshshinde2012/retention-radar)** + **[local-data-lakehouse](https://github.com/santoshshinde2012/local-data-lakehouse)**
-2. One synthetic command: `CHURN_DATA_SOURCE=synthetic ./scripts/run_all.sh`
-3. Optional lakehouse: `./scripts/run_lakehouse_e2e.sh ../local-data-lakehouse` (trains under `artifacts/lakehouse_run/` — committed `models/` untouched; refreshes `results/lakehouse_e2e_summary.json`)
-4. **Live demo:** TBD — Streamlit Community Cloud / HF Space ([deploy later](docs/guides/deploy-later.md))
-
-Full map: [docs/guides/start-here.md](docs/guides/start-here.md).
+The data is synthetic (seed **42**, no real PII), but the mechanisms behind it are the
+ones in the public record: cap hits, rationing to a cheaper model, a surprise overage
+bill, the first renewal after a pricing change, a rival tool taking the work. Sources:
+[docs/USE_CASE.md](docs/USE_CASE.md).
 
 ## What this is
 
 | This project | Not this project |
 |--------------|------------------|
-| FOSS teaching path: train → evaluate → serve | Production CRM or billing |
-| Synthetic users (seed **42**), no real PII | ROI or fairness claims |
-| HITL only (`auto_action: none`) | Auto account cancellation |
-| Public **code + benchmarks + results** | Narrative write-ups |
+| Train → evaluate → serve a T-7 renewal score | A CRM, billing system or messaging tool |
+| Label from billing: voluntary lapse only; failed cards → dunning; scheduled cancels → cancel flow | "Inactive for 30 days = churned" |
+| Expected-value policy + deterministic 10% holdout | A claim that any playbook works |
+| Synthetic renewals (seed 42), no real PII | ROI or fairness claims |
 
-**One-record example (seed 42):** raw **0.043** → calibrated **0.016** → band **low** → HITL **monitor**.
+**Worked examples (seed 42):**
 
-**Honest ladder (test AUC):** LogReg / CatBoost **0.872** · Optuna XGB **0.870** · RF **0.868** · LightGBM **0.865**. Serving hero = **calibrated XGBoost**. Full tables: [`models/metrics.json`](models/metrics.json) · [results/benchmarks.md](results/benchmarks.md).
+| Subscriber | Raw → calibrated P(lapse) | Band | Action |
+|------------|---------------------------|------|--------|
+| Maya: Pro, 4 cap hits in 14 days, 68% of requests on the cheap model, first renewal since the cap cut | 0.717 → **0.288** | medium | `limit_reset` (EV ≈ $5.20) |
+| Arjun: Pro+, 12 renewals, 66% of allowance used, no cap hits | 0.124 → **0.025** | low | `no_action` |
+
+**Honest ladder (test AUC, 7,329 T-7 rows, 9.6% base rate):** LogReg **0.781** · CatBoost
+**0.765** · RF **0.758** · Optuna XGB **0.757** · LightGBM **0.736** · default XGB **0.729** ·
+Dummy 0.500. Calibrated XGBoost serves for now; on this result a real deployment should swap in the linear model (see BENCHMARKS). Full tables:
+[`models/metrics.json`](models/metrics.json) · [results/benchmarks.md](results/benchmarks.md).
 
 ---
 
@@ -42,22 +56,20 @@ Full map: [docs/guides/start-here.md](docs/guides/start-here.md).
 
 | Repo | Role |
 |------|------|
-| **This repo** | Public code, benchmarks, and results |
-| [local-data-lakehouse](https://github.com/santoshshinde2012/local-data-lakehouse) | Data foundation (SILO · N=5000 gold) |
-| [medallion-write-back-loop](https://github.com/santoshshinde2012/medallion-write-back-loop) | See also — teaching write-back loop (not wired here) |
-| [churn-vs-risk-poc](https://github.com/santoshshinde2012/churn-vs-risk-poc) | See also — churn vs risk POC (not wired here) |
+| **This repo** | Public code, benchmarks and results |
+| [local-data-lakehouse](https://github.com/santoshshinde2012/local-data-lakehouse) | Data foundation: bronze billing + usage events → T-7 gold features |
 
 ---
 
 ## Requirements
 
-- Python **3.12+** (tested on 3.12). The committed seed-42 bundle was trained with XGBoost **3.4.1** and scikit-learn **1.9.1**; XGBoost 3.3+ needs Python 3.12, so on older Pythons `pip install -r requirements.txt` stops with "No matching distribution found for xgboost==3.4.1" (an unpinned older XGBoost cannot reproduce the published numbers).
-- `requirements.txt` pins the model-affecting libraries (XGBoost, scikit-learn, Optuna, LightGBM, CatBoost) so `make run` re-creates every non-latency value in `models/metrics.json` exactly (latency is machine-dependent). Full version snapshot: [`requirements.lock`](requirements.lock).
-- Linux, macOS, or Windows (WSL on Windows)
-- CPU only
-- **macOS:** `brew install libomp` if XGBoost or LightGBM fail to load
-
----
+- Python **3.12+**. The committed bundle was trained with XGBoost **3.4.1** and scikit-learn
+  **1.9.1**; `requirements.txt` pins the model-affecting libraries so `make run` re-creates
+  every non-latency value in `models/metrics.json` exactly on Linux x86-64, where the committed
+  bundle was trained (CI checks this). On other CPUs, such as Apple Silicon, a retrain differs from the
+  third decimal. Snapshot: [`requirements.lock`](requirements.lock).
+- CPU only. Linux, macOS, or Windows (WSL).
+- **macOS:** `brew install libomp` if XGBoost or LightGBM fail to load.
 
 ## Install
 
@@ -72,36 +84,28 @@ pip install -e .
 
 Or: `make setup`
 
-Optional env template: [`.env.example`](.env.example)
-
----
-
 ## Quick start
 
 ```bash
 CHURN_DATA_SOURCE=synthetic ./scripts/run_all.sh
 ```
 
-Then:
-
 | Step | Command / file |
 |------|----------------|
 | Cite metrics | [`models/metrics.json`](models/metrics.json) |
 | Read benchmarks | [results/benchmarks.md](results/benchmarks.md) |
-| Score Santosh | `make infer` |
-| Walk every use case | `make use-cases` — [data/use_cases/](data/use_cases/README.md): weekly batch → ranked queue (+ rejects) → packets → held records → reviews → day-30 outcomes |
-| Batch scores | `python -m retention_radar.cli.batch_score --csv data/raw/users.csv` → ranked queue + `*_rejected.csv` (lakehouse gold after a sync: `--csv data/external/churn_user_features.csv`) |
-| HITL outcomes | after `make use-cases`: `python -m retention_radar.cli.hitl_outcomes --log artifacts/use_cases/hitl_review_log.csv --labels data/use_cases/labels_day30.csv` |
-| Thin local API | `uvicorn retention_radar.serving.api:app --app-dir src` → `POST /v1/churn/score`, `/v1/churn/batch`, `/v1/churn/reviews` |
-| Open UI | `make ui` (committed models only — no fit on load) |
-| Live demo | TBD — Streamlit Community Cloud / HF Space ([deploy-later.md](docs/guides/deploy-later.md)) |
+| Score Maya | `make infer` → `artifacts/maya_decision_packet.json` |
+| Walk one renewal day | `make use-cases`: [data/use_cases/](data/use_cases/README.md) daily T-7 batch → action queue (+ rejects) → packets → held records → send export → renewal outcomes + lift vs holdout |
+| Daily batch | `python -m retention_radar.cli.batch_score --csv data/raw/renewals_t7.csv` → ranked queue + `*_rejected.csv` |
+| Lift vs holdout | after `make use-cases`: `python -m retention_radar.cli.outcomes --log artifacts/use_cases/action_log.csv --labels data/use_cases/renewal_outcomes.csv` |
+| Thin local API | `uvicorn retention_radar.serving.api:app --app-dir src` → `POST /v1/churn/score`, `/v1/churn/batch`, `/v1/churn/actions` |
+| Open UI | `make ui` (committed models only, no fit on load) |
 | Run tests | `make test` |
-| Verify everything locally | `make e2e-local` (~3 min on a laptop CPU; add the lakehouse by cloning it beside this repo) |
+| Verify everything locally | `make e2e-local` |
 
-Faster smoke:
+Faster smoke (committed `models/` untouched):
 
 ```bash
-# isolated: committed models/ stay the published bundle (users.csv is regenerated at N=800)
 RETENTION_RADAR_ARTIFACT_DIR=artifacts/smoke N_USERS=800 N_OPTUNA_TRIALS=5 CHURN_DATA_SOURCE=synthetic ./scripts/run_all.sh
 ```
 
@@ -112,50 +116,43 @@ RETENTION_RADAR_ARTIFACT_DIR=artifacts/smoke N_USERS=800 N_OPTUNA_TRIALS=5 CHURN
 | `make setup` | Create venv and install |
 | `make run` | Synthetic full pipeline |
 | `make test` | Pytest (synthetic) |
-| `make infer` | Santosh decision packet |
+| `make infer` | Maya's decision packet |
 | `make ui` | Streamlit UI |
 | `make api` | Thin local FastAPI (teaching; no auth) |
-| `make run-lakehouse` | Lakehouse E2E (needs lakehouse checkout) |
-| `make use-cases` | Walk the service on `data/use_cases/` (queue, packets, held records, reviews, outcomes) |
-| `make reproduce` | Retrain into `artifacts/repro/` and diff against committed `models/metrics.json` (exact match expected) |
-| `make e2e-local` | **Everything end to end**: reproduce, tests, CLI + live API + live Streamlit, lakehouse (if cloned beside), isolation check |
+| `make run-lakehouse` | Lakehouse E2E (needs a local-data-lakehouse checkout) |
+| `make use-cases` | One renewal day on `data/use_cases/` |
+| `make reproduce` | Retrain into `artifacts/repro/` and diff against `models/metrics.json` |
+| `make e2e-local` | Everything: reproduce, tests, CLI + live API + live Streamlit, lakehouse (if cloned beside), isolation check |
 | `make lint` | Ruff on `src/ tests/ app/` |
-
-CLI (after install):
-
-```bash
-python -m retention_radar.cli.train
-python -m retention_radar.cli.infer --user santosh
-python -m retention_radar.cli.batch_score --csv data/use_cases/weekly_batch.csv   # or data/raw/users.csv after make run
-uvicorn retention_radar.serving.api:app --app-dir src   # POST /v1/churn/score
-```
 
 ---
 
-## Architecture
+## The data contract
 
-Train writes one versioned bundle to `models/` (model, calibrator, feature list, feature stats with PSI bins, metrics with τ); every serving surface (CLI, batch, FastAPI, Streamlit) only loads it. Flow: generate or ingest → 22-feature contract → XGBoost + Optuna → isotonic calibration and τ on validation → test read once → decision packet (raw and calibrated score, band, SHAP drivers, suggested action) → human review log. Details: [docs/architecture.md](docs/architecture.md).
+One row per paying subscriber at **T-7** (seven days before a monthly renewal): 22 serve
+fields plus `user_id` / `user_name`. Every field must exist in the live record at score
+time; anything knowable only after the renewal stays out.
 
-## Results (seed 42, test split)
+| Family | Fields |
+|--------|--------|
+| Plan and tenure | `plan_tier`, `renewals_completed`, `first_renewal_after_pricing_change` |
+| Habit | `active_days_7d`, `active_days_28d`, `engagement_trend`, `last_active_days_ago`, `weekend_usage_ratio` |
+| Against the cap | `agent_requests_28d`, `allowance_used_pct`, `limit_hits_14d`, `cheap_model_share_28d`, `overage_usd_28d`, `overage_toggled_off` |
+| Quality | `suggestion_accept_rate_28d`, `accept_rate_change`, `agent_task_success_rate`, `failed_requests_rate`, `incident_exposed_28d`, `support_tickets_90d` |
+| Surface | `ide_sessions_28d`, `cli_sessions_28d` |
 
-| Metric | Value |
-|--------|-------|
-| Test AUC ladder | LogReg / CatBoost 0.872 · Optuna XGB 0.870 · RF 0.868 · LightGBM 0.865 · calibrated XGB 0.866 · dummy 0.500 |
-| Brier, raw → calibrated | 0.138 → 0.106 |
-| At τ = 0.34 | precision 0.577 · recall 0.628 · F1 0.602 · 208 of 1,000 flagged |
-| Warm single-record latency | p50 ≈ 2 ms (machine-dependent) |
-
-Source of truth: [`models/metrics.json`](models/metrics.json). Tables and notes: [results/benchmarks.md](results/benchmarks.md) · [docs/model-card.md](docs/model-card.md).
+Label `churned` = voluntary lapse at this renewal. Renewals lost to a failed card
+(dunning) and subscribers who had already scheduled a cancel before T-7 are excluded;
+`data/raw/renewals_all.csv` keeps them with `outcome` and `route` for audit. Full
+dictionary: [docs/data/data-dictionary.md](docs/data/data-dictionary.md).
 
 ## Data paths
 
 | Path | How | Notes |
 |------|-----|-------|
-| **Synthetic** (CI / published numbers) | `CHURN_DATA_SOURCE=synthetic` | Seed-42 ladder; committed `models/` |
-| **Lakehouse gold** | `./scripts/run_lakehouse_e2e.sh /path/to/local-data-lakehouse` | Writes under `artifacts/lakehouse_run/` only (`RETENTION_RADAR_ARTIFACT_DIR`) |
+| **Synthetic** (CI / published numbers) | `CHURN_DATA_SOURCE=synthetic` | Seed-42 renewal cohort; committed `models/` |
+| **Lakehouse gold** | `./scripts/run_lakehouse_e2e.sh /path/to/local-data-lakehouse` | Writes under `artifacts/lakehouse_run/` only |
 | **Sync only** | `./scripts/sync_lakehouse_exports.sh …/data/export` | No retrain |
-
-> **Isolation:** Lakehouse E2E sets `RETENTION_RADAR_ARTIFACT_DIR=artifacts/lakehouse_run` so train/eval/docs_gen never dirty committed `models/` or published `docs/model-card.md`. Dual-world cite: [`results/lakehouse_e2e_summary.json`](results/lakehouse_e2e_summary.json).
 
 Details: [docs/data/data-foundation-lakehouse.md](docs/data/data-foundation-lakehouse.md)
 
@@ -167,35 +164,28 @@ Details: [docs/data/data-foundation-lakehouse.md](docs/data/data-foundation-lake
 retention-radar/
 ├── src/retention_radar/     # Package + CLI
 ├── app/                     # Streamlit UI
-├── scripts/                 # run_all, lakehouse sync
-├── configs/                 # Schemas + HITL review-log template
-├── data/                    # raw · interim · processed · external
+├── scripts/                 # run_all, use cases, lakehouse sync, local E2E
+├── configs/                 # Record schema + action-log schema/template
+├── data/                    # raw (renewals + worked examples) · use_cases · external
 ├── models/                  # Seed-42 serve bundle + metrics
-├── results/                 # Benchmarks, Santosh analysis, plots
+├── results/                 # Benchmarks, worked examples, plots
 ├── artifacts/               # Runtime output (gitignored)
-├── notebooks/               # Exploration only
-├── docs/                    # Guides, architecture, model card
+├── docs/                    # Use case, guides, architecture, model card
 └── tests/
 ```
-
-Full map: [docs/folder-structure.md](docs/folder-structure.md)
-
----
 
 ## Docs
 
 | Doc | Purpose |
 |-----|---------|
-| [results/benchmarks.md](results/benchmarks.md) | Ladder, calibration, latency |
-| [results/example-account-analysis.md](results/example-account-analysis.md) | Single-record outcome |
+| [docs/USE_CASE.md](docs/USE_CASE.md) | The use case, the evidence behind it, and what the synthetic data can and cannot show |
+| [results/benchmarks.md](results/benchmarks.md) | Ladder, calibration, operating point, policy, latency |
+| [results/WORKED_EXAMPLES.md](results/WORKED_EXAMPLES.md) | Maya and Arjun, end to end |
 | [docs/model-card.md](docs/model-card.md) | Intended use + metrics |
-| [docs/guides/start-here.md](docs/guides/start-here.md) | Clone two repos → one command |
-| [docs/getting-started.md](docs/getting-started.md) | Short walkthrough |
+| [docs/guides/start-here.md](docs/guides/start-here.md) | Clone → one command → what to read |
 | [docs/architecture.md](docs/architecture.md) | Train ≠ serve design |
 | [docs/guides/algorithm-landscape.md](docs/guides/algorithm-landscape.md) | What we use vs defer |
 
----
-
 ## License
 
-MIT © Santosh Shinde — see [LICENSE](LICENSE).
+MIT © Santosh Shinde, see [LICENSE](LICENSE).

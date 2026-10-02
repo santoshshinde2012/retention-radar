@@ -1,5 +1,9 @@
 """Streamlit demo: Predict / Explain / Decision / Methodology / Benchmarks.
 
+One subscriber of a monthly AI coding assistant plan, scored seven days before
+renewal. Pick a worked example or a use-case scenario, move the sliders, and
+watch the calibrated score, the band and the suggested action change.
+
 Run from project root:
     export PYTHONPATH="$(pwd)/src"
     streamlit run app/streamlit_app.py
@@ -26,12 +30,11 @@ from retention_radar.config import (  # noqa: E402
     CALIBRATOR_PATH,
     METRICS_PATH,
     MODEL_PATH,
+    PLAN_PRICE_USD,
     PLAN_TIER_ORDER,
 )
-from retention_radar.data.ingest import (  # noqa: E402
-    resolve_santosh_json,
-    resolve_users_csv,
-)
+from retention_radar.data.generate import HERO_PROFILES  # noqa: E402
+from retention_radar.data.ingest import resolve_hero_json, resolve_users_csv  # noqa: E402
 from retention_radar.serving.packet import build_decision_packet  # noqa: E402
 from retention_radar.training.calibrate import load_calibrator  # noqa: E402
 
@@ -48,37 +51,12 @@ def load_cal():
     return load_calibrator(CALIBRATOR_PATH)
 
 
-def load_santosh_defaults() -> dict:
-    path = resolve_santosh_json()
+def load_hero(name: str) -> dict:
+    path = resolve_hero_json(name)
     if path.exists():
         with open(path, encoding="utf-8") as f:
             return json.load(f)
-    return {
-        "user_id": "santosh_shinde",
-        "user_name": "Santosh Shinde",
-        "days_since_signup": 420,
-        "sessions_last_7d": 9,
-        "sessions_last_30d": 38,
-        "avg_session_minutes": 28.5,
-        "models_used_count": 7,
-        "api_calls_last_30d": 1850,
-        "tokens_consumed_last_30d": 420000,
-        "tools_used_count": 8,
-        "failed_requests_rate": 0.12,
-        "support_tickets_last_90d": 2,
-        "plan_tier": "pro",
-        "payment_failures_last_90d": 1,
-        "feature_adoption_score": 0.78,
-        "nps_score": 7.0,
-        "last_active_days_ago": 8,
-        "weekend_usage_ratio": 0.22,
-        "engagement_trend": 0.9474,
-        "spend_usd_last_30d": 189.0,
-        "days_until_renewal": 21,
-        "agent_runs_last_30d": 52,
-        "ide_plugin_sessions_last_30d": 28,
-        "seat_utilization": 0.72,
-    }
+    return HERO_PROFILES[name]()
 
 
 def load_metrics() -> dict:
@@ -101,30 +79,34 @@ def load_use_cases() -> list[dict]:
 
 
 def choose_preset() -> dict:
-    """Sidebar picker: Santosh from the active data source, then the use-case pack."""
-    santosh = load_santosh_defaults()
-    presets = [
-        {
-            "id": "santosh_default",
-            "title": f"Santosh Shinde ({rr_config.CHURN_DATA_SOURCE} source)",
-            "story": "Hero record from the active data source.",
-            "expected": None,
-            "record": santosh,
-        }
-    ]
+    """Sidebar picker: the worked examples first, then the use-case pack."""
+    presets = []
+    for name in rr_config.HEROES:
+        record = load_hero(name)
+        presets.append(
+            {
+                "id": f"hero_{name}",
+                "title": record.get("user_name", name),
+                "story": "Worked example scored at T-7 (no label: the renewal is ahead).",
+                "expected": None,
+                "record": record,
+            }
+        )
+    hero_records = [p["record"] for p in presets]
     for p in load_use_cases():
-        if p["record"] == santosh:
-            presets[0]["expected"] = p.get("expected")  # same record as the hero
+        if p["record"] in hero_records:
+            presets[hero_records.index(p["record"])]["expected"] = p.get("expected")
+            presets[hero_records.index(p["record"])]["story"] = p.get("story", "")
             continue
         presets.append(p)
     titles = [p["title"] for p in presets]
-    title = st.sidebar.selectbox("Use case", titles, index=0, key="use_case")
+    title = st.sidebar.selectbox("Subscriber", titles, index=0, key="use_case")
     preset = presets[titles.index(title)]
     st.sidebar.caption(preset.get("story", ""))
     exp = preset.get("expected")
     if exp:
         st.sidebar.caption(
-            f"Committed bundle: `{exp['band']}` → `{exp['hitl_action']}` "
+            f"Committed bundle: `{exp['band']}` → `{exp['action']}` "
             f"(p_cal {exp['p_cal']:.3f}). Move a slider to explore."
         )
     return preset
@@ -141,104 +123,87 @@ def _slider(preset_id: str, label: str, key: str, lo, hi, defaults: dict, fallba
     return st.slider(label, lo, hi, value, **kwargs)
 
 
-def collect_user_inputs(defaults: dict, preset_id: str = "santosh_default") -> dict:
+def collect_user_inputs(defaults: dict, preset_id: str = "hero_maya") -> dict:
     st.sidebar.header("What-if")
-    st.sidebar.caption("Pick a use case, then tweak sliders to see how risk changes.")
-    user_name = st.sidebar.text_input(
-        "Name", value=defaults.get("user_name", "Santosh Shinde"), key=f"{preset_id}:user_name"
-    )
+    st.sidebar.caption("Pick a subscriber, then move sliders to see how risk and action change.")
     plan_tier = st.sidebar.selectbox(
-        "Plan tier",
+        "Plan",
         PLAN_TIER_ORDER,
         index=PLAN_TIER_ORDER.index(defaults.get("plan_tier", "pro")),
+        format_func=lambda t: f"{t} (${PLAN_PRICE_USD[t]:.0f}/mo)",
         key=f"{preset_id}:plan_tier",
     )
 
     def num(label, key, lo, hi, fallback, step=None, as_int=False):
         return _slider(preset_id, label, key, lo, hi, defaults, fallback, step=step, as_int=as_int)
 
+    def flag(label, key):
+        return int(st.checkbox(label, value=bool(defaults.get(key, 0)), key=f"{preset_id}:{key}"))
+
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        st.subheader("Usage")
-        days_since_signup = num("Days since signup", "days_since_signup", 14, 900, 420, as_int=True)
-        sessions_last_7d = num("Sessions last 7d", "sessions_last_7d", 0, 40, 9, as_int=True)
-        sessions_last_30d = num("Sessions last 30d", "sessions_last_30d", 0, 120, 38, as_int=True)
-        avg_session_minutes = num("Avg session minutes", "avg_session_minutes", 1.0, 120.0, 28.5)
-        api_calls_last_30d = num("API calls last 30d", "api_calls_last_30d", 0, 20000, 1850, as_int=True)
-        tokens_consumed_last_30d = num(
-            "Tokens last 30d", "tokens_consumed_last_30d", 0, 2_000_000, 420000, step=1000, as_int=True
-        )
+        st.subheader("Habit")
+        renewals_completed = num("Renewals already paid", "renewals_completed", 0, 36, 3, as_int=True)
+        active_days_28d = num("Active days (28d)", "active_days_28d", 0, 28, 15, as_int=True)
+        active_days_7d = num("Active days (7d)", "active_days_7d", 0, 7, 2, as_int=True)
+        active_days_7d = min(active_days_7d, active_days_28d)
+        last_active_days_ago = num("Last active (days ago)", "last_active_days_ago", 0, 60, 2, as_int=True)
+        weekend_usage_ratio = num("Weekend share", "weekend_usage_ratio", 0.0, 1.0, 0.2, step=0.01)
     with col2:
-        st.subheader("Adoption")
-        models_used_count = num("Models used", "models_used_count", 0, 15, 7, as_int=True)
-        tools_used_count = num("Tools used", "tools_used_count", 0, 20, 8, as_int=True)
-        feature_adoption_score = num("Feature adoption", "feature_adoption_score", 0.0, 1.0, 0.78)
-        nps_score = num("NPS score", "nps_score", 0.0, 10.0, 7.0, step=0.1)
-        weekend_usage_ratio = num("Weekend usage ratio", "weekend_usage_ratio", 0.0, 1.0, 0.22)
-        last_active_days_ago = num("Last active (days ago)", "last_active_days_ago", 0, 120, 8, as_int=True)
+        st.subheader("Against the cap")
+        allowance_used_pct = num("Allowance used", "allowance_used_pct", 0.0, 3.0, 1.0, step=0.01)
+        limit_hits_14d = num("Cap hits (14d)", "limit_hits_14d", 0, 20, 3, as_int=True)
+        cheap_model_share_28d = num("Cheap-model share", "cheap_model_share_28d", 0.0, 1.0, 0.6, step=0.01)
+        agent_requests_28d = num("Agent requests (28d)", "agent_requests_28d", 0, 5000, 470, as_int=True)
+        overage_usd_28d = num("Overage USD (28d)", "overage_usd_28d", 0.0, 500.0, 0.0, step=1.0)
+        overage_toggled_off = flag("Switched overage off", "overage_toggled_off")
     with col3:
-        st.subheader("Friction")
-        failed_requests_rate = num(
-            "Failed request rate", "failed_requests_rate", 0.0, 0.95, 0.12, step=0.01
+        st.subheader("Quality")
+        suggestion_accept_rate_28d = num(
+            "Suggestion accept rate", "suggestion_accept_rate_28d", 0.0, 0.9, 0.29, step=0.01
         )
-        support_tickets_last_90d = num(
-            "Support tickets (90d)", "support_tickets_last_90d", 0, 20, 2, as_int=True
+        accept_rate_change = num("Accept rate vs last period", "accept_rate_change", 0.3, 2.0, 1.0, step=0.01)
+        agent_task_success_rate = num(
+            "Agent tasks kept", "agent_task_success_rate", 0.0, 1.0, 0.6, step=0.01
         )
-        payment_failures_last_90d = num(
-            "Payment failures (90d)", "payment_failures_last_90d", 0, 10, 1, as_int=True
-        )
-        spend_usd_last_30d = num("Spend USD (30d)", "spend_usd_last_30d", 0.0, 2000.0, 189.0, step=1.0)
-        days_until_renewal = num("Days until renewal", "days_until_renewal", 0, 365, 21, as_int=True)
+        failed_requests_rate = num("Failed requests", "failed_requests_rate", 0.0, 0.5, 0.05, step=0.01)
+        incident_exposed_28d = flag("Hit an incident window", "incident_exposed_28d")
+        support_tickets_90d = num("Support tickets (90d)", "support_tickets_90d", 0, 10, 0, as_int=True)
     with col4:
-        st.subheader("AI-native / team")
-        default_trend = float(defaults.get("engagement_trend", 0.95))
-        auto_trend = sessions_last_7d / max(1.0, sessions_last_30d / 4.0)
-        # Auto-derive only when the loaded record already follows the formula, so a
-        # preset is scored exactly as the API / batch would score it.
-        record_follows_formula = abs(round(auto_trend, 4) - default_trend) < 1e-3
-        use_auto = st.checkbox(
-            "Auto engagement_trend from sessions",
-            value=record_follows_formula,
-            key=f"{preset_id}:auto_trend",
+        st.subheader("Surface / pricing")
+        ide_sessions_28d = num("IDE sessions (28d)", "ide_sessions_28d", 0, 120, 14, as_int=True)
+        cli_sessions_28d = num("CLI sessions (28d)", "cli_sessions_28d", 0, 120, 19, as_int=True)
+        first_renewal_after_pricing_change = flag(
+            "First renewal since the cap change", "first_renewal_after_pricing_change"
         )
-        engagement_trend = (
-            float(round(auto_trend, 4))
-            if use_auto
-            else num("Engagement trend", "engagement_trend", 0.0, 5.0, 0.95, step=0.01)
-        )
-        if use_auto:
-            st.caption(f"engagement_trend = {engagement_trend:.4f} (≈1 stable)")
-        agent_runs_last_30d = num("Agent runs (30d)", "agent_runs_last_30d", 0, 400, 52, as_int=True)
-        ide_plugin_sessions_last_30d = num(
-            "IDE plugin sessions (30d)", "ide_plugin_sessions_last_30d", 0, 200, 28, as_int=True
-        )
-        seat_utilization = num("Seat utilization", "seat_utilization", 0.0, 1.0, 0.72, step=0.01)
+        engagement_trend = round(active_days_7d / max(1.0, active_days_28d / 4.0), 4)
+        st.caption(f"engagement_trend = {engagement_trend:.4f} (~1 steady, <1 fading)")
 
     return {
-        "user_id": defaults.get("user_id", "santosh_shinde"),
-        "user_name": user_name,
-        "days_since_signup": days_since_signup,
-        "sessions_last_7d": sessions_last_7d,
-        "sessions_last_30d": sessions_last_30d,
-        "avg_session_minutes": avg_session_minutes,
-        "models_used_count": models_used_count,
-        "api_calls_last_30d": api_calls_last_30d,
-        "tokens_consumed_last_30d": tokens_consumed_last_30d,
-        "tools_used_count": tools_used_count,
-        "failed_requests_rate": failed_requests_rate,
-        "support_tickets_last_90d": support_tickets_last_90d,
+        "user_id": defaults.get("user_id", "sub_maya"),
+        "user_name": defaults.get("user_name", "Maya (worked example)"),
         "plan_tier": plan_tier,
-        "payment_failures_last_90d": payment_failures_last_90d,
-        "feature_adoption_score": feature_adoption_score,
-        "nps_score": nps_score,
-        "last_active_days_ago": last_active_days_ago,
-        "weekend_usage_ratio": weekend_usage_ratio,
+        "renewals_completed": renewals_completed,
+        "active_days_7d": active_days_7d,
+        "active_days_28d": active_days_28d,
         "engagement_trend": engagement_trend,
-        "spend_usd_last_30d": spend_usd_last_30d,
-        "days_until_renewal": days_until_renewal,
-        "agent_runs_last_30d": agent_runs_last_30d,
-        "ide_plugin_sessions_last_30d": ide_plugin_sessions_last_30d,
-        "seat_utilization": seat_utilization,
+        "last_active_days_ago": last_active_days_ago,
+        "agent_requests_28d": agent_requests_28d,
+        "allowance_used_pct": allowance_used_pct,
+        "limit_hits_14d": limit_hits_14d,
+        "cheap_model_share_28d": cheap_model_share_28d,
+        "overage_usd_28d": overage_usd_28d,
+        "overage_toggled_off": overage_toggled_off,
+        "suggestion_accept_rate_28d": suggestion_accept_rate_28d,
+        "accept_rate_change": accept_rate_change,
+        "agent_task_success_rate": agent_task_success_rate,
+        "failed_requests_rate": failed_requests_rate,
+        "incident_exposed_28d": incident_exposed_28d,
+        "support_tickets_90d": support_tickets_90d,
+        "ide_sessions_28d": ide_sessions_28d,
+        "cli_sessions_28d": cli_sessions_28d,
+        "weekend_usage_ratio": weekend_usage_ratio,
+        "first_renewal_after_pricing_change": first_renewal_after_pricing_change,
     }
 
 
@@ -247,40 +212,38 @@ def show_hold(packet: dict) -> None:
     st.error("Input failed validation, so it is not scored or queued.")
     for err in packet["validation"].get("errors") or []:
         st.markdown(f"- {err}")
-    st.markdown(f"**HITL action:** `{packet['hitl']['action']}`")
+    st.markdown(f"**Action:** `{packet['decision']['action']}`")
 
 
 def tab_predict(raw, cal, display, band, user_dict):
-    st.markdown("### Plain language")
+    st.markdown("### What the number means")
     st.write(
-        "This score estimates how likely this user is to **stop using the product** "
-        "(churn). A calibrated probability means: if we look at many users with ~30% "
-        "score, about 30% of them actually churned in the test data."
+        "The chance this subscriber lets the plan lapse at the renewal seven days from now. "
+        "Calibrated means: among many subscribers scored around 15%, about 15% lapsed in the "
+        "test data. The base rate is about 10%."
     )
     band_color = {"low": "🟢", "medium": "🟡", "high": "🔴"}[band]
-    st.markdown(
-        f"## {band_color} Churn probability: **{display:.1%}**  ({band} risk)"
-    )
+    st.markdown(f"## {band_color} P(lapse at renewal): **{display:.1%}**  ({band})")
     st.progress(min(max(display, 0.0), 1.0))
 
     c1, c2 = st.columns(2)
     with c1:
         st.metric("Raw model probability", f"{raw:.1%}")
     with c2:
-        if cal is not None:
-            st.metric("Calibrated probability", f"{cal:.1%}")
-        else:
-            st.metric("Calibrated probability", "n/a")
-
-    with st.expander("Raw feature vector"):
+        st.metric("Calibrated probability", f"{cal:.1%}" if cal is not None else "n/a")
+    st.caption(
+        "Raw is inflated on purpose: training reweights lapses (scale_pos_weight). "
+        "Only the calibrated number is a probability."
+    )
+    with st.expander("Feature vector"):
         st.json(user_dict)
 
 
 def tab_explain(top):
     st.markdown("### Why this score?")
     st.write(
-        "Positive contributions push **toward churn**; negative push **toward retain**. "
-        "We use SHAP when available, otherwise a simple importance heuristic."
+        "SHAP contributions in log-odds: positive pushes toward lapse, negative toward renewal. "
+        "They explain the score, not the cause, and not what an intervention would do."
     )
     explain_df = pd.DataFrame(top, columns=["feature", "contribution"])
     st.dataframe(explain_df, width="stretch")
@@ -288,41 +251,45 @@ def tab_explain(top):
 
 
 def tab_decision(packet: dict, user_dict: dict, top):
-    st.markdown(f"### Decision packet — {user_dict.get('user_name') or user_dict.get('user_id')}")
+    st.markdown(f"### Decision packet: {user_dict.get('user_name') or user_dict.get('user_id')}")
     st.write(
-        "End-to-end single-record path: **validate → score (raw+cal) → explain → "
-        "cohort compare → HITL action**. No auto-cancel."
+        "validate → score (raw + calibrated) → explain → compare to the cohort → pick an "
+        "approved playbook, the holdout, or nothing. The service never sends anything."
     )
 
     v = packet["validation"]
     s = packet["scoring"]
-    h = packet["hitl"]
+    d = packet["decision"]
     if s is None:
         st.metric("Validation", "FAIL ❌")
         for err in v.get("errors") or []:
             st.error(err)
-        st.markdown(f"**HITL action:** `{h['action']}`")
-        st.warning(h.get("rationale", ""))
-        st.caption(f"Auto action: `{h.get('auto_action')}` · not scored, not queued")
+        st.markdown(f"**Action:** `{d['action']}`")
+        st.warning(d.get("rationale", ""))
+        st.caption(f"Auto action: `{d.get('auto_action')}` · not scored, not queued")
         return
 
     c1, c2, c3, c4 = st.columns(4)
     with c1:
         st.metric("Validation", "OK ✅" if v.get("ok") else "FAIL ❌")
     with c2:
-        st.metric("Raw P(churn)", f"{s['churn_probability_raw']:.1%}")
+        st.metric("Raw P(lapse)", f"{s['churn_probability_raw']:.1%}")
     with c3:
         cal = s.get("churn_probability_calibrated")
         st.metric("Calibrated", f"{cal:.1%}" if cal is not None else "n/a")
     with c4:
-        st.metric("Best-F1 threshold", f"{s['best_f1_threshold']:.3f}")
+        st.metric("τ (contact threshold)", f"{s['best_f1_threshold']:.3f}")
 
     st.markdown(f"**Risk band:** `{s['risk_band']}`")
-    st.markdown(f"**HITL action:** `{h['action']}`")
-    st.info(h.get("rationale", ""))
-    st.caption(f"Auto action: `{h.get('auto_action')}` · HITL required: always")
+    st.markdown(f"**Action:** `{d['action']}`")
+    st.info(d.get("rationale", ""))
+    if d.get("candidates"):
+        st.markdown("#### Playbooks considered (expected value, assumption-based)")
+        st.dataframe(pd.DataFrame(d["candidates"]), width="stretch")
+    who = "a person" if d.get("hitl_required") else "the lifecycle tool, after a human approved the playbook"
+    st.caption(f"Auto action: `{d.get('auto_action')}` · executed by {who} · holdout: {d.get('holdout')}")
 
-    st.markdown("#### Cohort percentiles vs population")
+    st.markdown("#### Cohort percentiles (T-7 renewal table)")
     cohort = packet.get("cohort_compare") or {}
     if cohort:
         cdf = pd.DataFrame(
@@ -340,23 +307,22 @@ def tab_decision(packet: dict, user_dict: dict, top):
         st.bar_chart(cdf.set_index("feature")["percentile"])
         if any(v.get("source") == "feature_stats" for v in cohort.values()):
             st.caption(
-                "users.csv not present — percentiles approximated from training "
+                "renewals_t7.csv not present: percentiles approximated from training "
                 "quantiles in `feature_stats.json`."
             )
     else:
-        st.caption("No cohort stats (missing users.csv and feature_stats.json?).")
+        st.caption("No cohort stats (missing renewals_t7.csv and feature_stats.json?).")
 
     st.markdown("#### Top drivers")
-    explain_df = pd.DataFrame(top, columns=["feature", "contribution"])
-    st.dataframe(explain_df.head(5), width="stretch")
+    st.dataframe(pd.DataFrame(top, columns=["feature", "contribution"]).head(5), width="stretch")
 
     if packet.get("outliers"):
-        st.warning(f"Outliers vs train p01–p99: {len(packet['outliers'])}")
+        st.warning(f"Outside training p01–p99: {len(packet['outliers'])}")
         st.json(packet["outliers"])
 
     st.markdown(
-        "Docs: [single-record checklist](../docs/case-study/single-record-checklist.md) · "
-        "[Santosh case study](../docs/case-study/example-account-case-study.md) · "
+        "Docs: [worked examples](../docs/case-study/renewal-worked-examples.md) · "
+        "[single-record checklist](../docs/case-study/single-record-checklist.md) · "
         "[use cases](../data/use_cases/README.md)"
     )
     with st.expander("Full decision packet JSON"):
@@ -367,15 +333,15 @@ def tab_methodology(metrics: dict):
     st.markdown("### How this model was built")
     st.markdown(
         """
-1. **Synthetic data** — fake AI-platform users (seed 42), no real PII.
-2. **Honest baselines** — dummy, logistic regression, Random Forest, LightGBM, and CatBoost peers (XGBoost remains the teaching hero).
-3. **XGBoost + Optuna** — tune trees on validation AUC.
-4. **Calibration** — isotonic regression on validation probabilities.
-5. **Holdout test** — ROC, PR, Brier, threshold sweep for business action.
-6. **Single-record packet** — validate → score → explain → cohort → HITL.
-
-Beginner tip: **AUC** ranks users; **Brier** checks if probabilities are honest;
-**threshold** is the business dial (more alerts vs fewer misses).
+1. **Label from billing, not activity**: voluntary lapse at renewal. Failed-card lapses go to
+   dunning; subscribers who already scheduled a cancel go to the cancel flow. Neither trains the model.
+2. **Snapshot at T-7**: every feature is computed as of seven days before the renewal.
+3. **Honest ladder**: dummy, logistic regression, Random Forest, XGBoost (default + Optuna),
+   LightGBM, CatBoost. Logistic regression is allowed to win, and on this run it does.
+4. **Calibration**: Platt (sigmoid) on validation. Isotonic was tried and rejected: with ~140
+   validation lapses it made a staircase and scored some subscribers at exactly 0%.
+5. **Policy**: contact only above τ; pick the approved playbook with the best expected value;
+   hold 10% out so lift can be measured.
 """
     )
     if metrics:
@@ -396,7 +362,7 @@ Beginner tip: **AUC** ranks users; **Brier** checks if probabilities are honest;
                     {
                         "model": name,
                         "test_auc": block.get("roc_auc"),
-                        "test_f1": block.get("f1"),
+                        "test_pr_auc": block.get("average_precision"),
                     }
                 )
         if rows:
@@ -408,8 +374,7 @@ Beginner tip: **AUC** ranks users; **Brier** checks if probabilities are honest;
     st.markdown(
         "Docs: [model card](../docs/model-card.md) · "
         "[data dictionary](../docs/data/data-dictionary.md) · "
-        "[architecture](../docs/architecture.md) · "
-        "[Santosh case](../docs/case-study/example-account-case-study.md)"
+        "[architecture](../docs/architecture.md)"
     )
 
 
@@ -430,25 +395,26 @@ def tab_benchmarks(metrics: dict):
         ("pr_curve.png", "Precision–Recall"),
         ("calibration_curve.png", "Reliability diagram"),
         ("threshold_f1.png", "Threshold vs F1 / precision / recall"),
-        ("confusion_matrix.png", "Confusion matrix at τ"),
+        ("confusion_matrix.png", "Confusion matrix @ 0.5"),
     ]:
         path = ARTIFACTS_DIR / fname
+        if not path.exists():
+            path = ROOT / "results" / "plots" / fname
         if path.exists():
             st.image(str(path), caption=caption, width="stretch")
         else:
-            st.caption(f"Missing artifact: `{fname}` — run evaluate.")
+            st.caption(f"Missing artifact: `{fname}`: run evaluate.")
 
 
 def main() -> None:
-    st.set_page_config(page_title="AI Churn Risk — Santosh", layout="wide")
-    st.title("AI Platform Churn Risk")
+    st.set_page_config(page_title="Renewal risk: AI coding assistant", layout="wide")
+    st.title("Renewal risk at T-7")
     st.caption(
-        "FOSS XGBoost demo — Santosh Shinde what-if · Decision packet · "
-        "synthetic data, no real PII · HITL only (`auto_action: none`)"
+        "Monthly AI coding assistant plan (Pro $20 · Pro+ $60 · Ultra $200). "
+        "Synthetic data, no real PII. The service suggests; it never sends (`auto_action: none`)."
     )
     st.caption(
-        f"Data source: `{rr_config.CHURN_DATA_SOURCE}` · "
-        f"users=`{resolve_users_csv()}` · santosh=`{resolve_santosh_json()}`"
+        f"Data source: `{rr_config.CHURN_DATA_SOURCE}` · renewals=`{resolve_users_csv()}`"
     )
 
     bundle = load_model_bundle()
@@ -463,17 +429,13 @@ def main() -> None:
     metrics = load_metrics()
     calibrator = load_cal()
     user_dict = collect_user_inputs(preset["record"], preset["id"])
-    # One packet drives every tab: validate first, so invalid what-if input is
-    # held everywhere instead of being scored on Predict / Explain.
     try:
         packet = build_decision_packet(user_dict, model_bundle=bundle, calibrator=calibrator, top_k=8)
     except Exception as exc:  # noqa: BLE001
         st.error(f"Could not build decision packet: {exc}")
         return
 
-    t1, t2, t3, t4, t5 = st.tabs(
-        ["Predict", "Explain", "Decision", "Methodology", "Benchmarks"]
-    )
+    t1, t2, t3, t4, t5 = st.tabs(["Predict", "Explain", "Decision", "Methodology", "Benchmarks"])
     s = packet["scoring"]
     top = [
         (d["feature"], d["contribution"]) for d in (packet.get("explanation") or {}).get("top_features", [])

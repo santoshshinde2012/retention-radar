@@ -1,10 +1,12 @@
-"""Batch-score a gold feature CSV into a ranked HITL review queue.
+"""Batch-score the T-7 renewal snapshot into a ranked action queue.
 
-Every row is validated with the same contract as single-record serving
-(``packet.validate_payload``). Valid rows are scored in one vectorised pass and
-written as a queue sorted by calibrated risk (``rank`` 1 = review first); invalid
-rows are never scored and go to a rejects file with the reasons, so one bad row
-cannot sink (or silently pollute) a weekly job. ``auto_action`` is always ``none``.
+This is the production shape of the use case: once a day, every subscriber whose
+renewal is seven days out is scored in one pass. Each row is validated with the
+same contract as single-record serving (``packet.validate_payload``); invalid rows
+are never scored and go to a rejects file with the reasons. Valid rows get a
+calibrated score, a band, and an action from the renewal policy (a playbook,
+``holdout`` or ``no_action``). The queue is what a lifecycle messaging tool reads;
+this job never sends anything itself (``auto_action`` is always ``none``).
 
 Examples:
     python -m retention_radar.cli.batch_score \\
@@ -28,7 +30,7 @@ import pandas as pd
 from retention_radar import config
 from retention_radar.features.transform import encode_plan_tier
 from retention_radar.serving.packet import normalize_record, validate_payload
-from retention_radar.serving.policy import HitlDecisionPolicy, risk_band
+from retention_radar.serving.policy import RenewalDecisionPolicy, risk_band
 from retention_radar.serving.scoring import CalibratedScorer
 from retention_radar.training.calibrate import load_calibrator
 
@@ -38,7 +40,10 @@ SCORE_COLUMNS = [
     "p_raw",
     "p_cal",
     "band",
-    "hitl_action",
+    "action",
+    "holdout",
+    "would_have_sent",
+    "expected_value_usd",
     "model_version",
     "scored_at",
     "auto_action",
@@ -129,7 +134,7 @@ def score_payloads(
 
     threshold = float(metrics.get("best_f1_threshold", 0.5))
     model_version = resolve_model_version(metrics)
-    policy = HitlDecisionPolicy()
+    policy = RenewalDecisionPolicy()
     feature_names = model_bundle["feature_names"]
 
     frame = encode_plan_tier(pd.DataFrame(payloads))
@@ -139,23 +144,26 @@ def score_payloads(
     records: list[dict[str, Any]] = []
     for i, payload in enumerate(payloads):
         display = float(display_arr[i])
-        band = risk_band(display, threshold)
+        band = risk_band(display)
+        decision = policy.decide(display, threshold, band, payload)
         records.append(
             {
                 "user_id": str(payload.get("user_id", "")),
                 "p_raw": round(float(raw_arr[i]), 6),
                 "p_cal": round(float(cal_arr[i]) if cal_arr is not None else display, 6),
                 "band": band,
-                "hitl_action": policy.decide(display, threshold, band)["action"],
+                "action": decision["action"],
+                "holdout": bool(decision["holdout"]),
+                "would_have_sent": decision.get("would_have_sent") or "",
+                "expected_value_usd": decision["expected_value_usd"],
                 "model_version": model_version,
                 "scored_at": when,
                 "auto_action": "none",
             }
         )
     scores = pd.DataFrame.from_records(records)
-    # Queue order: highest calibrated risk first. Isotonic calibration is a step
-    # function (many users share a plateau), so raw P(churn) orders users inside a
-    # plateau; user_id makes the order fully deterministic.
+    # Queue order: highest calibrated risk first. Raw P breaks ties if the
+    # calibrator has plateaus (isotonic does); user_id makes the order deterministic.
     scores = scores.sort_values(
         ["p_cal", "p_raw", "user_id"], ascending=[False, False, True], kind="mergesort"
     )
@@ -235,7 +243,7 @@ def score_csv(
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Batch-score a feature CSV into a ranked HITL queue (auto_action=none)"
+        description="Batch-score a T-7 renewal CSV into a ranked action queue (auto_action=none)"
     )
     parser.add_argument(
         "--csv",
@@ -298,7 +306,7 @@ def main(argv: list[str] | None = None) -> int:
         for rec in rejects.head(10).to_dict(orient="records"):
             print(f"  row {rec['row_number']} ({rec['user_id'] or 'no user_id'}): {rec['errors']}")
     if len(scores):
-        print(scores["hitl_action"].value_counts().to_string())
+        print(scores["action"].value_counts().to_string())
         print(f"auto_action unique: {sorted(scores['auto_action'].unique().tolist())}")
     return 1 if (args.strict and len(rejects)) else 0
 

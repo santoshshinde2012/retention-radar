@@ -1,156 +1,133 @@
-# Benchmarks — seed 42 analysis
+# Benchmarks (seed 42)
 
-How we measure success, what the reference run produced, and how to read the ladder honestly.
+What the reference run produced and how to read it. Source of truth:
+[`../models/metrics.json`](../models/metrics.json) for metrics and
+[`analysis.json`](analysis.json) (bootstrap, calibrator comparison, deciles, holdout sizes).
+Model card: [`../docs/model-card.md`](../docs/model-card.md). Worked examples:
+[`WORKED_EXAMPLES.md`](WORKED_EXAMPLES.md).
 
-**Cite:** [`../models/metrics.json`](../models/metrics.json) · **Card:** [`../docs/model-card.md`](../docs/model-card.md) · **Landscape:** [`../docs/guides/algorithm-landscape.md`](../docs/guides/algorithm-landscape.md) · **Santosh:** [`example-account-analysis.md`](example-account-analysis.md)
+The committed bundle is trained on Linux x86-64 (the CI platform), where `make reproduce`
+matches it exactly. On other CPUs (for example Apple Silicon) the tree libraries and the
+Optuna search take slightly different paths, and a retrain differs from the third decimal.
 
-## Contents
+## The table under the numbers
 
-1. [What we measure](#what-we-measure)
-2. [Table A — Honest ladder (test)](#table-a--honest-ladder-test)
-3. [Table B — Calibration & threshold](#table-b--calibration--threshold)
-4. [Table C — Latency (warm, calibrated path)](#table-c--latency-warm-calibrated-path)
-5. [Table D — Optuna meta](#table-d--optuna-meta)
-6. [Reference plots](#reference-plots)
-7. [How to reproduce](#how-to-reproduce)
-8. [How to refresh after retrain](#how-to-refresh-after-retrain)
-9. [What not to claim](#what-not-to-claim)
+- 8,000 synthetic renewals. 280 were lost to failed cards (dunning) and 391 had a cancel
+  already scheduled (cancel flow); both are routed out, leaving **7,329** T-7 rows for the model.
+- Voluntary-lapse rate in the model table: **9.6%**.
+- Stratified split 60/20/20: train **4,397** · validation **1,466** · test **1,466**
+  (424 / 142 / 141 lapses).
+- Optuna (20 trials) and the calibrator see validation only; test is read once.
 
----
+## Table A: the ladder (test)
 
-## What we measure
+| Model | AUC-ROC | PR-AUC | F1 @ 0.5 | Notes |
+|-------|---------|--------|----------|-------|
+| Dummy (prior) | 0.500 | 0.096 | 0.000 | Accuracy 0.904 by predicting "renews" for everyone |
+| **Logistic regression** | **0.781** | **0.281** | 0.333 | Best ranking on this run |
+| CatBoost (untuned) | 0.765 | 0.276 | 0.330 | |
+| Random Forest | 0.758 | 0.267 | 0.303 | |
+| XGBoost (Optuna, raw) | 0.757 | 0.270 | 0.311 | The serving model before calibration |
+| LightGBM (untuned) | 0.736 | 0.243 | 0.309 | |
+| XGBoost (untuned) | 0.729 | 0.234 | 0.329 | |
+| XGBoost (calibrated) | 0.757 | 0.270 | 0.000 | Calibration keeps the ranking; at 0.5 it flags nobody (max calibrated p = 0.45) |
 
-| Metric | Role |
-|--------|------|
-| AUC-ROC | Ranking quality across thresholds |
-| PR-AUC / average precision | Ranking under imbalance (~19.1% train churn) |
-| Precision / recall / F1 | At τ = 0.5 in ladder rows; best-F1 τ separate |
-| Brier (raw vs calibrated) | Probability reliability |
-| Warm latency | Single-row `predict_proba` (+ calibrator) on a pre-built feature row |
+"Untuned" means fixed hand-set parameters (CatBoost and LightGBM: 120 rounds, depth 4,
+learning rate 0.08).
 
-Splits: stratified n_train / val / test = **3000 / 1000 / 1000**, seed **42**. Optuna on **validation** only; test reported once.
+**Reading it.** Logistic regression beats the tuned booster by 0.024. In a paired bootstrap
+of the test set (2,000 resamples) it comes out ahead 99.4% of the time; the 95% interval for
+the difference is +0.004 to +0.045. The generator's lapse logit is mostly additive in its
+causes, and there are only 424 training lapses for a tree to find interactions in.
+Calibrated XGBoost still serves because the explanation and serving code were built around
+it before the ladder came in; logistic regression would explain each subscriber just as
+exactly (coefficient × standardised value). For a real deployment with this result, swap it
+in: serving depends only on `predict_proba`.
 
----
-
-## Table A — Honest ladder (test)
-
-Numbers rounded from [`../models/metrics.json`](../models/metrics.json) (CatBoost `catboost_test`, LogReg `logreg_test`, etc.).
-
-| Model | Test AUC-ROC | Test PR-AUC | Test F1 @ 0.5 | Notes |
-|-------|--------------|-------------|----------------|-------|
-| Dummy (prior) | **0.500** | **0.191** | **0.000** | Accuracy **0.809** by predicting non-churn |
-| Logistic regression | **0.872** | **0.644** | **0.578** | Best AUC at full float (edges CatBoost) |
-| Random Forest | **0.868** | **0.643** | **0.584** | Mid-tier ensemble peer |
-| XGBoost default | **0.869** | **0.638** | **0.596** | Sane hyperparameters |
-| XGBoost Optuna (raw) | **0.870** | **0.641** | **0.580** | Teaching / SHAP vehicle |
-| LightGBM (default) | **0.865** | **0.633** | **0.584** | FOSS peer booster |
-| CatBoost (default) | **0.872** | **0.636** | **0.583** | GBDT trilogy peer (ties LogReg at 3dp) |
-| XGBoost calibrated | **0.866** | **0.612** | **0.601** | **Serving hero**; threshold-sensitive |
-
-**Honest finding:** On this synthetic, mostly additive label, **LogReg and CatBoost land at published test AUC 0.872** (LogReg slightly ahead at full float: 0.8719 vs 0.8715). Optuna XGBoost **0.870**, RF **0.868**, LightGBM **0.865**. That does not invalidate the XGBoost teaching path (SHAP, nonlinear capacity, calibration demo) — it *does* forbid booster-only victory laps. **Serving hero stays calibrated XGB** even when CatBoost matches LogReg on rounded AUC.
-
----
-
-## Table B — Calibration & threshold
+## Table B: calibration and the operating point
 
 | Quantity | Value |
 |----------|-------|
-| Brier raw (test) | **0.138** |
-| Brier calibrated (test) | **0.106** |
-| Calibration method | isotonic (fit on validation; the same split also picks the Optuna model and τ, so validation scores are optimistic) |
-| Best F1 threshold τ (swept on **validation**, then frozen) | **0.34** |
-| F1 at τ — validation | **0.699** |
-| F1 at τ — test (read once) | **0.602** |
-| Calibrated test AP | **0.612** |
+| Brier, always predict the base rate | 0.087 |
+| Brier raw (test) | 0.163 (inflated by `scale_pos_weight`) |
+| Brier calibrated (test) | **0.079** |
+| Calibration method | Platt (sigmoid), fit on validation |
+| τ, best F1 on validation, frozen | **0.16** |
+| F1 at τ: validation / test | 0.380 / 0.329 |
+| At τ on test | 248 flagged (16.9%); precision 0.258; recall 0.454 |
+| Top 10% of scores | 27.9% lapse (2.9× the base rate); holds 29.1% of all lapses |
 
----
+Lapse rate by score decile (test, decile 1 = highest scores): 27.9% · 19.9% · 15.0% · 8.2% ·
+8.8% · 6.9% · 3.4% · 2.1% · 2.7% · 1.4%.
 
-## Table C — Latency (warm, calibrated path)
+Calibration by quintile of calibrated p (test):
 
-From `metrics.json` → `latency` (host-dependent; cite the JSON):
+| Quintile | Mean p | Observed lapse rate |
+|----------|--------|---------------------|
+| 1 | 0.031 | 0.020 |
+| 2 | 0.045 | 0.027 |
+| 3 | 0.068 | 0.079 |
+| 4 | 0.110 | 0.116 |
+| 5 | 0.224 | 0.239 |
+
+**Why Platt, not isotonic.** With 142 lapses in validation, isotonic regression fit a
+staircase: 37 distinct values on the test set, and 44 test subscribers at a calibrated P of
+exactly 0.000. Platt scaling scored slightly better on test Brier (0.0794 vs 0.0799), kept a
+distinct score for every subscriber, and never returns zero.
+
+**Why the Brier gain is small.** A calibrated 0.079 against 0.087 for "always say 9.6%" is
+about a 9% Brier skill. Most renewals are hard to call seven days out; the value is
+concentrated at the top of the queue.
+
+## Table C: the policy on the test set
+
+Actions the renewal policy would take for the 1,466 test subscribers (τ = 0.16, 10% holdout,
+playbook effects are **assumptions** in `config.PLAYBOOKS`):
+
+| Action | Subscribers |
+|--------|-------------|
+| no_action | 1,218 |
+| limit_reset | 113 |
+| cancel_flow_discount | 82 |
+| pause_offer | 35 |
+| holdout | 17 |
+| personal_email (Ultra) | 1 |
+
+15.8% contacted. Summed expected value ≈ $837, which is only as true as the assumed effects.
+
+**How big a holdout would it take?** Among test subscribers above τ, 25.8% lapse. With a 10%
+holdout (a 9:1 split), detecting the limit reset's assumed effect (25.8% → 19.4%) at 95%
+confidence and 80% power takes 394 held-out and 3,546 treated subscribers, **3,940** in all.
+The discount's smaller assumed effect (25.8% → 22.7%) takes 1,727 held out and 15,543
+treated, **17,270**. The policy routes 8.5% of all renewals to the limit reset and 5.8% to the
+discount, so that is roughly **46,000** and **298,000** renewals of traffic. One day of
+renewals, like the use-case pack, is nowhere near either.
+
+## Table D: latency and search
 
 | Quantity | Value |
 |----------|-------|
-| p50 | **~2.01 ms** |
-| p95 | **~2.15 ms** |
-| mean | **~2.01 ms** |
-| warmup / runs | 20 / 200 |
+| Warm single-row score + calibrate, p50 | ~2.7 ms on a GitHub Actions runner (host-dependent) |
+| Optuna best trial | `max_depth=5`, `n_estimators=91`, `learning_rate≈0.025` |
+| Optuna best validation AUC | 0.770 |
 
-Fine for Streamlit; SHAP is separate and should stay on-demand.
-
----
-
-## Table D — Optuna meta
-
-| Item | Value |
-|------|-------|
-| Trials | 20 |
-| Best val AUC | **0.913** |
-| Example best depth | **3** |
-| Train churn rate | **0.191** |
-
----
-
-## Reference plots
+## Plots
 
 ![ROC](plots/roc_curve.png)
-
-![PR](plots/pr_curve.png)
-
+![Precision–Recall](plots/pr_curve.png)
 ![Calibration](plots/calibration_curve.png)
+![Threshold vs F1](plots/threshold_f1.png)
+![Confusion matrix @ 0.5](plots/confusion_matrix.png)
 
-![Threshold F1](plots/threshold_f1.png)
-
-![Confusion](plots/confusion_matrix.png)
-
----
-
-## How to reproduce
-
-Exact commands for the **published** seed-42 ladder (`N_USERS=5000`, `N_OPTUNA_TRIALS=20`, `RANDOM_SEED=42`):
+## Reproduce
 
 ```bash
-cd retention-radar
-python3.12 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-pip install -e .
-# or: export PYTHONPATH="$(pwd)/src"
-
-export CHURN_DATA_SOURCE=synthetic
-export N_USERS=5000
-export N_OPTUNA_TRIALS=20
-./scripts/run_all.sh
-
-python -m json.tool models/metrics.json | less
-python -m retention_radar.cli.infer --user santosh
-make docs-results   # refresh results/plots/ from artifacts/
+make reproduce        # retrain into artifacts/repro/ and diff against models/metrics.json
 ```
-
-Or, without touching committed files: `make reproduce` retrains into `artifacts/repro/` and diffs every value against [`../models/metrics.json`](../models/metrics.json) (latency excluded — it is machine-dependent).
-
-**Reproducibility is exact, not approximate, on the pinned stack:** Python 3.12 + `requirements.txt` (XGBoost 3.4.1, scikit-learn 1.9.1, Optuna 5.0.0, LightGBM 4.7.0, CatBoost 1.2.10) re-creates all 182 non-latency values bit-for-bit and a byte-identical `churn_xgb.joblib` (verified 2026-09-25). On Python 3.11 the pinned install fails (XGBoost 3.4.1 needs 3.12); forcing XGBoost 3.2 there makes every XGBoost-derived number drift (e.g. best-F1 τ 0.34 → 0.32) while Dummy / LogReg / RF / LightGBM / CatBoost still match. Changing the generator also breaks bit-identical AUC — update the model card and this narrative together.
-
-**Cite the JSON**, not this markdown alone: every Table A–D cell is a rounded view of [`../models/metrics.json`](../models/metrics.json).
-
-**Dual world:** lakehouse gold E2E writes under `artifacts/lakehouse_run/` via `RETENTION_RADAR_ARTIFACT_DIR` and is **not** the published ladder. See [`lakehouse_e2e_summary.json`](lakehouse_e2e_summary.json) and [docs/data/data-foundation-lakehouse.md](../docs/data/data-foundation-lakehouse.md). Committed `models/` stay seed-42.
-
----
-
-## How to refresh after retrain
-
-After a deliberate retrain on the synthetic path:
-
-1. Confirm `models/metrics.json` changed intentionally (diff AUC / Brier / τ).
-2. Regenerate prose artifacts: `python -m retention_radar.cli.docs_gen` → `docs/model-card.md`, `docs/data/data-dictionary.md`.
-3. Copy charts: `make docs-results`.
-4. Update **this file** (Tables A–D) and [`example-account-analysis.md`](example-account-analysis.md) so rounded numbers still match the JSON.
-5. Do **not** mix lakehouse E2E metrics into the published ladder without a separate section.
-
----
 
 ## What not to claim
 
-- Production ROI from synthetic lift  
-- Fairness / DPIA from plan-tier slices alone  
-- That XGBoost or CatBoost “won production churn” when LogReg/CatBoost tie or edge AUC  
-- Mixing lakehouse Santosh scores with the seed-42 packet in one caption  
+- That XGBoost beats logistic regression. It doesn't on this run.
+- Any real effect size for a playbook. The effects are inputs, not results.
+- Production lift. The generator encodes the mechanisms from the public record; it
+  does not reproduce any company's data.

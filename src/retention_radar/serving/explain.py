@@ -55,10 +55,14 @@ def top_contributing_features(
         for name in feature_names:
             g = float(gains.get(name, 0.0))
             risk_up = {
+                "limit_hits_14d",
+                "cheap_model_share_28d",
+                "overage_toggled_off",
                 "failed_requests_rate",
-                "support_tickets_last_90d",
-                "payment_failures_last_90d",
+                "incident_exposed_28d",
+                "support_tickets_90d",
                 "last_active_days_ago",
+                "first_renewal_after_pricing_change",
             }
             sign = 1.0 if name in risk_up else -1.0
             score = sign * g * (1.0 + abs(float(row[name])) * 0.01)

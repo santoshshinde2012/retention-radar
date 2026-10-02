@@ -1,4 +1,4 @@
-"""Load and lightly validate the users table (synthetic or lakehouse gold export)."""
+"""Load and validate the T-7 renewal table (synthetic or lakehouse gold export)."""
 
 from __future__ import annotations
 
@@ -29,17 +29,21 @@ def resolve_users_csv(path: Path | None = None) -> Path:
     return lake if lake.exists() else synth
 
 
-def resolve_santosh_json(path: Path | None = None) -> Path:
+def resolve_hero_json(name: str | None = None, path: Path | None = None) -> Path:
+    """Scoring-time JSON for a worked example (``maya`` / ``arjun``)."""
     if path is not None:
         return Path(path)
+    key = (name or config.DEFAULT_HERO).lower()
+    if key not in config.HEROES:
+        raise ValueError(f"Unknown worked example {name!r}; choose from {sorted(config.HEROES)}")
     source = (config.CHURN_DATA_SOURCE or "auto").lower()
-    lake = config.LAKEHOUSE_SANTOSH_JSON
-    synth = config.SANTOSH_JSON
-    if source == "lakehouse":
+    lake = config.LAKEHOUSE_HERO_JSON
+    synth = config.HERO_DIR / config.HEROES[key]
+    if key == config.DEFAULT_HERO and (
+        source == "lakehouse" or (source == "auto" and lake.exists())
+    ):
         return lake
-    if source == "synthetic":
-        return synth
-    return lake if lake.exists() else synth
+    return synth
 
 
 def load_users(path: Path | None = None) -> pd.DataFrame:
@@ -55,7 +59,11 @@ def load_users(path: Path | None = None) -> pd.DataFrame:
 
     df = pd.read_csv(csv_path)
     # Drop lake-only metadata if someone passes a raw gold dump
-    drop_cols = [c for c in ("city", "feature_as_of", "built_at") if c in df.columns]
+    drop_cols = [
+        c
+        for c in ("city", "feature_as_of", "built_at", "as_of_date", "renewal_date", "outcome", "route")
+        if c in df.columns
+    ]
     if drop_cols:
         df = df.drop(columns=drop_cols)
     validate_users(df)
@@ -86,35 +94,26 @@ def validate_users(df: pd.DataFrame) -> None:
     if bad_plans:
         raise ValueError(f"Unknown plan_tier values: {bad_plans}")
 
-    for col in (
-        "failed_requests_rate",
-        "weekend_usage_ratio",
-        "feature_adoption_score",
-        "seat_utilization",
-    ):
+    for col in config.RATE_FEATURES:
         if not df[col].between(0, 1).all():
             raise ValueError(f"{col} must be in [0, 1]")
 
-    if not df["engagement_trend"].between(0, 5).all():
-        raise ValueError("engagement_trend must be in [0, 5]")
+    for col in config.BINARY_FEATURES:
+        if not df[col].isin([0, 1]).all():
+            raise ValueError(f"{col} must be 0/1")
 
-    if (df["spend_usd_last_30d"] < 0).any():
-        raise ValueError("spend_usd_last_30d must be >= 0")
+    for col, (lo, hi) in config.FEATURE_RANGES.items():
+        if not df[col].between(lo, hi).all():
+            raise ValueError(f"{col} outside [{lo}, {hi}]")
 
-    if (df["days_until_renewal"] < 0).any():
-        raise ValueError("days_until_renewal must be >= 0")
-
-    if (df["agent_runs_last_30d"] < 0).any():
-        raise ValueError("agent_runs_last_30d must be >= 0")
-
-    if (df["ide_plugin_sessions_last_30d"] < 0).any():
-        raise ValueError("ide_plugin_sessions_last_30d must be >= 0")
+    if (df["active_days_7d"] > df["active_days_28d"]).any():
+        raise ValueError("active_days_7d cannot exceed active_days_28d")
 
     if not set(df[config.TARGET_COLUMN].unique()).issubset({0, 1}):
         raise ValueError("churned must be 0/1")
 
     rate = float(df[config.TARGET_COLUMN].mean())
-    if rate < 0.05 or rate > 0.55:
+    if rate < 0.02 or rate > 0.40:
         raise ValueError(f"Unexpected churn rate {rate:.3f}; regenerate data?")
 
 
@@ -122,18 +121,18 @@ def sync_lakehouse_exports(
     source_dir: Path,
     dest_dir: Path | None = None,
 ) -> tuple[Path, Path]:
-    """Copy churn_user_features.csv + santosh_inference_record.json into data/external/."""
+    """Copy churn_user_features.csv + hero_inference_record.json into data/external/."""
     source_dir = Path(source_dir)
     dest_dir = Path(dest_dir) if dest_dir is not None else config.EXTERNAL_DIR
     dest_dir.mkdir(parents=True, exist_ok=True)
     src_csv = source_dir / "churn_user_features.csv"
-    src_json = source_dir / "santosh_inference_record.json"
+    src_json = source_dir / "hero_inference_record.json"
     if not src_csv.exists() or not src_json.exists():
         raise FileNotFoundError(
             f"Expected {src_csv.name} and {src_json.name} under {source_dir}"
         )
     dest_csv = dest_dir / "churn_user_features.csv"
-    dest_json = dest_dir / "santosh_inference_record.json"
+    dest_json = dest_dir / "hero_inference_record.json"
     shutil.copy2(src_csv, dest_csv)
     shutil.copy2(src_json, dest_json)
     return dest_csv, dest_json

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from retention_radar.data.generate import santosh_profile
+from retention_radar.data.generate import maya_profile
 from retention_radar.docs_gen import (
     load_user_record_schema,
     schema_field_meta,
@@ -17,9 +17,9 @@ from retention_radar.features.transform import row_to_feature_frame
 def test_schema_meta_covers_required_fields():
     schema = load_user_record_schema()
     assert schema.get("properties")
-    dtype, rng, nullable = schema_field_meta("nps_score", schema)
+    dtype, rng, nullable = schema_field_meta("limit_hits_14d", schema)
     assert "number" in dtype
-    assert "0" in rng and "10" in rng
+    assert "0" in rng and "60" in rng
     assert "required" in nullable
     dtype, rng, nullable = schema_field_meta("plan_tier_code", schema)
     assert dtype == "integer"
@@ -41,7 +41,9 @@ def test_write_dictionary_and_model_card(tmp_path, monkeypatch):
     assert "| Range |" in text
     assert "Nullable" in text
     assert "no NaNs by design" in text
-    assert "`nps_score`" in text
+    assert "`limit_hits_14d`" in text
+    assert "dunning" in text and "cancel flow" in text  # label routing is documented
+    assert "Maya" in text or "maya" in text
 
     metrics = {
         "dummy_val": {"roc_auc": 0.5, "f1": 0.0, "average_precision": 0.2},
@@ -58,7 +60,7 @@ def test_write_dictionary_and_model_card(tmp_path, monkeypatch):
         "brier_calibrated_val": 0.08,
         "brier_raw_test": 0.12,
         "brier_calibrated_test": 0.10,
-        "calibration_method": "isotonic",
+        "calibration_method": "sigmoid",
         "n_train": 3000,
         "n_val": 1000,
         "n_test": 1000,
@@ -89,21 +91,21 @@ def test_write_dictionary_and_model_card(tmp_path, monkeypatch):
 
 
 def test_serve_fails_loud_on_nan():
-    profile = {k: v for k, v in santosh_profile().items() if k != "churned"}
-    profile["nps_score"] = None
+    profile = maya_profile()
+    profile["suggestion_accept_rate_28d"] = None
     with pytest.raises(ValueError, match="NaNs"):
         row_to_feature_frame(profile)
 
 
 def test_serve_fails_loud_on_non_numeric():
-    profile = {k: v for k, v in santosh_profile().items() if k != "churned"}
-    profile["sessions_last_7d"] = "not-a-number"
+    profile = maya_profile()
+    profile["active_days_7d"] = "not-a-number"
     with pytest.raises(ValueError, match="NaNs"):
         row_to_feature_frame(profile)
 
 
-def test_valid_santosh_row_has_no_nans():
-    profile = {k: v for k, v in santosh_profile().items() if k != "churned"}
+def test_valid_worked_example_row_has_no_nans():
+    profile = maya_profile()
     X = row_to_feature_frame(profile)
     assert not X.isna().any().any()
     assert len(X) == 1
