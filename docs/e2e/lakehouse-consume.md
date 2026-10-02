@@ -1,11 +1,14 @@
-# End to end with local-data-lakehouse (branch `feat/local-first-stack-2026`)
+# End to end with local-data-lakehouse
 
-Radar on this branch consumes the v2 export of
+Radar `main` (the v2 reader, merged in
+[#21](https://github.com/santoshshinde2012/retention-radar/pull/21)) consumes the v2 export of
 [local-data-lakehouse PR #13](https://github.com/santoshshinde2012/local-data-lakehouse/pull/13)
 (`feat/local-first-stack-2026`, Spark 4.1.3 + Iceberg 1.12.0 through the Lakekeeper REST catalog).
-The lakehouse runs it with `pipelines/radar_consume.sh`, which clones this branch (same name as the
-lakehouse branch), builds a Python 3.12 venv, syncs the export into `data/external/`, runs
+The lakehouse runs it with `pipelines/radar_consume.sh`, which clones radar, builds a Python 3.12 venv, syncs the export into `data/external/`, runs
 `cli.ingest` with `CHURN_DATA_SOURCE=lakehouse` and `cli.batch_score` with the committed bundle.
+
+The run below was captured before #21 merged, with `RADAR_REF=feat/local-first-stack-2026` at `65cab25`;
+its tree is identical to `main` at `7e3bec8` (the squash merge of #21).
 
 Captured 2026-10-02 (IST) on a MacBook Pro (Apple M1 Pro, macOS 26.6.2), from empty lakehouse volumes.
 The lakehouse's full set of excerpts is in its
@@ -72,7 +75,7 @@ $ zsh -c cd /tmp/radar-e2e && git log -1 --oneline && .venv/bin/python -m pip in
 
 ## CI
 
-- This repo: `test` and `e2e-local` on the PR head
-  ([PR #21](https://github.com/santoshshinde2012/retention-radar/pull/21)).
+- This repo: `test` and `e2e-local` on the PR head `65cab25`
+  ([PR #21](https://github.com/santoshshinde2012/retention-radar/pull/21)) and again on `main` after the merge.
 - The lakehouse's `t0-unit` job runs the same consumer against its CI export ("Retention Radar consumes
   the export": 7,387 rows scored).
