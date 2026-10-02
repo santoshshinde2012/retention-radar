@@ -83,3 +83,6 @@ Sync only, no retrain:
 
 Related: [data-dictionary.md](data-dictionary.md) ·
 [e2e-free-platforms.md](../guides/e2e-free-platforms.md)
+
+A recorded end-to-end run (lakehouse Spark export → sync → ingest → batch score, 7,387 rows) is in
+[../e2e/lakehouse-consume.md](../e2e/lakehouse-consume.md).
