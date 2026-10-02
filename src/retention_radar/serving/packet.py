@@ -1,8 +1,8 @@
-"""Single-record decision packet: validate → score → explain → cohort → HITL.
+"""Single-record decision packet: validate → score → explain → cohort → decision.
 
 Examples:
-    python -m retention_radar.cli.single_record --user santosh \\
-        --out artifacts/example_decision_packet.json
+    python -m retention_radar.cli.single_record --user maya \\
+        --out artifacts/maya_decision_packet.json
 """
 
 from __future__ import annotations
@@ -22,7 +22,7 @@ from retention_radar import config
 from retention_radar.data.ingest import resolve_users_csv
 from retention_radar.features.transform import row_to_feature_frame
 from retention_radar.serving.infer import predict_user, resolve_user_json
-from retention_radar.serving.policy import HitlDecisionPolicy, validation_hold
+from retention_radar.serving.policy import RenewalDecisionPolicy, validation_hold
 from retention_radar.training.calibrate import load_calibrator
 
 
@@ -149,22 +149,27 @@ def validate_payload(payload: dict) -> dict[str, Any]:
         if val < lo or val > hi:
             errors.append(f"{key}={val} outside allowed range [{lo}, {hi}]")
 
-    if (
-        "sessions_last_7d" in payload
-        and "sessions_last_30d" in payload
-        and "engagement_trend" in payload
-        and not missing
-        and not bad_numeric & {"sessions_last_7d", "sessions_last_30d", "engagement_trend"}
-    ):
-        s7 = float(payload["sessions_last_7d"])
-        s30 = float(payload["sessions_last_30d"])
-        expected = s7 / max(1.0, s30 / 4.0)
+    trend_keys = {"active_days_7d", "active_days_28d", "engagement_trend"}
+    if trend_keys <= set(payload) and not missing and not bad_numeric & trend_keys:
+        d7 = float(payload["active_days_7d"])
+        d28 = float(payload["active_days_28d"])
+        if d7 > d28:
+            errors.append(f"active_days_7d={d7:g} cannot exceed active_days_28d={d28:g}")
+        expected = d7 / max(1.0, d28 / 4.0)
         actual = float(payload["engagement_trend"])
         if abs(expected - actual) > 0.25:
             warnings.append(
                 f"engagement_trend={actual:.4f} diverges from "
-                f"sessions formula ≈{expected:.4f} (tolerance 0.25)"
+                f"active-days formula ≈{expected:.4f} (tolerance 0.25)"
             )
+
+    for key in config.BINARY_FEATURES:
+        if key in payload and key not in bad_numeric and payload[key] is not None:
+            try:
+                if float(payload[key]) not in (0.0, 1.0):
+                    errors.append(f"{key} must be 0 or 1, got {payload[key]!r}")
+            except (TypeError, ValueError):
+                pass
 
     schema_ok = None
     validator = _record_validator()
@@ -309,7 +314,7 @@ def held_packet(payload: Any, validation: dict[str, Any]) -> dict[str, Any]:
         "explanation": None,
         "outliers": [],
         "cohort_compare": {},
-        "hitl": validation_hold(validation["errors"]),
+        "decision": validation_hold(validation["errors"]),
         "meta": {"data_source": config.CHURN_DATA_SOURCE},
     }
 
@@ -320,13 +325,13 @@ def build_decision_packet(
     calibrator=None,
     metrics: dict | None = None,
     feature_stats: dict | None = None,
-    policy: HitlDecisionPolicy | None = None,
+    policy: RenewalDecisionPolicy | None = None,
     top_k: int = 5,
 ) -> dict[str, Any]:
-    """Full validate → score → explain → cohort → HITL decision packet."""
+    """Full validate → score → explain → cohort → decision packet."""
     metrics = metrics if metrics is not None else load_metrics()
     feature_stats = feature_stats if feature_stats is not None else load_feature_stats()
-    policy = policy or HitlDecisionPolicy()
+    policy = policy or RenewalDecisionPolicy()
 
     payload, notes = normalize_record(payload)
     validation = validate_payload(payload)
@@ -341,13 +346,11 @@ def build_decision_packet(
     if calibrator is None:
         calibrator = load_calibrator(config.CALIBRATOR_PATH)
 
-    threshold = float(metrics.get("best_f1_threshold", 0.5))
-    score = predict_user(
-        payload, model_bundle, calibrator=calibrator, top_k=top_k, threshold=threshold
-    )
+    score = predict_user(payload, model_bundle, calibrator=calibrator, top_k=top_k)
     display = float(score["churn_probability"])
     band = score["risk_band"]
-    action = policy.decide(display, threshold, band)
+    threshold = float(metrics.get("best_f1_threshold", 0.5))
+    action = policy.decide(display, threshold, band, payload)
     outliers = flag_outliers(payload, feature_stats)
     cohort = cohort_percentiles(payload)
 
@@ -371,7 +374,7 @@ def build_decision_packet(
         },
         "outliers": outliers,
         "cohort_compare": cohort,
-        "hitl": action,
+        "decision": action,
         "meta": {
             "model_path": str(config.MODEL_PATH),
             "calibrator_path": str(config.CALIBRATOR_PATH),
@@ -387,7 +390,7 @@ def build_decision_packet(
 
 def print_human_summary(packet: dict) -> None:
     s = packet["scoring"]
-    h = packet["hitl"]
+    h = packet["decision"]
     v = packet["validation"]
     print(f"User: {packet.get('user_name')} ({packet.get('user_id')})")
     print(
@@ -397,7 +400,7 @@ def print_human_summary(packet: dict) -> None:
     if s is None:
         for err in v.get("errors") or []:
             print(f"  error: {err}")
-        print(f"HITL action: {h.get('action')}  (auto={h.get('auto_action')})")
+        print(f"Action: {h.get('action')}  (auto={h.get('auto_action')})")
         return
     raw = s.get("churn_probability_raw")
     cal = s.get("churn_probability_calibrated")
@@ -405,7 +408,10 @@ def print_human_summary(packet: dict) -> None:
         f"P(churn) raw={raw:.4f}  calibrated={cal:.4f}  "
         f"band={s.get('risk_band')}  threshold={s.get('best_f1_threshold'):.4f}"
     )
-    print(f"HITL action: {h.get('action')}  (auto={h.get('auto_action')})")
+    print(
+        f"Action: {h.get('action')}  holdout={h.get('holdout')}  "
+        f"EV=${h.get('expected_value_usd')}  (auto={h.get('auto_action')})"
+    )
     print(f"Rationale: {h.get('rationale')}")
     print("Top drivers:")
     for item in packet["explanation"]["top_features"][:5]:
@@ -414,7 +420,7 @@ def print_human_summary(packet: dict) -> None:
         print(f"Outliers vs train p01–p99: {len(packet['outliers'])}")
         for o in packet["outliers"][:5]:
             print(f"  {o['feature']}={o['value']} ({o['side']})")
-    print("Cohort percentiles (vs active users table):")
+    print("Cohort percentiles (vs the T-7 renewal table):")
     for feat, block in list(packet["cohort_compare"].items())[:6]:
         print(f"  {feat}: pctl={block['percentile']:.1f}  value={block['value']}")
 
@@ -449,7 +455,7 @@ def batch_score_dir(
             packet["source_file"] = str(fp)
             fout.write(json.dumps(packet) + "\n")
             n_ok += 1
-            action = packet.get("hitl", {}).get("action")
+            action = packet.get("decision", {}).get("action")
             scoring = packet.get("scoring")
             score_txt = (
                 f"P={scoring['churn_probability']:.4f} band={scoring['risk_band']}"
@@ -465,7 +471,9 @@ def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(
         description="Build single-record / batch decision packets"
     )
-    parser.add_argument("--user", type=str, default=None, help="Shortcut: santosh")
+    parser.add_argument(
+        "--user", type=str, default=None, help=f"Worked example: {', '.join(config.HEROES)}"
+    )
     parser.add_argument("--json", type=str, default=None, help="Path to user JSON")
     parser.add_argument(
         "--dir",
@@ -510,10 +518,10 @@ def main(argv: list[str] | None = None) -> None:
 
     packet = build_decision_packet(payload, model_bundle=bundle, calibrator=calibrator)
 
-    # Default name follows the record, so scoring another user never overwrites
-    # artifacts/example_decision_packet.json (which `make infer` and the docs use).
+    # Default name follows the record, so scoring one subscriber never overwrites
+    # another's packet (``make infer`` writes maya_decision_packet.json).
     default_name = (
-        "example_decision_packet.json"
+        f"{args.user.lower()}_decision_packet.json"
         if args.user
         else f"{(payload.get('user_id') if isinstance(payload, dict) else None) or json_path.stem}_decision_packet.json"
     )

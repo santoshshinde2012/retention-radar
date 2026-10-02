@@ -1,21 +1,25 @@
 # Serve bundle
 
-These files are the **read-only** artifacts Streamlit Community Cloud and Hugging Face Spaces load. They exist so the demo does **not** run Optuna on page load.
+The files the UI, API and CLI load. They are committed so a free host can serve the app
+without training.
 
-Serve-bundle training env pin: **scikit-learn==1.9.1** (matches `calibrator.joblib` / `requirements.lock`). Keep `requirements.txt` pinned to the same major.minor so Mac/Linux loads do not drift (isotonic calibrator is sklearn-pickled).
+This is the seed-42 reference run: 8,000 generated renewals, 7,329 in the model table,
+split 4,397 / 1,466 / 1,466, 20 Optuna trials, Platt calibration. Trained with
+scikit-learn 1.9.1 and XGBoost 3.4.1 (pinned in `requirements.txt`; the calibrator is a
+scikit-learn pickle). Cite this folder's `metrics.json` together with
+[model-card.md](../docs/model-card.md).
 
-This committed copy is the **seed-42 reference train**: `N_USERS=5000`, default Optuna trials (**20**), n_train/val/test = **3000 / 1000 / 1000**. Cite [model-card.md](../docs/model-card.md) and `models/metrics.json` together — one number set.
-
-CI still smoke-trains (`N_USERS=800`, `N_OPTUNA_TRIALS=5`) and does **not** overwrite this bundle on GitHub Actions.
+CI trains a smaller smoke bundle (`N_USERS=800`, `N_OPTUNA_TRIALS=5`) in
+`artifacts/smoke/` and never overwrites these files.
 
 To refresh:
 
 ```bash
-export PYTHONPATH="$(pwd)/src"
 unset N_USERS N_OPTUNA_TRIALS
-./scripts/run_all.sh
+CHURN_DATA_SOURCE=synthetic ./scripts/run_all.sh
 python -m retention_radar.cli.docs_gen
-make docs-results  # copies plots → results/plots/
+make docs-results      # copy plots to results/plots/
 ```
 
-Then commit the files listed in [docs/guides/e2e-free-platforms.md](../docs/guides/e2e-free-platforms.md).
+Then commit `churn_xgb.joblib`, `calibrator.joblib`, `feature_names.json`,
+`feature_stats.json` and `metrics.json`.

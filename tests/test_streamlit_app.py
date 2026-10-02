@@ -1,4 +1,4 @@
-"""Headless Streamlit smoke: the HITL app boots on the committed bundle and never auto-acts."""
+"""Headless Streamlit smoke: the app boots on the committed bundle and never auto-acts."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ def committed_bundle():
         pytest.skip("RETENTION_RADAR_ARTIFACT_DIR is set; app would load another bundle")
 
 
-def test_streamlit_app_scores_santosh_without_auto_action(committed_bundle):
+def test_streamlit_app_scores_maya_without_auto_action(committed_bundle):
     testing = pytest.importorskip("streamlit.testing.v1")
     at = testing.AppTest.from_file(str(APP), default_timeout=120).run()
 
@@ -28,4 +28,5 @@ def test_streamlit_app_scores_santosh_without_auto_action(committed_bundle):
     ]
     text = " ".join(m.value for m in at.markdown) + " ".join(c.value for c in at.caption)
     assert "Auto action: `none`" in text
-    assert "**Risk band:** `low`" in text  # Santosh preset (seed 42) → low / monitor
+    assert "**Risk band:** `medium`" in text  # Maya preset (seed 42) → medium / limit_reset
+    assert "**Action:** `limit_reset`" in text

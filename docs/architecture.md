@@ -1,205 +1,128 @@
-# Architecture — Retention Radar (XGBoost AI Platform Churn)
+# Architecture
 
-**Model card:** [model-card.md](model-card.md) · **Landscape:** [algorithm-landscape.md](guides/algorithm-landscape.md) · **Practices:** [best-practices.md](guides/best-practices.md) · **Lakehouse:** [data-foundation-lakehouse.md](data/data-foundation-lakehouse.md) · **Results:** [../results/benchmarks.md](../results/benchmarks.md)
+How a T-7 renewal record becomes a score and a suggested action, and where the line
+between training and serving sits. Related: [model-card.md](model-card.md) ·
+[USE_CASE.md](USE_CASE.md) · [../results/benchmarks.md](../results/benchmarks.md).
 
-## Purpose
+Everything is open source: Python, pandas, scikit-learn, XGBoost, LightGBM, CatBoost,
+Optuna, SHAP, FastAPI, Streamlit.
 
-End-to-end view of the fictional AI-platform **Retention Radar**: synthetic data through Streamlit single-record inference for **Santosh Shinde**. All components are FOSS (Python, pandas, scikit-learn, XGBoost, LightGBM, CatBoost, Optuna, SHAP, Streamlit).
-
-The radar ranks quiet fade-out risk and hands a flight checklist to a human — it does not auto-act.
-
-## End-to-end flow
-
+## Flow
 
 ```mermaid
 flowchart TB
-  subgraph offline ["Offline / Train"]
-    A["Synthetic data generator"] --> B["Ingest + validate"]
-    B --> C["Feature engineering<br/>22 columns"]
-    C --> D["Train / val / test split"]
-    D --> E["Honest ladder<br/>Dummy → LogReg → RF → XGB → LightGBM → CatBoost"]
-    E --> F["Evaluate + calibrate + τ"]
-    F --> G["Artifacts bundle"]
+  subgraph offline ["Train (may write)"]
+    A["Generate renewals<br/>renewals_all.csv"] --> R["Route: dunning / cancel_flow / model"]
+    R --> B["renewals_t7.csv<br/>24 fields + churned"]
+    B --> C["Features: encode plan_tier"]
+    C --> D["Stratified split 60/20/20"]
+    D --> E["Ladder: Dummy, LogReg, RF, XGB, Optuna XGB, LightGBM, CatBoost"]
+    E --> F["Platt calibration + τ on validation"]
+    F --> G["models/ bundle + metrics.json"]
   end
 
-  subgraph online ["Serve / Infer"]
-    G --> H["Artifact loader"]
-    H --> I["Single-record transform"]
-    I --> J["predict_proba + calibrator"]
-    J --> K["Risk band"]
-    J --> L["SHAP explain"]
-    K --> M["Streamlit / CLI packet"]
-    L --> M
+  subgraph online ["Serve (read only)"]
+    G --> H["Validate record"]
+    H --> I["Score: raw + calibrated"]
+    I --> K["Band"]
+    I --> L["SHAP drivers"]
+    I --> P["Policy: no_action / holdout / playbook"]
+    P --> Q["Packet, action queue, API response"]
   end
 
-  N["Hero: Santosh Shinde"] --> M
-  M --> O["HITL: monitor / nurture / outreach"]
+  Q --> T["Lifecycle tool sends approved playbooks"]
+  T --> U["Action log"]
+  U --> V["Outcomes: lift vs holdout"]
 ```
 
-## Train vs serve boundary
+The service stops at the suggestion. A lifecycle or messaging tool runs the approved
+playbook; the service only records what was done (`action_log`) and later measures it
+(`outcomes`).
 
+## Train and serve boundary
 
-```mermaid
-flowchart LR
-  subgraph train_side ["Train side — may write"]
-    CFG["src/retention_radar/config.py"] --> TR["train / evaluate / calibrate"]
-    TR --> ART["models/ + artifacts/"]
-  end
-
-  subgraph serve_side ["Serve side — read only"]
-    ART --> INF["serving/infer.py / serving/packet.py"]
-    INF --> UI["Streamlit app"]
-    UI --> USER["Santosh or manual form"]
-  end
-
-  ART -.->|"never Optuna / never fit encoders"| serve_side
-```
-
-- **Train** may write models, metrics, plots, calibrators.
-- **Serve** must not fit encoders, call Optuna, or regenerate labels.
-- Shared: feature name list (22), threshold/band config, version metadata, [model-card.md](model-card.md).
-
-## Module map
-
-```mermaid
-flowchart TB
-  subgraph src_mods ["src/retention_radar"]
-    CFG2["config.py"]
-    GEN["data/generate.py"]
-    ING["data/ingest.py"]
-    FEA["features/transform.py"]
-    TRN["training/"]
-    EVA["evaluation/"]
-    INF2["serving/infer.py"]
-    SR["serving/packet.py"]
-    BS["serving/batch_score.py"]
-    HL["serving/hitl_log.py"]
-    OUT["serving/outcomes.py"]
-    API["serving/api.py"]
-    POL["serving/policy.py"]
-    EXP["serving/explain.py"]
-  end
-  GEN --> ING --> FEA --> TRN --> EVA
-  TRN --> MOD["models/*.joblib + feature_names + metrics"]
-  EVA --> MOD
-  MOD --> INF2
-  MOD --> SR
-  MOD --> BS
-  MOD --> API
-  EXP --> SR
-  POL --> SR
-  POL --> BS
-  POL --> API
-  SR --> APP["app/streamlit_app.py"]
-  INF2 --> APP
-  INF2 --> API
-  HL --> OUT
-```
-
-```text
-retention-radar/
-├── src/retention_radar/   # packages: data, features, training, evaluation, serving
-├── src/retention_radar/cli/  # python -m retention_radar.cli.train, .infer, …
-├── app/streamlit_app.py
-├── scripts/run_all.sh
-├── data/raw/      # users.csv, example_account.json
-├── models/        # churn_xgb.joblib, calibrator, feature_names.json, metrics.json
-├── artifacts/     # plots + example_decision_packet.json
-├── docs/          # dictionary, checklist, lakehouse notes, result charts
-├── docs/architecture.md / docs/model-card.md
-├── results/  # BENCHMARKS + plots + Santosh analysis
-├── data/external/ # lakehouse gold sync (gitignored)
-└── scripts/       # run_all.sh + run_lakehouse_e2e.sh
-```
-
-**Contracts:** config in → artifacts out → UI reads artifacts only. Dictionary and `feature_names.json` must agree.
+- Train may write models, metrics, plots and the calibrator.
+- Serve loads the bundle. It never fits an encoder, runs Optuna, or builds labels.
+- Shared contract: the 22 feature names in `models/feature_names.json`, the record schema
+  in `configs/schemas/user_record.schema.json`, τ and the band edges.
 
 ## Pipeline stages
 
-| Stage | Responsibility | Typical outputs |
-|-------|----------------|-----------------|
-| Generate | Synthetic users + noisy `churned`; inject Santosh | `users.csv`, `example_account.json` |
-| Ingest / validate | Schema, ranges, label rate, hero row | Clean table + fail-fast errors |
-| Features | Select columns, encode `plan_tier` | `X`, `y` (22 model features) |
-| Train / tune | Stratified splits, imbalance, baselines, Optuna on **val** | Best params, fitted model |
-| Evaluate | AUC, PR, F1, Brier, τ, latency | `metrics.json`, plots |
-| Infer | Load bundle, score one row | Probability + band + drivers |
-| UI | Presets, forms, Decision tab | Streamlit HITL |
-| Batch score | Gold CSV → scores.csv / JSONL | `cli.batch_score` |
-| Thin API | Local `POST /v1/churn/score` · `/batch` · `/reviews` | `serving/api.py` (no auth) |
-| Use cases | Seed-42 holdout scenarios per HITL path + invalid records + weekly batch + reviews + day-30 labels | `data/use_cases/` (`make use-cases`) |
-| HITL log | Append review decisions | `cli.hitl_log` + configs/templates |
-| Outcomes | Join reviews → later labels | `cli.hitl_outcomes` → `hitl_outcomes.{csv,json}` |
-| Ops-lite | Drift, retrain, when not to ship | guides/best-practices.md |
+| Stage | What it does | Output |
+|-------|--------------|--------|
+| Generate | 8,000 synthetic renewals; routes failed cards to dunning and scheduled cancels to the cancel flow | `data/raw/renewals_all.csv`, `renewals_t7.csv`, `subscribers/*.json` |
+| Ingest | Schema, ranges, label rate; fails loud on nulls or unknown plans | clean table |
+| Features | Encode `plan_tier`, build X and y | 22 model columns |
+| Train | Split, ladder, Optuna on validation AUC | `churn_xgb.joblib` |
+| Evaluate | AUC, PR-AUC, Brier, calibration, τ on validation, test read once | `metrics.json`, plots |
+| Benchmark | Warm single-row latency | `metrics.json` |
+| Packet | Validate → score → explain → cohort → decide | `artifacts/<id>_decision_packet.json` |
+| Batch | CSV → ranked action queue + rejects | `cli.batch_score` |
+| API | `POST /v1/churn/score`, `/v1/churn/batch`, `/v1/churn/actions` | `serving/api.py` (no auth) |
+| Action log | Append what was done, including holdout and suppressions | `cli.action_log` |
+| Outcomes | Join the log to renewal outcomes; lift per playbook vs holdout | `cli.outcomes` |
+| Drift | z-score of the current table against training stats | `cli.drift_check` |
 
-## Key artifacts contract
+## Modules
 
-| File | Consumer |
-|------|----------|
-| `models/churn_xgb.joblib` | `infer`, Streamlit |
-| `models/calibrator.joblib` | calibrated `p` for bands |
-| `models/feature_names.json` | Transform order (22) for Santosh’s vector |
-| `models/feature_stats.json` | Outlier flags, drift reference, cohort-percentile fallback |
-| `models/metrics.json` | model-card.md tables |
-| `artifacts/example_decision_packet.json` | Case study + CI canary |
-| Risk thresholds / bands | `policy.risk_band(p, τ)` (τ-aligned edges), UI chips |
-| `model-card.md` | Humans; fill metrics after `run_all` |
+| Module | Responsibility |
+|--------|----------------|
+| `config.py` | Paths, seed, feature contract, plans and prices, playbooks, band edges, holdout share |
+| `protocols.py` | Small interfaces: classifier, calibrator, transformer, decision policy |
+| `data/generate.py` | Synthetic renewal cohort, routing, the two worked examples |
+| `data/ingest.py` | Load and validate the model table |
+| `data/use_cases.py` | Build and check the `data/use_cases/` pack against the committed bundle |
+| `features/transform.py` | Encode `plan_tier`, build the feature matrix |
+| `training/split.py`, `baselines.py`, `train.py` | Split, ladder peers, XGBoost + Optuna |
+| `training/calibrate.py` | Platt (sigmoid) calibrator; isotonic is supported but not used |
+| `evaluation/` | Metrics, plots, τ sweep, slices by plan, latency, reproduction check |
+| `serving/scoring.py` | Model + calibrator → raw and calibrated probabilities |
+| `serving/infer.py` | Load the bundle, score one record |
+| `serving/explain.py` | Top SHAP drivers, gain-importance fallback |
+| `serving/policy.py` | Risk band, holdout assignment, expected value per playbook, the decision |
+| `serving/packet.py` | Normalise, validate, assemble the decision packet |
+| `serving/batch_score.py` | Vectorised batch scoring into a ranked queue |
+| `serving/action_log.py` | Append-only action log (single row or bulk import of a send export) |
+| `serving/outcomes.py` | Lapse per band, lift vs holdout with a Newcombe interval |
+| `serving/api.py` | Thin FastAPI wrapper over the same validation, scoring and policy |
+| `serving/drift.py` | Lite drift check |
+| `app/streamlit_app.py` | UI over the same packet; loads committed models only |
+| `docs_gen.py` | Writes the model card and data dictionary from `metrics.json` and the schema |
 
-## Runtime views
+Callers depend on the interfaces in [`protocols.py`](../src/retention_radar/protocols.py),
+so Dummy, logistic regression and XGBoost can be swapped at score time, and the policy
+can be replaced without touching scoring.
 
-**Batch / offline:** `./scripts/run_all.sh` → compare metrics → update model card.  
-**Batch gold scores:** `python -m retention_radar.cli.batch_score` → `artifacts/predictions/scores.csv`.  
-**Interactive:** Streamlit → load Santosh → edit → score + SHAP.  
-**Thin API:** `uvicorn retention_radar.serving.api:app --app-dir src` → `POST /v1/churn/score`.  
-**Canary:** freeze Santosh JSON; diff `P(churn)` after retrain (reference **0.043 / 0.016** · monitor).
+## The decision
 
-## Non-goals
+`serving/policy.py::decide` takes the calibrated probability, τ (0.16, best F1 on
+validation) and the record:
 
-- Live billing or CRM write-back  
-- Multi-tenant auth  
-- GPU serving  
-- Paid feature stores or AutoML  
+1. Below τ: `no_action`.
+2. In the 10% holdout (hash of `user_id`): `holdout`. Nothing is sent; the row is the
+   comparison group.
+3. Otherwise: the eligible playbook in `config.PLAYBOOKS` with the highest expected
+   value, or `no_action` if none is positive.
 
-**In scope (optional teaching serve):** a thin local FastAPI app (`serving/api.py`) with `POST /v1/churn/score` (conceptual alias `POST /v1/churn:score`; invalid input → 422 + hold, never scored), `POST /v1/churn/batch` (ranked queue + rejects) and `POST /v1/churn/reviews` (HITL decision logged against the service's own last score). No auth — localhost teaching only. Streamlit remains the interactive HITL UI.
+`auto_action` is always `none`. `hitl_required` is true only for `personal_email`, the one
+playbook a person writes, offered only on Ultra. Band edges (0.10 / 0.30) are for display
+and reporting; they do not drive the decision.
 
-## SOLID map (packages → principles)
+## Committed artifacts
 
-The layout is a **teaching** SOLID sketch, not a claim that every file is a textbook example. Callers depend on small Protocols so Dummy, LogReg, and XGBoost can swap at score time.
+| File | Used by |
+|------|---------|
+| `models/churn_xgb.joblib` | every serve surface |
+| `models/calibrator.joblib` | calibrated probability |
+| `models/feature_names.json` | feature order |
+| `models/feature_stats.json` | outlier flags, drift reference, cohort-percentile fallback |
+| `models/metrics.json` | model card, UI, docs |
+| `results/maya_decision_packet.sample.json` | example packet |
 
-| Package / module | SRP | OCP | LSP | ISP | DIP |
-|------------------|-----|-----|-----|-----|-----|
-| `config.py` | One place for paths, seed, 22-column contract | Extend features via config, not scattered lists | — | Does not expose train/serve APIs | Downstream depends on config values, not ad-hoc paths |
-| `data/generate.py` | Synthetic table + Santosh inject only | New generator knobs without touching serve | — | No scoring interface | Train scripts depend on CSV contract |
-| `data/use_cases.py` | Build / check the serving use-case pack (seed-42 test split + Santosh hero) | New scenario = one `Scenario` entry | — | Pack ≠ training data (Santosh aside: validation split) | Checks against the committed bundle |
-| `data/ingest.py` | Load + validate; fail loud on NaNs / bad plans | Extra checks can be added without changing transform | — | Validation is not mixed with Optuna | Train/eval depend on `load_users` |
-| `features/transform.py` | Encode `plan_tier`, build X/y | New columns via `MODEL_FEATURE_COLUMNS` | `DefaultFeatureTransformer` honours `FeatureTransformer` | Transform-only API | Train/serve call the transformer, not pandas ad-hoc |
-| `training/split.py` | Stratified split only | — | Same split helper for train/eval | No model API | Train/eval depend on split, not sklearn calls inline |
-| `training/baselines.py` | Dummy + LogReg + RF + LightGBM + CatBoost peers | New baseline = new function; ladder stays | Sklearn/LGBM/CatBoost stay substitutable via `predict_proba` | No SHAP/UI | Train depends on `run_baselines` |
-| `training/train.py` | Fit default XGB + Optuna; write artifacts | Optuna search space can grow without serve changes | Best model still `predict_proba` | Does not own HITL copy | Writes files; UI never imports Optuna |
-| `training/calibrate.py` | Fit/persist probability map | Method `isotonic`/`sigmoid` | `ProbabilityCalibrator` honours `Calibrator` | Transform-only | Scorer depends on Protocol, not sklearn class |
-| `evaluation/metrics.py` | Metric dict helper | Extra keys without changing plots | — | No I/O | Train/eval share one helper |
-| `evaluation/evaluate.py` | Holdout plots + τ sweep on validation (test read once at τ) | New plots without retraining | — | Not a trainer | Reads artifacts |
-| `evaluation/slices.py` | Educational `plan_tier` slices | New slice keys without claiming fairness | — | Slice report ≠ DPIA API | Evaluate calls slices |
-| `evaluation/benchmark.py` | Latency only | — | — | No training | Reads serve path |
-| **`serving/scoring.py`** | `CalibratedScorer`: raw → calibrated → display | New calibrator without UI changes | Dummy / LogReg / XGB all `predict_proba` | Tiny class: `raw_positive` + `score` | **Depends on `ProbabilisticClassifier` + `Calibrator` Protocols** (DIP) |
-| `serving/infer.py` | Load bundle + one-row predict | — | Any Protocol-satisfying model | CLI wrapper stays thin | Uses scorer + transformer |
-| `serving/explain.py` | Top drivers only | Swap SHAP vs gain without packet rewrite | — | Explain ≠ decide | Packet depends on explain helper |
-| `serving/policy.py` | Risk band + HITL action; `auto_action: none` | New bands without retraining | `HitlDecisionPolicy` honours `DecisionPolicy` | Policy is not a model | Packet/UI depend on policy Protocol |
-| `serving/packet.py` | Assemble validate → score → HITL JSON | Extra packet fields without trainer changes | — | Packet ≠ Streamlit | App depends on `build_decision_packet` |
-| `serving/batch_score.py` | CSV → validated, ranked review queue + rejects | New output cols without UI changes | — | Batch ≠ packet | Shares `validate_payload` with packet / API |
-| `serving/hitl_log.py` | Append HITL review CSV | New log fields via schema | — | Log ≠ outcome write-back | CLI appends only |
-| `serving/outcomes.py` | Join review log → later labels; per-band / per-action report | New summary cuts without touching the log | — | Report ≠ retrain trigger | CLI reads log + labels only |
-| `serving/api.py` | Thin FastAPI: score / batch / reviews | Query flags (shap/log) without retraining | — | No auth / no CRM | Uses packet validation + infer + policy + hitl_log |
-| `serving/drift.py` | PSI drift check (SMD as context) | — | — | Not a trainer | CLI only |
-| `app/streamlit_app.py` | Serve-only adapter | UI can change without retraining | — | Forms ≠ Optuna | Calls serving helpers only |
-| `docs_gen.py` | Model card + dictionary from JSON/schema | New columns appear when config/schema grow | — | Docs ≠ train | Reads metrics + schema |
+`tests/test_seed42_canary.py` scores Maya and Arjun against the committed bundle and
+fails if either result moves.
 
-**`serving/scoring.py` in one sentence:** SRP = turn an estimator + optional calibrator into probability vectors; OCP = new models/calibrators without editing Streamlit; LSP = Dummy/LogReg/XGB are interchangeable via `predict_proba`; ISP = no fat “ModelService”; DIP = `CalibratedScorer` depends on Protocols in `protocols.py`, not on `XGBClassifier`.
+## Out of scope
 
-Related: [src/retention_radar/protocols.py](../src/retention_radar/protocols.py)
-
-## Related docs
-
-- [model-card.md](model-card.md) · [data-dictionary.md](data/data-dictionary.md) · [../results/](../results/)
-- [guides/best-practices.md](guides/best-practices.md) · [data/data-foundation-lakehouse.md](data/data-foundation-lakehouse.md)
-- [src/retention_radar/protocols.py](../src/retention_radar/protocols.py)
+Billing or CRM integration, sending messages, authentication, multi-tenant serving, GPU
+serving, feature stores, AutoML, the Teams plan.

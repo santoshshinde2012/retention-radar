@@ -1,88 +1,85 @@
-# Data foundation — local-data-lakehouse
+# Data foundation: local-data-lakehouse
 
-Retention Radar’s **feature system of record** is the FOSS laptop lakehouse:
+The synthetic generator in this repo produces the T-7 renewal table directly.
+[local-data-lakehouse](https://github.com/santoshshinde2012/local-data-lakehouse) builds
+the same table the way a real team would: from raw billing and usage events, through
+bronze and silver, into a gold feature table as of each subscriber's T-7 date.
 
-https://github.com/santoshshinde2012/local-data-lakehouse
+## Required export (v2 contract)
+
+This repo reads two files from the lakehouse export directory:
+
+| File | Contents |
+|------|----------|
+| `churn_user_features.csv` | One row per subscriber at T-7: the 24 fields in `configs/schemas/user_record.schema.json` (22 features + `user_id`, `user_name`) plus `churned` |
+| `hero_inference_record.json` | One scoring-time record with the same 24 fields and no label |
+
+Only voluntary lapses count as `churned = 1`. Renewals lost to a failed card and
+subscribers who scheduled a cancel before T-7 must be left out of the table, as in the
+synthetic generator.
+
+The lakehouse writes this contract from raw
+billing and usage events, computing every feature as of each renewal's T-7 and deriving the
+label from billing events. The last run, recorded in
+[`results/lakehouse_e2e_summary.json`](../../results/lakehouse_e2e_summary.json):
+7,387 renewals routed to the model (7.4% voluntary lapse), calibrated test AUC 0.726, and
+Maya's event-built record scored 0.774 raw → 0.210 calibrated, medium, `limit_reset`. Those
+numbers are a different world from the synthetic run and are not the published ladder.
 
 ## Path
 
 ```text
-bronze (users / daily usage / tickets / payments)
+bronze (subscriptions, invoices, usage events, tickets)
   → silver
-  → gold.churn_user_features   (as-of CHURN_AS_OF, default 2024-03-02)
-  → data/export/churn_user_features.csv
-  → data/export/santosh_inference_record.json
-  → retention-radar/data/external/   (via scripts/sync_lakehouse_exports.sh)
-  → train / calibrate / Santosh infer / Streamlit
+  → gold churn_user_features (as of T-7)
+  → data/export/churn_user_features.csv + hero_inference_record.json
+  → retention-radar/data/external/        (scripts/sync_lakehouse_exports.sh)
+  → train / calibrate / score
 ```
 
-Feature column contract matches `configs/schemas/user_record.schema.json` 1:1 (24 serve fields + `churned` on train). **Models consume gold features; algorithm choice lives in this repo** (see [algorithm-landscape.md](../guides/algorithm-landscape.md)) — not in the lakehouse.
+The lakehouse owns the features. Model choice lives in this repo
+([algorithm-landscape.md](../guides/algorithm-landscape.md)).
 
-## Two ways to build gold
-
-| Mode | Command (lakehouse repo) | Needs Docker? |
-|------|--------------------------|---------------|
-| Spark E2E | `make up && make wait && make churn-e2e` | Yes |
-| Local parity | `make churn-gold-local` | No (pandas mirrors Spark math) |
-
-Scale bronze first: `make churn-sample` (`N_USERS=5000`, `CHURN_SEED=42`).
-
-## Dual ingest in this repo
+## Choosing the source
 
 `CHURN_DATA_SOURCE`:
 
-- `lakehouse` — require `data/external/` gold (`./scripts/run_lakehouse_e2e.sh`)
-- `synthetic` — generator (`./scripts/run_all.sh` defaults here so leftover gold cannot hijack the published ladder)
-- `auto` — use `data/external/*` if present, else synthetic (ingest-time helper only)
+- `synthetic`: the seed-42 generator. `run_all.sh` defaults to this so a leftover export
+  cannot change the published numbers. CI always uses it.
+- `lakehouse`: require `data/external/churn_user_features.csv`.
+- `auto`: use `data/external/` if present, else synthetic.
 
-Synthetic remains the CI / offline fallback so `pytest` does not need **SILO** (S3-compatible object store in the lakehouse compose stack — not MinIO/Garage/RustFS) or Docker Spark.
+With `lakehouse` (or `auto` and an export present), `--user maya` scores
+`hero_inference_record.json` instead of `data/raw/subscribers/maya.json`.
 
-## Honest limits
+## One command
 
-- Lakehouse Santosh is **event-aggregated as-of 2024-03-02**, not the seed-42 generator profile — scores differ by design.
-- `models_used_count` and `seat_utilization` include documented proxies in the lakehouse gold job.
-- Published seed-42 metrics.json in this repo were trained on the **synthetic** generator unless a retrain on lakehouse exports is explicitly committed.
-
-## Related
-
-- [data-dictionary.md](data-dictionary.md)
-- [e2e-free-platforms.md](../guides/e2e-free-platforms.md)
-
-
-## One-command E2E (best path)
-
-From Retention Radar, with the lakehouse repo checked out beside it (or pass the path):
+With the lakehouse repo beside this one (or pass its path):
 
 ```bash
 ./scripts/run_lakehouse_e2e.sh /path/to/local-data-lakehouse
 ```
 
-This runs: `churn-sample` → `churn-gold-local` → sync → `CHURN_DATA_SOURCE=lakehouse ./scripts/run_all.sh`
-(train → evaluate → benchmark → Santosh infer → decision packet).
+Steps: generate the lakehouse sample (`N_USERS`, default 8000; `CHURN_SEED=42`) → build
+gold locally with pandas (no Docker) → sync the export → `CHURN_DATA_SOURCE=lakehouse
+./scripts/run_all.sh` → write `results/lakehouse_e2e_summary.json`.
 
-CI always sets `CHURN_DATA_SOURCE=synthetic` so GitHub Actions never requires Silo/Spark.
+The run sets `RETENTION_RADAR_ARTIFACT_DIR=artifacts/lakehouse_run`, so models, metrics,
+packets and the generated model card land there. Committed `models/` and
+`docs/model-card.md` are not touched. It does rewrite the committed summary file;
+`git checkout -- results/lakehouse_e2e_summary.json` if you do not mean to publish it.
 
-## Verified lakehouse E2E (box, 2026-09-25 · Python 3.12, pinned stack)
+Sync only, no retrain:
 
-One-command path used: `./scripts/run_lakehouse_e2e.sh /path/to/local-data-lakehouse`.
+```bash
+./scripts/sync_lakehouse_exports.sh /path/to/local-data-lakehouse/data/export
+```
 
-| Step | Result |
-|------|--------|
-| Sample | `N_USERS=5000`, `CHURN_SEED=42`, Santosh `u-0001` |
-| Gold export | `data/export/churn_user_features.csv` + `santosh_inference_record.json` |
-| Sync | → `data/external/` via `scripts/sync_lakehouse_exports.sh` |
-| Train (lake gold) | `n_train=3000` · train churn ≈ **0.17** · Optuna XGB val AUC ≈ **0.721** · calibrated test AUC ≈ **0.694** · best-F1 τ ≈ **0.17** |
-| Santosh (lake as-of) | raw ≈ **0.399** · calibrated ≈ **0.1696** (just under τ = 0.17) · band **medium** · HITL nurture. Rerun on 2026-10-01 by the CI `e2e-local` job with τ-aligned bands; every other number matches the 2026-09-25 run, which labelled the band low under the old fixed edges (0.30 / 0.60). |
-| Drift | **ok** on the 2026-09-25 run, from the old abs-mean-z check (`flagged=0/22`, max ≈ 0.03). The check is PSI-based now; this row is pending a lakehouse E2E rerun. |
+## Limits
 
-### Dual-world honesty
+- Lakehouse numbers come from events aggregated by the lakehouse jobs, not from the
+  seed-42 generator. Do not put them in the same table as the published results.
+- The published `models/metrics.json` is always the synthetic run.
 
-| Track | Purpose | Published ladder? |
-|-------|---------|---------------------------|
-| **Synthetic** (`CHURN_DATA_SOURCE=synthetic`, seed 42) | Reproducible model-card numbers (LogReg ~0.872 … Optuna XGB ~0.870) | **Yes** — keep `models/*` committed from this path |
-| **Lakehouse** (`CHURN_DATA_SOURCE=lakehouse` or `auto` with exports present) | Real SoR path: bronze→silver→gold→Radar | **No** — retrain locally; do **not** overwrite committed `models/metrics.json` when publishing articles |
-
-CI pins `CHURN_DATA_SOURCE=synthetic` so PRs stay deterministic.
-
-Machine-readable summary and committed source of truth: [`results/lakehouse_e2e_summary.json`](../../results/lakehouse_e2e_summary.json). Full lakehouse `metrics.json` / joblibs land under ignored `artifacts/lakehouse_run/` (`RETENTION_RADAR_ARTIFACT_DIR`); they are not published and do not replace committed `models/`.
-
+Related: [data-dictionary.md](data-dictionary.md) ·
+[e2e-free-platforms.md](../guides/e2e-free-platforms.md)

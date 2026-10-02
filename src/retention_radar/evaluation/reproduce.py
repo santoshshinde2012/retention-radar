@@ -1,7 +1,7 @@
 """Check that a fresh retrain reproduces the committed seed-42 bundle.
 
 ``make reproduce`` retrains into an isolated ``RETENTION_RADAR_ARTIFACT_DIR`` and
-then runs this check, which diffs the new ``metrics.json`` (and Santosh packet)
+then runs this check, which diffs the new ``metrics.json`` (and Maya's decision packet)
 against the committed ``models/metrics.json`` that every published number cites.
 Latency is machine-dependent and is reported, never compared.
 
@@ -77,10 +77,10 @@ def compare_packets(
         for k in PACKET_KEYS
         if not _equal(ref_s.get(k), cand_s.get(k), tol)
     ]
-    ref_a = (reference.get("hitl") or {}).get("action")
-    cand_a = (candidate.get("hitl") or {}).get("action")
+    ref_a = (reference.get("decision") or {}).get("action")
+    cand_a = (candidate.get("decision") or {}).get("action")
     if ref_a != cand_a:
-        diffs.append(("hitl.action", ref_a, cand_a))
+        diffs.append(("decision.action", ref_a, cand_a))
     return diffs
 
 
@@ -114,7 +114,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--reference-packet",
-        default=str(config.PROJECT_ROOT / "results" / "example_decision_packet.json"),
+        default=str(config.PROJECT_ROOT / "results" / "maya_decision_packet.sample.json"),
     )
     parser.add_argument("--tol", type=float, default=1e-9)
     args = parser.parse_args(argv)
@@ -130,12 +130,16 @@ def main(argv: list[str] | None = None) -> int:
     drift = [k for k, v in PINNED.items() if versions.get(k) != v]
     if sys.version_info < (3, 12):
         drift.insert(0, "python<3.12")
+    import platform
+
+    if (platform.system(), platform.machine()) != ("Linux", "x86_64"):
+        drift.append(f"platform {platform.system()} {platform.machine()} (the bundle is trained on Linux x86_64)")
 
     reference = json.loads(Path(args.reference).read_text(encoding="utf-8"))
     candidate = json.loads(cand_path.read_text(encoding="utf-8"))
     diffs = compare_metrics(reference, candidate, args.tol)
 
-    packet_path = art / "example_decision_packet.json"
+    packet_path = art / "maya_decision_packet.json"
     ref_packet_path = Path(args.reference_packet)
     if packet_path.exists() and ref_packet_path.exists():
         diffs += compare_packets(

@@ -1,8 +1,8 @@
 """Score a user JSON with the trained churn model.
 
 Examples:
-    python -m retention_radar.cli.infer --user santosh
-    python -m retention_radar.cli.infer --json data/raw/example_account.json
+    python -m retention_radar.cli.infer --user maya
+    python -m retention_radar.cli.infer --json data/raw/subscribers/arjun.json
 """
 
 from __future__ import annotations
@@ -14,7 +14,7 @@ from pathlib import Path
 import joblib
 
 from retention_radar import config
-from retention_radar.data.ingest import resolve_santosh_json
+from retention_radar.data.ingest import resolve_hero_json
 from retention_radar.features.transform import row_to_feature_frame
 from retention_radar.serving.explain import top_contributing_features
 from retention_radar.serving.policy import risk_band
@@ -27,26 +27,17 @@ def load_model_bundle(path: Path) -> dict:
     return joblib.load(path)
 
 
-# Back-compat alias: older notebooks and scripts import ``load_payload``.
+# Back-compat alias: older notebooks / articles import ``load_payload``.
 load_payload = load_model_bundle
 
 
 def resolve_user_json(user: str | None, json_path: str | None) -> Path:
-    """Resolve ``--user santosh`` or ``--json path`` to a payload file."""
+    """Resolve ``--user maya|arjun`` or ``--json path`` to a payload file."""
     if json_path:
         return Path(json_path)
-    if user and user.lower() in {"santosh", "santosh_shinde", "santosh-shinde"}:
-        return resolve_santosh_json()
-    raise SystemExit("Provide --user santosh or --json path/to/user.json")
-
-
-def load_threshold(path: Path | None = None) -> float:
-    """τ (``best_f1_threshold``) from metrics.json; 0.5 only if no metrics exist yet."""
-    p = path or config.METRICS_PATH
-    if not p.exists():
-        return 0.5
-    with open(p, encoding="utf-8") as f:
-        return float(json.load(f).get("best_f1_threshold", 0.5))
+    if user and user.lower() in config.HEROES:
+        return resolve_hero_json(user.lower())
+    raise SystemExit(f"Provide --user {{{'|'.join(config.HEROES)}}} or --json path/to/record.json")
 
 
 def predict_user(
@@ -55,7 +46,6 @@ def predict_user(
     calibrator=None,
     top_k: int = 5,
     explain: bool = True,
-    threshold: float | None = None,
 ) -> dict:
     """Score one user through the transformer + classifier + optional calibrator.
 
@@ -77,14 +67,16 @@ def predict_user(
         "churn_probability": display,
         "churn_probability_raw": raw_proba,
         "churn_probability_calibrated": cal_proba,
-        "risk_band": risk_band(display, threshold if threshold is not None else load_threshold()),
+        "risk_band": risk_band(display),
         "top_features": top,
     }
 
 
 def main(argv: list[str] | None = None) -> None:
-    parser = argparse.ArgumentParser(description="Infer churn probability for a user")
-    parser.add_argument("--user", type=str, default=None, help="Shortcut: santosh")
+    parser = argparse.ArgumentParser(description="Score one subscriber at T-7")
+    parser.add_argument(
+        "--user", type=str, default=None, help=f"Worked example: {', '.join(config.HEROES)}"
+    )
     parser.add_argument("--json", type=str, default=None, help="Path to user JSON")
     parser.add_argument(
         "--model", type=str, default=None, help="Path to joblib model"

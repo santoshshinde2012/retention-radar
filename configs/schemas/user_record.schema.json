@@ -1,68 +1,185 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://example.local/schemas/user_record.schema.json",
-  "title": "AI Platform Churn — Inference User Record",
-  "description": "Single-record inference payload (no churned label). Aligns with FEATURE_COLUMNS in src/config.py.",
+  "title": "Renewal scoring record (T-7)",
+  "description": "One paying subscriber seven days before a monthly renewal. No label: the renewal is ahead. Aligns with FEATURE_COLUMNS in src/retention_radar/config.py.",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "user_id",
     "user_name",
-    "days_since_signup",
-    "sessions_last_7d",
-    "sessions_last_30d",
-    "avg_session_minutes",
-    "models_used_count",
-    "api_calls_last_30d",
-    "tokens_consumed_last_30d",
-    "tools_used_count",
-    "failed_requests_rate",
-    "support_tickets_last_90d",
     "plan_tier",
-    "payment_failures_last_90d",
-    "feature_adoption_score",
-    "nps_score",
-    "last_active_days_ago",
-    "weekend_usage_ratio",
+    "renewals_completed",
+    "active_days_7d",
+    "active_days_28d",
     "engagement_trend",
-    "spend_usd_last_30d",
-    "days_until_renewal",
-    "agent_runs_last_30d",
-    "ide_plugin_sessions_last_30d",
-    "seat_utilization"
+    "last_active_days_ago",
+    "agent_requests_28d",
+    "allowance_used_pct",
+    "limit_hits_14d",
+    "cheap_model_share_28d",
+    "overage_usd_28d",
+    "overage_toggled_off",
+    "suggestion_accept_rate_28d",
+    "accept_rate_change",
+    "agent_task_success_rate",
+    "failed_requests_rate",
+    "incident_exposed_28d",
+    "support_tickets_90d",
+    "ide_sessions_28d",
+    "cli_sessions_28d",
+    "weekend_usage_ratio",
+    "first_renewal_after_pricing_change"
   ],
   "properties": {
-    "user_id": { "type": "string", "minLength": 1 },
-    "user_name": { "type": "string", "minLength": 1 },
-    "days_since_signup": { "type": "number", "minimum": 1, "maximum": 2000 },
-    "sessions_last_7d": { "type": "number", "minimum": 0, "maximum": 60 },
-    "sessions_last_30d": { "type": "number", "minimum": 0, "maximum": 200 },
-    "avg_session_minutes": { "type": "number", "minimum": 0.5, "maximum": 240 },
-    "models_used_count": { "type": "number", "minimum": 0, "maximum": 30 },
-    "api_calls_last_30d": { "type": "number", "minimum": 0, "maximum": 100000 },
-    "tokens_consumed_last_30d": { "type": "number", "minimum": 0, "maximum": 50000000 },
-    "tools_used_count": { "type": "number", "minimum": 0, "maximum": 40 },
-    "failed_requests_rate": { "type": "number", "minimum": 0, "maximum": 1 },
-    "support_tickets_last_90d": { "type": "number", "minimum": 0, "maximum": 50 },
+    "user_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "user_name": {
+      "type": "string",
+      "minLength": 1
+    },
     "plan_tier": {
       "type": "string",
-      "enum": ["free", "starter", "pro", "enterprise"]
+      "enum": [
+        "pro",
+        "pro_plus",
+        "ultra"
+      ],
+      "description": "Monthly plan: pro ($20) | pro_plus ($60) | ultra ($200)."
     },
-    "payment_failures_last_90d": { "type": "number", "minimum": 0, "maximum": 20 },
-    "feature_adoption_score": { "type": "number", "minimum": 0, "maximum": 1 },
-    "nps_score": { "type": "number", "minimum": 0, "maximum": 10 },
-    "last_active_days_ago": { "type": "number", "minimum": 0, "maximum": 365 },
-    "weekend_usage_ratio": { "type": "number", "minimum": 0, "maximum": 1 },
-    "engagement_trend": {
+    "renewals_completed": {
       "type": "number",
       "minimum": 0,
-      "maximum": 5,
-      "description": "sessions_last_7d / max(1, sessions_last_30d/4); ≈1 stable, <1 cooling"
+      "maximum": 60,
+      "description": "Monthly renewals already paid. 0 = this is the first renewal (the cliff)."
     },
-    "spend_usd_last_30d": { "type": "number", "minimum": 0, "maximum": 100000 },
-    "days_until_renewal": { "type": "number", "minimum": 0, "maximum": 730 },
-    "agent_runs_last_30d": { "type": "number", "minimum": 0, "maximum": 5000 },
-    "ide_plugin_sessions_last_30d": { "type": "number", "minimum": 0, "maximum": 500 },
-    "seat_utilization": { "type": "number", "minimum": 0, "maximum": 1 }
+    "active_days_7d": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 7,
+      "description": "Days with any coding activity in the 7 days before T-7 (0-7)."
+    },
+    "active_days_28d": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 28,
+      "description": "Days with any coding activity in the 28 days before T-7 (0-28)."
+    },
+    "engagement_trend": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 4.0,
+      "description": "active_days_7d / max(1, active_days_28d / 4): ~1 steady, <1 fading."
+    },
+    "last_active_days_ago": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 90,
+      "description": "Days since the last coding activity, measured at T-7."
+    },
+    "agent_requests_28d": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 50000,
+      "description": "Agent / chat requests sent to frontier models in 28 days."
+    },
+    "allowance_used_pct": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 3.0,
+      "description": "Share of the plan's included usage consumed in 28 days (can exceed 1 with overage)."
+    },
+    "limit_hits_14d": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 60,
+      "description": "Times a 5-hour or weekly usage cap blocked a request in 14 days."
+    },
+    "cheap_model_share_28d": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Share of requests routed to a cheaper / auto model (rationing signal)."
+    },
+    "overage_usd_28d": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 5000.0,
+      "description": "Usage billed above the plan in 28 days (USD)."
+    },
+    "overage_toggled_off": {
+      "type": "number",
+      "enum": [
+        0,
+        1
+      ],
+      "description": "1 if paid overage was switched off or capped after being on."
+    },
+    "suggestion_accept_rate_28d": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Accepted / shown inline suggestions in 28 days."
+    },
+    "accept_rate_change": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 3.0,
+      "description": "Accept rate this 28 days / previous 28 days (1 = unchanged)."
+    },
+    "agent_task_success_rate": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Agent tasks that ended with the change kept (not reverted) in 28 days."
+    },
+    "failed_requests_rate": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Share of requests that errored or timed out in 28 days."
+    },
+    "incident_exposed_28d": {
+      "type": "number",
+      "enum": [
+        0,
+        1
+      ],
+      "description": "1 if the subscriber had requests during a declared incident window."
+    },
+    "support_tickets_90d": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 50,
+      "description": "Support tickets opened in 90 days."
+    },
+    "ide_sessions_28d": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 500,
+      "description": "IDE-extension sessions in 28 days."
+    },
+    "cli_sessions_28d": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 500,
+      "description": "CLI-agent sessions in 28 days."
+    },
+    "weekend_usage_ratio": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Share of activity on weekends (side-project signal)."
+    },
+    "first_renewal_after_pricing_change": {
+      "type": "number",
+      "enum": [
+        0,
+        1
+      ],
+      "description": "1 if this is the subscriber's first renewal since the last limit / pricing change."
+    }
   }
 }

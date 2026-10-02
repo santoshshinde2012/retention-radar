@@ -1,53 +1,53 @@
-# Algorithm landscape — what is on the ladder vs deferred
+# Algorithm landscape
 
-Teaching decision for Retention Radar (2025–26). **Cite:** [`../../models/metrics.json`](../../models/metrics.json) · **Benchmarks:** [`../../results/benchmarks.md`](../../results/benchmarks.md)
+Which models are on the ladder, which serves, and which were left out on purpose.
+Numbers: [`models/metrics.json`](../../models/metrics.json) ·
+[results/benchmarks.md](../../results/benchmarks.md).
 
-This study ships an **honest bake-off ladder** on a synthetic AI-platform churn table (seed **42**, N=5000, 22 numeric features after plan encoding). The **serving / Santosh / SHAP hero stays Optuna-tuned XGBoost + isotonic calibration**, even when a peer edges AUC.
+The table is 7,329 T-7 renewals (seed 42) with 22 features after encoding `plan_tier`.
 
-## IN — published ladder (implement)
+## On the ladder
 
-| Stage | Model | Role |
-|-------|--------|------|
-| Prior | Dummy (`strategy=prior`) | Accuracy theatre control |
-| Linear | Logistic regression (scaled, balanced) | Strong additive-label peer |
-| Bagging | Random Forest | Mid-tier ensemble peer |
-| GBDT | XGBoost (default) | Tree baseline before Optuna |
-| GBDT tuned | XGBoost (Optuna on val AUC) | Teaching vehicle |
-| GBDT peer | LightGBM (sane defaults) | FOSS peer booster |
-| GBDT peer | **CatBoost (sane defaults)** | Completes the **XGB / LightGBM / CatBoost** trilogy |
-| Serve | **XGBoost + isotonic calibration** | Santosh packet, risk bands, SHAP |
+| Model | Why it is there |
+|-------|-----------------|
+| Dummy (prior) | Shows what accuracy is worth at a 9.6% base rate |
+| Logistic regression (scaled, class-balanced) | Linear peer; the generator's lapse logit is mostly additive |
+| Random Forest | Bagged trees |
+| XGBoost, default settings | Booster before tuning |
+| XGBoost, Optuna-tuned on validation AUC | The serving model |
+| LightGBM, default settings | Peer booster |
+| CatBoost, default settings | Peer booster; strong on tabular benchmarks such as TabArena |
 
-**Why CatBoost now:** TabArena (NeurIPS 2025 Datasets & Benchmarks; arXiv:2506.16791) treats CatBoost as a first-class conventional tree and, in the conventional tuning regime, often ranks it at or near the top of classical GBDT peers. For a beginner CPU FOSS HITL packet path, a **default** CatBoost row is the missing honest peer — not a production crown.
+Logistic regression ranks best on this run (test AUC 0.781 against 0.757 for tuned
+XGBoost). Calibrated XGBoost still serves because the explanation and serving code were built around it before the ladder came in; logistic regression would explain each subscriber just as exactly (coefficient × standardised value), and a calibrator works on either. For a real deployment with this result, swap it in: serving depends only on `predict_proba`.
 
-**What we do *not* claim:** CatBoost (or any booster) “wins production churn.” On this synthetic, mostly additive label, LogReg and CatBoost can tie or edge Optuna XGB on test AUC; we still serve calibrated XGB for SHAP + calibration UX.
+## Calibration
 
-## DEFER — written rationale (do not implement here)
+Platt scaling (sigmoid), fit on validation. Isotonic regression was tried and rejected:
+with 142 lapses in validation it produced a staircase of 37 distinct values,
+tied most of the queue, and gave some subscribers a calibrated probability of exactly
+0.000. Details: [results/benchmarks.md](../../results/benchmarks.md).
 
-| Family | Examples | Why deferred for *this* teaching arc |
-|--------|----------|--------------------------------------|
-| Tabular foundation / ICL | TabPFN, TabPFN-v2/v3, TabICL | Strong on **small** tables on TabArena-class boards; licensing / GPU / serve story does not fit beginner **CPU FOSS HITL packet** path |
-| Heavy tabular DL | RealMLP, FT-Transformer, TabM | Heavy deps and training story; outside the tree-ladder scope |
-| Survival | Cox PH, Random Survival Forest | Needs **time-to-event** label redesign; we keep a **binary snapshot** label |
-| Causal / uplift | Meta-learners, T-/S-/X-learners | Different question (treatment effect), not P(churn) ranking |
-| Soft-voting mega-ensemble | Average of all ladder models | Muddles ladder honesty; hides which inductive bias won |
-| Conformal prediction | MAPIE | Valuable **HITL next study** (prediction sets); mention only — do not code unless trivial |
-| Glass-box GAM | EBM (Explainable Boosting Machine) | Nice interpretability peer; defer to keep the published ladder readable |
+## Left out
 
-## Fit to this use case
+| Family | Examples | Why not here |
+|--------|----------|--------------|
+| Uplift / treatment-effect models | T-, S-, X-learners, causal forests | The right next step for choosing who to contact, but they need randomised treatment data. The 10% holdout is there to produce it |
+| Survival models | Cox PH, random survival forest | Would model time to lapse across several renewals; this repo scores one renewal at a time |
+| Tabular foundation models | TabPFN, TabICL | Strong on small tables; licensing, GPU and serving story do not fit a CPU-only repo |
+| Tabular deep learning | RealMLP, FT-Transformer, TabM | Heavy dependencies for little expected gain on this table |
+| Ensembles of the ladder | soft voting | Hides which model family is doing the work |
+| Conformal prediction | MAPIE | Useful for "not sure" flags; not needed for the current policy |
+| Glass-box GAMs | EBM | A reasonable alternative to LogReg + SHAP; left out to keep the ladder short |
 
-- **Label:** binary `churned` at a snapshot — not duration or treatment assignment.
-- **Serve:** single-record JSON → 22 features → calibrated `p` → band → SHAP → HITL (`auto_action: none`).
-- **Audience:** beginners on CPU with FOSS pins (`requirements.txt`).
-- **Data foundation:** lakehouse gold exports feed the **same 22-feature contract**; algorithm choice lives in this repo, not in the lakehouse.
+## References
 
-## Citations (landscape, not victory laps)
+- Erickson et al., *TabArena: A Living Benchmark for Machine Learning on Tabular Data*,
+  NeurIPS 2025 Datasets and Benchmarks, [arXiv:2506.16791](https://arxiv.org/abs/2506.16791).
+- Prokhorenkova et al., CatBoost, arXiv:1706.09516. Ke et al., LightGBM (NeurIPS 2017).
+  Chen and Guestrin, XGBoost (KDD 2016).
+- Ascarza, "Retention Futility: Targeting High-Risk Customers Might Be Ineffective",
+  JMR 2018, on why a risk score is not an uplift score.
 
-- Erickson et al., *TabArena: A Living Benchmark for Machine Learning on Tabular Data* (NeurIPS 2025 D&B; [arXiv:2506.16791](https://arxiv.org/abs/2506.16791)) — living Elo-style tabular board; CatBoost / LightGBM / XGBoost as conventional trees; neural and foundation models after ensembling.
-- Prokhorenkova et al., CatBoost (arXiv:1706.09516); Ke et al., LightGBM; Chen & Guestrin, XGBoost — the GBDT trilogy peers on this ladder.
-- Churn teaching practice: always publish Dummy + linear + tree peers before claiming booster success (see [`../results/benchmarks.md`](../../results/benchmarks.md)).
-
-## Related
-
-- [`model-card.md`](../model-card.md) — metrics table from `models/metrics.json`
-- [`best-practices.md`](best-practices.md) — dual-world synthetic vs lakehouse
-- [`architecture.md`](../architecture.md) — train ≠ serve
+Related: [model-card.md](../model-card.md) · [best-practices.md](best-practices.md) ·
+[architecture.md](../architecture.md)

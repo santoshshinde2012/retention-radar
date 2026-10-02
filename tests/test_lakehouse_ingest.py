@@ -5,70 +5,51 @@ import pandas as pd
 import pytest
 
 from retention_radar import config
+from retention_radar.data.generate import generate_renewals, maya_profile
 from retention_radar.data.ingest import (
     load_users,
-    resolve_santosh_json,
+    resolve_hero_json,
     resolve_users_csv,
     sync_lakehouse_exports,
 )
 
 
 def test_resolve_prefers_external_when_present(tmp_path, monkeypatch):
-    ext = tmp_path / "external"
+    ext, raw = tmp_path / "external", tmp_path / "raw"
     ext.mkdir()
-    raw = tmp_path / "raw"
-    raw.mkdir()
-    # minimal valid frame
-    cols = config.ID_COLUMNS + config.FEATURE_COLUMNS + [config.TARGET_COLUMN]
-    row = {c: 0 for c in cols}
-    row.update(
-        {
-            "user_id": "u-1",
-            "user_name": "T",
-            "plan_tier": "pro",
-            "churned": 0,
-            "avg_session_minutes": 1.0,
-            "nps_score": 5.0,
-            "feature_adoption_score": 0.5,
-            "seat_utilization": 0.5,
-            "failed_requests_rate": 0.1,
-            "weekend_usage_ratio": 0.2,
-            "engagement_trend": 1.0,
-            "days_since_signup": 10,
-            "days_until_renewal": 5,
-        }
-    )
-    # need enough rows + churn band — skip full validate by testing resolve only
+    (raw / "subscribers").mkdir(parents=True)
     monkeypatch.setattr(config, "EXTERNAL_DIR", ext)
     monkeypatch.setattr(config, "LAKEHOUSE_FEATURES_CSV", ext / "churn_user_features.csv")
-    monkeypatch.setattr(config, "LAKEHOUSE_SANTOSH_JSON", ext / "santosh_inference_record.json")
-    monkeypatch.setattr(config, "USERS_CSV", raw / "users.csv")
-    monkeypatch.setattr(config, "SANTOSH_JSON", raw / "example_account.json")
+    monkeypatch.setattr(config, "LAKEHOUSE_HERO_JSON", ext / "hero_inference_record.json")
+    monkeypatch.setattr(config, "USERS_CSV", raw / "renewals_t7.csv")
+    monkeypatch.setattr(config, "HERO_DIR", raw / "subscribers")
     monkeypatch.setattr(config, "CHURN_DATA_SOURCE", "auto")
 
     (ext / "churn_user_features.csv").write_text("user_id\n1\n")
-    (ext / "santosh_inference_record.json").write_text("{}")
+    (ext / "hero_inference_record.json").write_text("{}")
     assert resolve_users_csv() == ext / "churn_user_features.csv"
-    assert resolve_santosh_json() == ext / "santosh_inference_record.json"
+    assert resolve_hero_json() == ext / "hero_inference_record.json"
+    assert resolve_hero_json("arjun") == raw / "subscribers" / "arjun.json"  # only the default hero comes from gold
 
     monkeypatch.setattr(config, "CHURN_DATA_SOURCE", "synthetic")
-    (raw / "users.csv").write_text("user_id\n1\n")
-    assert resolve_users_csv() == raw / "users.csv"
+    assert resolve_users_csv() == raw / "renewals_t7.csv"
+    assert resolve_hero_json() == raw / "subscribers" / "maya.json"
+    with pytest.raises(ValueError, match="Unknown worked example"):
+        resolve_hero_json("santosh")
 
 
 def test_sync_lakehouse_exports(tmp_path, monkeypatch):
-    src = tmp_path / "export"
+    src, dest = tmp_path / "export", tmp_path / "external"
     src.mkdir()
-    dest = tmp_path / "external"
     (src / "churn_user_features.csv").write_text("user_id,churned\nu-1,0\n")
-    (src / "santosh_inference_record.json").write_text('{"user_id":"u-1"}\n')
+    (src / "hero_inference_record.json").write_text('{"user_id":"u-1"}\n')
     monkeypatch.setattr(config, "EXTERNAL_DIR", dest)
     csv_p, json_p = sync_lakehouse_exports(src, dest)
     assert csv_p.exists() and json_p.exists()
     assert "u-1" in csv_p.read_text()
 
 
-def test_drift_cli_defaults_to_active_users_table():
+def test_drift_cli_defaults_to_active_table():
     import inspect
 
     from retention_radar.serving import drift as drift_mod
@@ -78,45 +59,13 @@ def test_drift_cli_defaults_to_active_users_table():
     assert "resolve_users_csv()" in inspect.getsource(packet_mod.cohort_percentiles)
 
 
-def _gold_frame(n: int = 20) -> pd.DataFrame:
-    cols = config.ID_COLUMNS + config.FEATURE_COLUMNS + [config.TARGET_COLUMN]
-    rows = []
-    for i in range(n):
-        row = {c: 0 for c in cols}
-        row.update(
-            {
-                "user_id": f"u-{i:04d}",
-                "user_name": "Santosh Shinde" if i == 0 else f"User {i}",
-                "plan_tier": "pro" if i % 2 == 0 else "free",
-                "churned": 1 if i % 8 == 0 else 0,
-                "avg_session_minutes": 12.0,
-                "nps_score": 7.0,
-                "feature_adoption_score": 0.5,
-                "seat_utilization": 0.4,
-                "failed_requests_rate": 0.05,
-                "weekend_usage_ratio": 0.2,
-                "engagement_trend": 1.0,
-                "days_since_signup": 100,
-                "days_until_renewal": 20,
-                "sessions_last_7d": 5,
-                "sessions_last_30d": 20,
-                "models_used_count": 4,
-                "api_calls_last_30d": 200,
-                "tokens_consumed_last_30d": 50000,
-                "tools_used_count": 3,
-                "support_tickets_last_90d": 1,
-                "payment_failures_last_90d": 0,
-                "last_active_days_ago": 2,
-                "spend_usd_last_30d": 12.0,
-                "agent_runs_last_30d": 10,
-                "ide_plugin_sessions_last_30d": 8,
-                "city": "Pune",
-                "feature_as_of": "2024-03-02",
-                "built_at": "2024-03-02T00:00:00Z",
-            }
-        )
-        rows.append(row)
-    return pd.DataFrame(rows)
+def _gold_frame(n: int = 400) -> pd.DataFrame:
+    """Gold export shape: the model table plus lake metadata and routing columns."""
+    df = generate_renewals(n=n, seed=7)
+    df["city"] = "Pune"
+    df["feature_as_of"] = df["as_of_date"]
+    df["built_at"] = "2026-09-28T00:00:00Z"
+    return df[df["route"] == config.ROUTE_MODEL].reset_index(drop=True)
 
 
 def test_load_users_from_lakehouse_shaped_export(tmp_path, monkeypatch):
@@ -129,22 +78,29 @@ def test_load_users_from_lakehouse_shaped_export(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "CHURN_DATA_SOURCE", "lakehouse")
 
     df = load_users()
-    assert len(df) == 20
-    assert "city" not in df.columns
-    assert "feature_as_of" not in df.columns
+    for dropped in ("city", "feature_as_of", "built_at", "as_of_date", "renewal_date", "outcome", "route"):
+        assert dropped not in df.columns
     assert set(df["churned"].unique()).issubset({0, 1})
 
     from retention_radar.features.transform import prepare_xy
 
     X, y = prepare_xy(df)
     assert list(X.columns) == list(config.MODEL_FEATURE_COLUMNS)
-    assert len(X) == len(y) == 20
+    assert len(X) == len(y) == len(df)
 
 
 def test_unknown_plan_tier_fails_loud():
     from retention_radar.features.transform import encode_plan_tier
 
-    df = _gold_frame(n=2)
-    df.loc[0, "plan_tier"] = "gold"
+    df = pd.DataFrame([maya_profile(), {**maya_profile(), "plan_tier": "pro_max"}])
     with pytest.raises(ValueError, match="Unknown plan_tier"):
         encode_plan_tier(df)
+
+
+def test_validate_rejects_seven_day_count_above_28_day_count():
+    from retention_radar.data.ingest import validate_users
+
+    df = _gold_frame()[config.ID_COLUMNS + config.FEATURE_COLUMNS + [config.TARGET_COLUMN]]
+    df.loc[0, ["active_days_7d", "active_days_28d"]] = [7, 2]
+    with pytest.raises(ValueError, match="active_days_7d"):
+        validate_users(df)

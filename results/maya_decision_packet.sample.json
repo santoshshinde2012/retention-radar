@@ -1,0 +1,162 @@
+{
+  "user_id": "sub_maya",
+  "user_name": "Maya (worked example)",
+  "validation": {
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "schema_validated": true,
+    "required_keys_present": true
+  },
+  "payload": {
+    "user_id": "sub_maya",
+    "user_name": "Maya (worked example)",
+    "plan_tier": "pro",
+    "renewals_completed": 3,
+    "active_days_7d": 2,
+    "active_days_28d": 15,
+    "engagement_trend": 0.5333,
+    "last_active_days_ago": 2,
+    "agent_requests_28d": 470,
+    "allowance_used_pct": 1.02,
+    "limit_hits_14d": 4,
+    "cheap_model_share_28d": 0.68,
+    "overage_usd_28d": 0.0,
+    "overage_toggled_off": 0,
+    "suggestion_accept_rate_28d": 0.29,
+    "accept_rate_change": 0.96,
+    "agent_task_success_rate": 0.58,
+    "failed_requests_rate": 0.05,
+    "incident_exposed_28d": 1,
+    "support_tickets_90d": 0,
+    "ide_sessions_28d": 14,
+    "cli_sessions_28d": 19,
+    "weekend_usage_ratio": 0.21,
+    "first_renewal_after_pricing_change": 1
+  },
+  "scoring": {
+    "churn_probability_raw": 0.7165229320526123,
+    "churn_probability_calibrated": 0.2880465475025406,
+    "churn_probability": 0.2880465475025406,
+    "risk_band": "medium",
+    "best_f1_threshold": 0.16,
+    "half_threshold": 0.08
+  },
+  "explanation": {
+    "top_features": [
+      {
+        "feature": "limit_hits_14d",
+        "contribution": 0.6332750916481018
+      },
+      {
+        "feature": "cheap_model_share_28d",
+        "contribution": 0.30187419056892395
+      },
+      {
+        "feature": "first_renewal_after_pricing_change",
+        "contribution": 0.213152214884758
+      },
+      {
+        "feature": "renewals_completed",
+        "contribution": 0.0875694677233696
+      },
+      {
+        "feature": "active_days_28d",
+        "contribution": -0.08221759647130966
+      }
+    ]
+  },
+  "outliers": [],
+  "cohort_compare": {
+    "active_days_28d": {
+      "value": 15.0,
+      "percentile": 82.15,
+      "population_median": 10.0,
+      "population_mean": 10.5287215172602,
+      "source": "users_csv"
+    },
+    "engagement_trend": {
+      "value": 0.5333,
+      "percentile": 33.97,
+      "population_median": 0.8,
+      "population_mean": 0.8404916223222814,
+      "source": "users_csv"
+    },
+    "limit_hits_14d": {
+      "value": 4.0,
+      "percentile": 90.41,
+      "population_median": 0.0,
+      "population_mean": 1.1956610724519035,
+      "source": "users_csv"
+    },
+    "cheap_model_share_28d": {
+      "value": 0.68,
+      "percentile": 96.26,
+      "population_median": 0.2682,
+      "population_mean": 0.303965656979124,
+      "source": "users_csv"
+    },
+    "allowance_used_pct": {
+      "value": 1.02,
+      "percentile": 77.16,
+      "population_median": 0.5476,
+      "population_mean": 0.726076163187338,
+      "source": "users_csv"
+    },
+    "suggestion_accept_rate_28d": {
+      "value": 0.29,
+      "percentile": 61.3,
+      "population_median": 0.2696,
+      "population_mean": 0.2699924000545777,
+      "source": "users_csv"
+    },
+    "agent_task_success_rate": {
+      "value": 0.58,
+      "percentile": 49.76,
+      "population_median": 0.5805,
+      "population_mean": 0.5804985673352435,
+      "source": "users_csv"
+    },
+    "renewals_completed": {
+      "value": 3.0,
+      "percentile": 49.02,
+      "population_median": 4.0,
+      "population_mean": 5.448628735161686,
+      "source": "users_csv"
+    }
+  },
+  "decision": {
+    "risk_band": "medium",
+    "auto_action": "none",
+    "holdout": false,
+    "expected_value_usd": 5.2,
+    "candidates": [
+      {
+        "playbook": "limit_reset",
+        "expected_value_usd": 5.2
+      },
+      {
+        "playbook": "cancel_flow_discount",
+        "expected_value_usd": 2.79
+      },
+      {
+        "playbook": "in_app_usage_tips",
+        "expected_value_usd": 1.13
+      }
+    ],
+    "would_have_sent": "limit_reset",
+    "hitl_required": false,
+    "action": "limit_reset",
+    "playbook_label": "One-time usage-limit reset with a short note",
+    "rationale": "P(lapse)=0.288 (\u03c4=0.160). Highest expected value among ['limit_reset', 'cancel_flow_discount', 'in_app_usage_tips']: One-time usage-limit reset with a short note (\u2248$5.20, assumption-based). Sent by the lifecycle tool."
+  },
+  "meta": {
+    "model_path": "retention-radar/models/churn_xgb.joblib",
+    "calibrator_path": "retention-radar/models/calibrator.joblib",
+    "feature_stats_path": "retention-radar/models/feature_stats.json",
+    "metrics_path": "retention-radar/models/metrics.json",
+    "feature_count": 22,
+    "data_source": "synthetic",
+    "users_csv": "retention-radar/data/raw/renewals_t7.csv"
+  }
+}

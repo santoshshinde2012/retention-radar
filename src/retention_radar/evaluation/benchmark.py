@@ -13,7 +13,7 @@ import joblib
 import numpy as np
 
 from retention_radar import config
-from retention_radar.data.ingest import resolve_santosh_json
+from retention_radar.data.ingest import resolve_hero_json
 from retention_radar.features.transform import row_to_feature_frame
 from retention_radar.training.calibrate import load_calibrator
 
@@ -66,16 +66,16 @@ def benchmark_latency(
 def main() -> None:
     if not config.MODEL_PATH.exists():
         raise SystemExit(f"Model not found: {config.MODEL_PATH}. Run train first.")
-    santosh_path = resolve_santosh_json()
-    if not santosh_path.exists():
-        raise SystemExit(f"Santosh JSON not found: {santosh_path}")
+    hero_path = resolve_hero_json()
+    if not hero_path.exists():
+        raise SystemExit(f"Worked-example JSON not found: {hero_path}")
 
     bundle = joblib.load(config.MODEL_PATH)
     model = bundle["model"]
     feature_names = bundle["feature_names"]
     calibrator = load_calibrator(config.CALIBRATOR_PATH)
 
-    with open(santosh_path, encoding="utf-8") as f:
+    with open(hero_path, encoding="utf-8") as f:
         user = json.load(f)
     X = row_to_feature_frame(user)[feature_names]
 

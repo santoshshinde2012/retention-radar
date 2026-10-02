@@ -78,15 +78,13 @@ jobs:
           pip install -r requirements.txt
           pip install -e . ruff
 
-      # Pinned: local-data-lakehouse main moved to a renewal-event export (its PR #11), which
-      # no longer writes churn_user_features.csv + santosh_inference_record.json. e0850bf is
-      # the last commit with the export contract this repo reads.
-      - name: Clone local-data-lakehouse (pinned)
-        env:
-          LAKEHOUSE_REF: e0850bf91250e9d4e3e5ec5e32f834fead4be609
+      - name: Clone local-data-lakehouse (same-named branch if it exists, else main)
         run: |
-          git clone https://github.com/santoshshinde2012/local-data-lakehouse.git "$RUNNER_TEMP/local-data-lakehouse"
-          git -C "$RUNNER_TEMP/local-data-lakehouse" checkout --quiet "$LAKEHOUSE_REF"
+          URL=https://github.com/santoshshinde2012/local-data-lakehouse.git
+          BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
+          if git ls-remote --exit-code --heads "$URL" "$BRANCH" >/dev/null; then REF="$BRANCH"; else REF=main; fi
+          echo "local-data-lakehouse ref: $REF"
+          git clone --depth 1 --branch "$REF" "$URL" "$RUNNER_TEMP/local-data-lakehouse"
 
       - name: make e2e-local
         env:

@@ -32,17 +32,17 @@ def test_committed_pickles_do_not_reference_src_package():
         assert b"src.retention_radar" not in (config.SEED_MODELS_DIR / name).read_bytes(), name
 
 
-def test_bundle_scores_santosh_outside_repo_root(tmp_path):
+def test_bundle_scores_maya_outside_repo_root(tmp_path):
     code = f"""
 import json, sys
 assert {str(ROOT)!r} not in sys.path and '' not in sys.path[1:]
 from retention_radar.serving.packet import build_decision_packet
-p = build_decision_packet(json.load(open({str(ROOT / 'data/raw/example_account.json')!r})))
-print(round(p['scoring']['churn_probability_calibrated'], 6), p['hitl']['action'])
+p = build_decision_packet(json.load(open({str(ROOT / 'data/raw/subscribers/maya.json')!r})))
+print(round(p['scoring']['churn_probability_calibrated'], 3), p['decision']['action'])
 """
     res = _run(code, tmp_path)
     assert res.returncode == 0, res.stderr[-2000:]
-    assert res.stdout.split()[-2:] == ["0.016461", "monitor"]
+    assert res.stdout.split()[-2:] == ["0.288", "limit_reset"]
 
 
 def test_streamlit_app_boots_like_streamlit_cloud(tmp_path):
@@ -54,7 +54,7 @@ from streamlit.testing.v1 import AppTest
 at = AppTest.from_file({str(ROOT / 'app/streamlit_app.py')!r}, default_timeout=120).run()
 assert not at.exception, [e.value for e in at.exception]
 assert not at.error, [e.value for e in at.error]
-print('OK', any('Risk band:** `low`' in m.value for m in at.markdown))
+print('OK', any('Risk band:** `medium`' in m.value for m in at.markdown))
 """
     res = _run(code, tmp_path)
     assert res.returncode == 0, res.stderr[-2000:]

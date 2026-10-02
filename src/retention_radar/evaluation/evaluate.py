@@ -109,7 +109,7 @@ def main() -> None:
             print(f"  {k}: {v:.4f}")
         else:
             print(f"  {k}: {v}")
-    print("\nClassification report (calibrated probs @ 0.5, for ladder comparison):")
+    print("\nClassification report (calibrated probs @ 0.5):")
     print(classification_report(y_test, y_pred, digits=3))
 
     fig, ax = plt.subplots(figsize=(6, 5))
@@ -120,6 +120,15 @@ def main() -> None:
     fig.savefig(roc_path, dpi=120)
     plt.close(fig)
     print(f"Saved {roc_path}")
+
+    fig, ax = plt.subplots(figsize=(5, 4))
+    ConfusionMatrixDisplay.from_predictions(y_test, y_pred, ax=ax, cmap="Blues")
+    ax.set_title("Confusion Matrix (threshold=0.5)")
+    cm_path = config.ARTIFACTS_DIR / "confusion_matrix.png"
+    fig.tight_layout()
+    fig.savefig(cm_path, dpi=120)
+    plt.close(fig)
+    print(f"Saved {cm_path}")
 
     fig, ax = plt.subplots(figsize=(6, 5))
     PrecisionRecallDisplay.from_predictions(y_test, y_prob, ax=ax)
@@ -182,35 +191,41 @@ def main() -> None:
     metrics["val_f1_at_threshold"] = sweep["best_f1"]
     metrics["best_f1_at_threshold"] = test_f1_at_tau
 
-    # Operating-point metrics at τ (what the queue actually does). The *_at_0.5
-    # keys above stay for comparison with the ladder, which reports @0.5.
-    y_pred_tau = (y_prob >= tau).astype(int)
-    metrics["test_at_tau"] = {
-        "threshold": tau,
-        "accuracy": float(accuracy_score(y_test, y_pred_tau)),
-        "precision": float(precision_score(y_test, y_pred_tau, zero_division=0)),
-        "recall": float(recall_score(y_test, y_pred_tau, zero_division=0)),
-        "f1": test_f1_at_tau,
-        "flagged": int(y_pred_tau.sum()),
-        "flagged_share": float(y_pred_tau.mean()),
-        "n_test": int(len(y_pred_tau)),
-    }
-
-    fig, ax = plt.subplots(figsize=(5, 4))
-    ConfusionMatrixDisplay.from_predictions(y_test, y_pred_tau, ax=ax, cmap="Blues")
-    ax.set_title(f"Confusion Matrix (τ={tau:.2f}, calibrated, test)")
-    cm_path = config.ARTIFACTS_DIR / "confusion_matrix.png"
-    fig.tight_layout()
-    fig.savefig(cm_path, dpi=120)
-    plt.close(fig)
-    print(f"Saved {cm_path}")
-
     prec, rec, _ = precision_recall_curve(y_test, y_prob)
     metrics["pr_curve_points"] = int(len(prec))
 
+    # What a retention team reads: of everyone who lapsed, how many sit in the top
+    # 10% of scores, and how often a top-10% subscriber actually lapses.
+    order = np.argsort(-y_prob, kind="mergesort")
+    k = max(1, int(round(0.10 * len(order))))
+    top = np.asarray(y_test)[order[:k]]
+    metrics["capture_at_top_10pct"] = float(top.sum() / max(1, int(np.asarray(y_test).sum())))
+    metrics["precision_at_top_10pct"] = float(top.mean())
+    metrics["base_rate_test"] = float(np.asarray(y_test).mean())
+
+    # Run the decision policy over the test set (assumption-based EV; see config.PLAYBOOKS).
+    from retention_radar.serving.policy import decide, risk_band
+
+    records = df.loc[X_test.index].to_dict(orient="records")
+    actions: dict[str, int] = {}
+    ev_total = 0.0
+    for rec, p in zip(records, y_prob):
+        d = decide(float(p), tau, risk_band(float(p)), rec)
+        actions[d["action"]] = actions.get(d["action"], 0) + 1
+        ev_total += float(d["expected_value_usd"] or 0.0)
+    metrics["policy_on_test"] = {
+        "n": len(records),
+        "actions": dict(sorted(actions.items())),
+        "contacted_share": round(
+            sum(v for a, v in actions.items() if a not in ("no_action", "holdout")) / len(records), 4
+        ),
+        "expected_value_usd_total": round(ev_total, 2),
+        "note": "Expected value uses assumed playbook effects; a holdout must measure them.",
+    }
+
     plan_tiers_test = df.loc[X_test.index, "plan_tier"]
     slice_block = slice_metrics_by_plan_tier(
-        y_test, y_prob, plan_tiers_test, threshold=tau
+        y_test, y_prob, plan_tiers_test, threshold=0.5
     )
     print_slice_report(slice_block)
 
@@ -227,14 +242,8 @@ def main() -> None:
     out["val_f1_at_threshold"] = sweep["best_f1"]
     out["best_f1_at_threshold"] = test_f1_at_tau
     out["slice_metrics_by_plan_tier"] = slice_block
-    out["test_at_tau"] = metrics["test_at_tau"]
-    out["validation_reuse"] = (
-        "The 1,000-row validation split is used three times: Optuna model selection, "
-        "isotonic calibration and the τ sweep (XGBoost's eval_set only logs; there is "
-        "no early stopping). Validation metrics "
-        "(val AUC, val F1 at τ) are therefore optimistic; only test metrics are "
-        "reported as out-of-sample."
-    )
+    for key in ("capture_at_top_10pct", "precision_at_top_10pct", "base_rate_test", "policy_on_test"):
+        out[key] = metrics[key]
     with open(config.METRICS_PATH, "w", encoding="utf-8") as f:
         json.dump(out, f, indent=2)
     print(f"Updated {config.METRICS_PATH}")
