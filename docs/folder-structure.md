@@ -28,7 +28,7 @@ retention-radar/
 │   ├── interim/      # empty
 │   └── processed/    # empty
 ├── models/           # committed seed-42 serve bundle
-├── results/          # benchmarks.md, WORKED_EXAMPLES.md, sample packet, plots/
+├── results/          # benchmarks.md, WORKED_EXAMPLES.md, lakehouse-consume-e2e.md, sample packet, plots/
 ├── artifacts/        # runtime output, gitignored
 ├── notebooks/        # exploration only
 ├── docs/             # use case, guides, architecture, model card, data, case study
