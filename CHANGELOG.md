@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-10-03 — lakehouse consume run moves to `results/`
+
+- `docs/e2e/lakehouse-consume.md` → [`results/lakehouse-consume-e2e.md`](results/lakehouse-consume-e2e.md).
+  It is a committed run, so it lives with the other results (next to `lakehouse_e2e_summary.json`),
+  in lowercase kebab-case like the other docs. `docs/e2e/` is gone; every link is updated.
+- Re-captured against radar `main` (`4a947be`, code = `7e3bec8`) and lakehouse `main` (`08bb274`):
+  7,387 rows scored, same action counts, 96 tests passed, CI links for both repos. It also states
+  that drift falls back to SMD because the committed bundle has no `psi_bins`.
+
 ## 2026-10-02 — v2 on main (local-first lakehouse stack)
 
 Radar `main` still read the v1 export (`santosh_inference_record.json`, 22 generic SaaS features),

@@ -36,4 +36,5 @@
 
 ## Results (repo root)
 
-[`../results/`](../results/): benchmarks, worked examples, plots.
+[`../results/`](../results/): benchmarks, worked examples, plots, and the lakehouse consume run
+([`lakehouse-consume-e2e.md`](../results/lakehouse-consume-e2e.md)).

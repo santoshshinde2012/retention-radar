@@ -168,7 +168,7 @@ retention-radar/
 ├── configs/                 # Record schema + action-log schema/template
 ├── data/                    # raw (renewals + worked examples) · use_cases · external
 ├── models/                  # Seed-42 serve bundle + metrics
-├── results/                 # Benchmarks, worked examples, plots
+├── results/                 # Benchmarks, worked examples, lakehouse consume run, plots
 ├── artifacts/               # Runtime output (gitignored)
 ├── docs/                    # Use case, guides, architecture, model card
 └── tests/
@@ -178,10 +178,10 @@ retention-radar/
 
 | Doc | Purpose |
 |-----|---------|
-| [docs/e2e/lakehouse-consume.md](docs/e2e/lakehouse-consume.md) | End-to-end run against the local-data-lakehouse export (rows scored, actions, tests, bundle metrics) |
 | [docs/USE_CASE.md](docs/USE_CASE.md) | The use case, the evidence behind it, and what the synthetic data can and cannot show |
 | [results/benchmarks.md](results/benchmarks.md) | Ladder, calibration, operating point, policy, latency |
 | [results/WORKED_EXAMPLES.md](results/WORKED_EXAMPLES.md) | Maya and Arjun, end to end |
+| [results/lakehouse-consume-e2e.md](results/lakehouse-consume-e2e.md) | Radar main scoring the local-data-lakehouse export: 7,387 rows, actions, tests, CI |
 | [docs/model-card.md](docs/model-card.md) | Intended use + metrics |
 | [docs/guides/start-here.md](docs/guides/start-here.md) | Clone → one command → what to read |
 | [docs/architecture.md](docs/architecture.md) | Train ≠ serve design |
