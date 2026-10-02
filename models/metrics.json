@@ -222,7 +222,7 @@
   "best_f1_at_threshold": 0.32904884318766064,
   "slice_metrics_by_plan_tier": {
     "disclaimer": "Educational segment diagnostics by plan_tier only. NOT a protected-class fairness audit / DPIA / disparate-impact study.",
-    "threshold": 0.5,
+    "threshold": 0.16,
     "min_samples_for_auc": 20,
     "by_plan_tier": {
       "pro": {
@@ -230,8 +230,8 @@
         "n_positive": 129,
         "n_negative": 1034,
         "churn_rate": 0.11092003439380911,
-        "precision": 0.0,
-        "recall": 0.0,
+        "precision": 0.2692307692307692,
+        "recall": 0.4883720930232558,
         "roc_auc": 0.7435038159926829,
         "average_precision": 0.286191284061146,
         "enough_samples_for_auc": true
@@ -241,8 +241,8 @@
         "n_positive": 9,
         "n_negative": 236,
         "churn_rate": 0.036734693877551024,
-        "precision": 0.0,
-        "recall": 0.0,
+        "precision": 0.07692307692307693,
+        "recall": 0.1111111111111111,
         "roc_auc": 0.7721280602636534,
         "average_precision": 0.10769580188284351,
         "enough_samples_for_auc": true
