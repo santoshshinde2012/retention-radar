@@ -42,6 +42,9 @@ volumes, and `radar_consume.sh` cloned radar `main` at `c5dd040` (the merged PR 
 tests passed (101 in 41.7 s), and it scored 7,387 rows with the same action counts. The features and hero sha256
 values matched the ones below.
 
+Run times next to the model's latency: [benchmarks.md](benchmarks.md#table-e-run-times). The whole lakehouse run
+(start-up, memory, disk, CI): [docs/benchmarks.md](https://github.com/santoshshinde2012/local-data-lakehouse/blob/main/docs/benchmarks.md) in local-data-lakehouse.
+
 ## The export it read (v2 contract)
 
 | File | Content | sha256 |

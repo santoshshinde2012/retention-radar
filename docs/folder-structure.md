@@ -34,7 +34,7 @@ retention-radar/
 │                     # lakehouse_e2e_summary.json, sample packet, plots/
 ├── artifacts/        # runtime output, gitignored
 ├── notebooks/        # exploration only
-├── docs/             # use case, guides, architecture, model card, data, case study
+├── docs/             # use case, guides, architecture, model card, data, case study, img/ (UI screenshots)
 └── tests/
 ```
 

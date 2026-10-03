@@ -92,6 +92,10 @@ make use-cases    # one renewal day: queue -> packets -> send export -> outcomes
 make ui           # Streamlit UI on the committed model (Ctrl+C to stop)
 ```
 
+![The Streamlit UI: Santosh's decision packet](docs/img/radar-ui-decision.png)
+
+More screenshots: [docs/README.md](docs/README.md#screenshots).
+
 A quick retrain that leaves the committed `models/` alone:
 
 ```bash
@@ -163,10 +167,11 @@ events, all scored by the committed bundle in one batch.
 | [docs/getting-started.md](docs/getting-started.md) | Install, run, score, and walk one renewal day |
 | [docs/use-case.md](docs/use-case.md) | The business problem, the evidence, and what synthetic data can and cannot show |
 | [docs/architecture.md](docs/architecture.md) | Train and serve boundary, modules, the decision policy |
-| [docs/model-card.md](docs/model-card.md) | Intended use and seed-42 metrics |
+| [docs/model-card.md](docs/model-card.md) | Intended use, data, training setup, seed-42 metrics, holdout design, limitations, versioning |
+| [docs/README.md#screenshots](docs/README.md#screenshots) | The Streamlit UI on the worked example: predict, explain, decision |
 | [docs/data/data-dictionary.md](docs/data/data-dictionary.md) | The 24-field T-7 record |
 | [docs/data/data-foundation-lakehouse.md](docs/data/data-foundation-lakehouse.md) | Building the same table from events in the lakehouse |
-| [results/README.md](results/README.md) | Benchmarks, worked examples, the lakehouse consume run, plots |
+| [results/README.md](results/README.md) | Benchmarks (metrics and run times), worked examples, the lakehouse consume run, plots |
 | [docs/README.md](docs/README.md) | The full docs index, including guides and case studies |
 
 ## How the two repos connect

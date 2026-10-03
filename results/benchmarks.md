@@ -3,7 +3,7 @@
 What the reference run produced and how to read it. Source of truth:
 [`../models/metrics.json`](../models/metrics.json) for metrics and
 [`analysis.json`](analysis.json) (bootstrap, calibrator comparison, deciles, holdout sizes).
-Model card: [`../docs/model-card.md`](../docs/model-card.md). Worked examples:
+Model card: [`../docs/model-card.md`](../docs/model-card.md). UI screenshots: [`../docs/img/`](../docs/README.md#screenshots). Worked examples:
 [`worked-examples.md`](worked-examples.md).
 
 The committed bundle is trained on Linux x86-64 (the CI platform), where `make reproduce`
@@ -110,6 +110,21 @@ renewals, like the use-case pack, is nowhere near either.
 | Warm single-row score + calibrate, p50 | ~2.7 ms on a GitHub Actions runner (host-dependent) |
 | Optuna best trial | `max_depth=5`, `n_estimators=91`, `learning_rate≈0.025` |
 | Optuna best validation AUC | 0.770 |
+
+## Table E: run times
+
+Measured, not estimated. Latency comes from `models/metrics.json` (`latency`: 20 warm-up calls, then 200
+timed single-row score + calibrate calls). The consume rows come from the lakehouse end-to-end runs on
+2026-10-03 on a MacBook Pro (Apple M1 Pro, 16 GB, macOS 26.6.2), listed step by step in [lakehouse-consume-e2e.md](lakehouse-consume-e2e.md#steps-and-timings) and the lakehouse
+[benchmarks](https://github.com/santoshshinde2012/local-data-lakehouse/blob/main/docs/benchmarks.md).
+
+| Quantity | Value |
+|----------|-------|
+| Single-row score + calibrate, p50 / p95 / p99 | 2.73 / 3.28 / 3.46 ms (mean 2.77 ms) |
+| Lakehouse consume: venv install + score 7,387 renewals with the committed bundle | 72.4 s, 73.2 s and 75.9 s (three runs) |
+| `pytest` on the consumer checkout (101 tests) | 38.2 s, 42.3 s and 41.7 s (wall clock of the step) |
+| CI `test` job on `main` (`c5dd040`) | [2 min 7 s](https://github.com/santoshshinde2012/retention-radar/actions/runs/37120399538/job/111195224928) |
+| CI `e2e-local` job on `main` (`c5dd040`, clones the lakehouse and runs it end to end) | [2 min 41 s](https://github.com/santoshshinde2012/retention-radar/actions/runs/37120399538/job/111195224712) |
 
 ## Plots
 
