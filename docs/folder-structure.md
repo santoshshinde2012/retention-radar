@@ -4,9 +4,10 @@ Uses a src layout for the package and the cookiecutter-data-science `data/` laye
 
 ```text
 retention-radar/
-├── README.md, LICENSE, CHANGELOG.md, CONTRIBUTING.md, Makefile
+├── README.md, LICENSE, CHANGELOG.md, CONTRIBUTING.md, SECURITY.md, CODE_OF_CONDUCT.md, Makefile
 ├── pyproject.toml, requirements.txt, requirements.lock, runtime.txt, packages.txt
-├── .env.example, .github/workflows/ci.yml
+├── .env.example, .editorconfig, .pre-commit-config.yaml, .streamlit/config.toml
+├── .github/          # ci.yml, dependabot.yml, issue and pull-request templates
 ├── configs/
 │   ├── schemas/user_record.schema.json   # the 24-field T-7 record
 │   ├── action_log.schema.json
@@ -18,9 +19,10 @@ retention-radar/
 │   ├── features/
 │   ├── training/
 │   ├── evaluation/
-│   └── serving/      # infer, packet, policy, batch_score, action_log, outcomes, api, drift
+│   └── serving/      # infer, scoring, explain, packet, policy, batch_score, action_log, outcomes, api, drift
 ├── app/streamlit_app.py
-├── scripts/          # run_all, run_use_cases, run_lakehouse_e2e, sync_lakehouse_exports, run_local_e2e
+├── scripts/          # run_all, run_use_cases, run_lakehouse_e2e, sync_lakehouse_exports, run_local_e2e,
+│                     # check_docs (naming + links), fix_macos_libomp (called by make setup)
 ├── data/
 │   ├── raw/          # renewals_t7.csv, renewals_all.csv (generated, gitignored); subscribers/santosh.json, arjun.json
 │   ├── use_cases/    # one renewal day: scenarios, invalid records, daily batch, send export, outcomes
@@ -28,7 +30,8 @@ retention-radar/
 │   ├── interim/      # empty
 │   └── processed/    # empty
 ├── models/           # committed seed-42 serve bundle
-├── results/          # benchmarks.md, worked-examples.md, lakehouse-consume-e2e.md, sample packet, plots/
+├── results/          # benchmarks.md, worked-examples.md, lakehouse-consume-e2e.md, analysis.json,
+│                     # lakehouse_e2e_summary.json, sample packet, plots/
 ├── artifacts/        # runtime output, gitignored
 ├── notebooks/        # exploration only
 ├── docs/             # use case, guides, architecture, model card, data, case study

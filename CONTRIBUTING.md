@@ -66,7 +66,7 @@ One convention for the whole repo, checked by `make docs-check` (`scripts/check_
 
 | Where | Rule | Examples |
 |---|---|---|
-| Repo root, standard files | Conventional uppercase names | `README.md`, `CHANGELOG.md`, `CONTRIBUTING.md`, `LICENSE` |
+| Repo root, standard files | Conventional uppercase names | `README.md`, `CHANGELOG.md`, `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, `LICENSE` |
 | Any folder, directory index | `README.md` | `docs/README.md`, `results/README.md` |
 | Other `.md` and `.mmd` files | Lowercase kebab-case; dots only between parts | `docs/use-case.md`, `results/worked-examples.md` |
 | Everything under `docs/` and `results/` | Lowercase, no spaces (`a-z 0-9 . _ -`) | `results/plots/pr_curve.png` |

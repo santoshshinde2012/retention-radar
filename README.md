@@ -255,6 +255,8 @@ surface, and the lakehouse E2E against the local-data-lakehouse branch of the sa
 
 Contributions are welcome. [CONTRIBUTING.md](CONTRIBUTING.md) covers set-up, tests, the file-naming
 convention (`make docs-check`) and the diagram rules. Changes are recorded in [CHANGELOG.md](CHANGELOG.md).
+Report security problems privately as described in [SECURITY.md](SECURITY.md); everyone taking part follows the
+[code of conduct](CODE_OF_CONDUCT.md).
 
 ## Licence
 
