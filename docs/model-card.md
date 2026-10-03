@@ -106,4 +106,4 @@ Committed copies live under `results/plots/` (runtime dumps in `artifacts/`).
 - [renewal-worked-examples.md](case-study/renewal-worked-examples.md)
 - [algorithm-landscape.md](guides/algorithm-landscape.md) — what is on the ladder vs deferred
 - [../results/benchmarks.md](../results/benchmarks.md)
-- [../results/WORKED_EXAMPLES.md](../results/WORKED_EXAMPLES.md)
+- [../results/worked-examples.md](../results/worked-examples.md)

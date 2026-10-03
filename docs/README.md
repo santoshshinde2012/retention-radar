@@ -4,7 +4,7 @@
 
 | Doc | Purpose |
 |-----|---------|
-| [USE_CASE.md](USE_CASE.md) | What is modelled, why, and the sources behind it |
+| [use-case.md](use-case.md) | What is modelled, why, and the sources behind it |
 | [guides/start-here.md](guides/start-here.md) | Clone, run one command, what to read next |
 | [getting-started.md](getting-started.md) | Install, run, score, walk one renewal day |
 | [folder-structure.md](folder-structure.md) | Where things live |
@@ -31,7 +31,7 @@
 
 | Doc | Purpose |
 |-----|---------|
-| [case-study/renewal-worked-examples.md](case-study/renewal-worked-examples.md) | Maya and Arjun through the serve path |
+| [case-study/renewal-worked-examples.md](case-study/renewal-worked-examples.md) | Santosh and Arjun through the serve path |
 | [case-study/single-record-checklist.md](case-study/single-record-checklist.md) | What one T-7 record goes through |
 
 ## Results (repo root)

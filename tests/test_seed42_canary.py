@@ -14,7 +14,7 @@ from pathlib import Path
 import pytest
 
 from retention_radar import config
-from retention_radar.data.generate import arjun_profile, maya_profile
+from retention_radar.data.generate import arjun_profile, santosh_profile
 from retention_radar.serving.infer import load_model_bundle, predict_user
 from retention_radar.serving.policy import decide, risk_band
 from retention_radar.training.calibrate import load_calibrator
@@ -49,12 +49,15 @@ def _score(canary, profile):
     return raw, cal, band, decide(cal, canary["metrics"]["best_f1_threshold"], band, profile)
 
 
-def test_maya_gets_the_limit_reset(canary):
-    raw, cal, band, d = _score(canary, maya_profile())
+def test_santosh_is_held_out_from_the_limit_reset(canary):
+    raw, cal, band, d = _score(canary, santosh_profile())
     assert abs(raw - 0.717) <= TOL_PROB, raw
     assert abs(cal - 0.288) <= TOL_PROB, cal
     assert band == "medium"
-    assert d["action"] == "limit_reset" and d["auto_action"] == "none"
+    # sub_santosh hashes into the 10% holdout (control group): nothing is sent, and the
+    # playbook he would have got is still recorded.
+    assert d["action"] == "holdout" and d["holdout"] is True and d["auto_action"] == "none"
+    assert d["would_have_sent"] == "limit_reset"
     assert [c["playbook"] for c in d["candidates"]][:2] == ["limit_reset", "cancel_flow_discount"]
 
 

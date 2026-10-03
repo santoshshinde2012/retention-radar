@@ -1,6 +1,6 @@
 {
-  "user_id": "sub_maya",
-  "user_name": "Maya (worked example)",
+  "user_id": "sub_santosh",
+  "user_name": "Santosh (worked example)",
   "validation": {
     "ok": true,
     "errors": [],
@@ -9,8 +9,8 @@
     "required_keys_present": true
   },
   "payload": {
-    "user_id": "sub_maya",
-    "user_name": "Maya (worked example)",
+    "user_id": "sub_santosh",
+    "user_name": "Santosh (worked example)",
     "plan_tier": "pro",
     "renewals_completed": 3,
     "active_days_7d": 2,
@@ -128,8 +128,8 @@
   "decision": {
     "risk_band": "medium",
     "auto_action": "none",
-    "holdout": false,
-    "expected_value_usd": 5.2,
+    "holdout": true,
+    "expected_value_usd": null,
     "candidates": [
       {
         "playbook": "limit_reset",
@@ -146,9 +146,8 @@
     ],
     "would_have_sent": "limit_reset",
     "hitl_required": false,
-    "action": "limit_reset",
-    "playbook_label": "One-time usage-limit reset with a short note",
-    "rationale": "P(lapse)=0.288 (\u03c4=0.160). Highest expected value among ['limit_reset', 'cancel_flow_discount', 'in_app_usage_tips']: One-time usage-limit reset with a short note (\u2248$5.20, assumption-based). Sent by the lifecycle tool."
+    "action": "holdout",
+    "rationale": "Eligible (P(lapse)=0.288) but in the 10% holdout. No contact, so the playbooks' lift can be measured against this group."
   },
   "meta": {
     "model_path": "retention-radar/models/churn_xgb.joblib",

@@ -22,13 +22,13 @@ retention-radar/
 ├── app/streamlit_app.py
 ├── scripts/          # run_all, run_use_cases, run_lakehouse_e2e, sync_lakehouse_exports, run_local_e2e
 ├── data/
-│   ├── raw/          # renewals_t7.csv, renewals_all.csv (generated, gitignored); subscribers/maya.json, arjun.json
+│   ├── raw/          # renewals_t7.csv, renewals_all.csv (generated, gitignored); subscribers/santosh.json, arjun.json
 │   ├── use_cases/    # one renewal day: scenarios, invalid records, daily batch, send export, outcomes
 │   ├── external/     # lakehouse gold exports (gitignored)
 │   ├── interim/      # empty
 │   └── processed/    # empty
 ├── models/           # committed seed-42 serve bundle
-├── results/          # benchmarks.md, WORKED_EXAMPLES.md, lakehouse-consume-e2e.md, sample packet, plots/
+├── results/          # benchmarks.md, worked-examples.md, lakehouse-consume-e2e.md, sample packet, plots/
 ├── artifacts/        # runtime output, gitignored
 ├── notebooks/        # exploration only
 ├── docs/             # use case, guides, architecture, model card, data, case study

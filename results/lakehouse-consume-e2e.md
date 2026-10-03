@@ -1,64 +1,68 @@
 # Lakehouse consume run (end to end)
 
-Radar `main` scoring the v2 export of
-[local-data-lakehouse](https://github.com/santoshshinde2012/local-data-lakehouse) `main` with the
-committed seed-42 bundle. No retraining: this is the consume path only (sync → ingest → batch score).
-For a retrain on lakehouse gold, see [`lakehouse_e2e_summary.json`](lakehouse_e2e_summary.json)
-(a separate run, 2026-09-30, not the published ladder).
+Retention Radar scoring the v2 export of
+[local-data-lakehouse](https://github.com/santoshshinde2012/local-data-lakehouse) with the committed
+seed-42 bundle. No retraining: this is the consume path only (sync → ingest → batch score). For a retrain
+on lakehouse gold, see [`lakehouse_e2e_summary.json`](lakehouse_e2e_summary.json) (a separate Linux run,
+not the published ladder; CI `e2e-local` re-runs it on every pull request and compares).
 
-Captured 2026-10-03 00:49–00:53 IST on a MacBook Pro (Apple M1 Pro, macOS 26.6.2), Docker Compose,
-starting from the lakehouse's existing volumes.
+**This run:** 2026-10-03 (IST), on a MacBook Pro (Apple M1 Pro, macOS 26.6.2, Docker Desktop 29.8.1), as part
+of the lakehouse's full end-to-end run from empty volumes (`make purge` first). All numbers below are from
+that run. The lakehouse write-up of the same run: its
+[RESULTS.md](https://github.com/santoshshinde2012/local-data-lakehouse/blob/chore/sample-customer-santosh/RESULTS.md).
 
-| Repo | Ref | Commit |
+| Repo | Branch | Commit |
 |---|---|---|
-| local-data-lakehouse | `main` | `08bb274` (squash merge of [#13](https://github.com/santoshshinde2012/local-data-lakehouse/pull/13)) |
-| retention-radar | `main` | `4a947be` (code identical to `7e3bec8`, the merge of [#21](https://github.com/santoshshinde2012/retention-radar/pull/21); `4a947be` only adds docs) |
+| local-data-lakehouse | `chore/sample-customer-santosh` ([PR #16](https://github.com/santoshshinde2012/local-data-lakehouse/pull/16)) | `2fcb92f` for the pipeline steps; `6c57111` for the second consume (README only in between) |
+| retention-radar | `chore/sample-customer-santosh` ([PR #24](https://github.com/santoshshinde2012/retention-radar/pull/24)) | `98df572` for the first consume, `07d8205` for the second (README, `make setup` and docs only in between) |
 
-`pipelines/radar_consume.sh` in the lakehouse clones radar `main` (override with `RADAR_REF`),
-builds a Python 3.12 venv, copies the export into `data/external/`, then runs `cli.ingest` with
-`CHURN_DATA_SOURCE=lakehouse` and `cli.batch_score`.
+`pipelines/radar_consume.sh` in the lakehouse clones radar at `RADAR_REF`, builds a Python 3.12 venv,
+copies the export into `data/external/`, then runs `cli.ingest` with `CHURN_DATA_SOURCE=lakehouse` and
+`cli.batch_score`.
 
 ## Steps and timings
 
 | Step | Exit | Seconds |
 |---|---|---|
-| `make up-full` | 0 | 17.9 |
-| `make churn-sample` | 0 | 2.2 |
-| `make churn-e2e` (Spark 4.1.3 + Iceberg 1.12.0 via Lakekeeper; writes `data/export/`) | 0 | 109.3 |
-| `scripts/check_churn_export.py --strict` | 0 | n/a |
-| `pipelines/radar_consume.sh data/export /tmp/radar-main-e2e` (clone + venv + score) | 0 | 80.2 |
-| radar pytest on that checkout | 0 | 38.3 |
-| `make down` (volumes kept) | 0 | 4.1 |
+| `make purge`, then `make up-light` and `make up-full` (empty volumes) | 0 | 1.1 + 8.0 + 11.6 |
+| `make churn-sample` (8,001 subscriptions, seed 42) | 0 | 1.9 |
+| `make churn-e2e` (Spark 4.1.3 + Iceberg 1.12.0 via Lakekeeper; writes `data/export/`) | 0 | 85.0 |
+| `scripts/check_churn_export.py --strict` | 0 | 0.7 |
+| `make churn-parity` (Spark SQL vs pandas, 8,001 × 27 cells) | 0 | 15.3 |
+| `radar_consume.sh` on the Spark export, radar `98df572` (clone + venv + score) | 0 | 72.4 |
+| radar pytest on that checkout | 0 | 38.2 (101 passed) |
+| `make churn-gold-local` (pandas twin export) | 0 | 3.9 |
+| `radar_consume.sh` on the pandas export, radar `07d8205` | 0 | 73.2 |
+| radar pytest on that checkout | 0 | 42.3 (101 passed) |
+
+Both consumes loaded 7,387 rows (churn rate 0.074) and produced the same action counts.
 
 ## The export it read (v2 contract)
-
-```text
-Churn export contract OK (7387 renewals, 25 cols) → .../local-data-lakehouse/data/export
-```
 
 | File | Content | sha256 |
 |---|---|---|
 | `churn_user_features.csv` | 7,387 renewals, 25 columns (22 T-7 features + ids + `churned`) | `742f9028e4216d32ad6029007ee3b57414d1772344005ea907a5e5cf80eba18d` |
-| `hero_inference_record.json` | `sub_maya`, 24 keys, no label | `49abdddc526827375b2f8d442fda6359cc2532353d528207545b204e3eb10878` |
-| `churn_renewals_audit.csv` | Lakehouse-side audit (radar does not read it) | `e07dcfceb32c00a4b4ab34615ef7a9a40ea3ba165fa9468a6ab3db30cd5c12f2` |
+| `hero_inference_record.json` | `sub_santosh`, 24 keys, no label | `0db4f2de0cdec5e15d31ef85ff2de814525f854de734b28414ac0bcaf7abcfe5` |
+| `churn_renewals_audit.csv` | Lakehouse-side audit (radar does not read it; has a `built_at` time, so its hash changes every run) | `f081a52a725ad699e25b737e0297ceced57b3d7bfb471cb8171d980fd9593656` |
 
-The features and hero hashes match the earlier Spark export at lakehouse `7f5fc43`, so the export is
-deterministic across these commits.
+These are the hashes at the end of the run. The features and hero files have the same sha256 as in
+the previous runs, so the export is deterministic. The hero is `holdout` in radar: `sub_santosh` hashes
+into the 10% control group (the limit reset is what he would have got).
 
-## Sync, ingest, batch score
+## Sync, ingest, batch score (second consume)
 
 ```text
-$ ./pipelines/radar_consume.sh data/export /tmp/radar-main-e2e
-retention-radar ref: main
-retention-radar commit: 4a947be
+$ env RADAR_REF=chore/sample-customer-santosh ./pipelines/radar_consume.sh data/export /tmp/radar-e2e
+retention-radar ref: chore/sample-customer-santosh
+retention-radar commit: 07d8205
 XGBoost/LightGBM cannot load libomp; using scikit-learn's bundled copy (or: brew install libomp)
-Synced -> /private/tmp/radar-main-e2e/data/external/churn_user_features.csv
-Synced -> /private/tmp/radar-main-e2e/data/external/hero_inference_record.json
-Loaded 7387 rows from /private/tmp/radar-main-e2e/data/external/churn_user_features.csv
+Synced -> /tmp/radar-e2e/data/external/churn_user_features.csv
+Synced -> /tmp/radar-e2e/data/external/hero_inference_record.json
+Loaded 7387 rows from /tmp/radar-e2e/data/external/churn_user_features.csv
 CHURN_DATA_SOURCE=lakehouse
 Churn rate: 0.074
 ... (head of the frame trimmed)
-Scored 7387 rows → /tmp/radar-main-e2e/scores.csv (queue order: rank 1 = highest risk)
+Scored 7387 rows → /tmp/radar-e2e/scores.csv (queue order: rank 1 = highest risk)
 action
 no_action               6499
 cancel_flow_discount     410
@@ -67,7 +71,7 @@ pause_offer              111
 holdout                   87
 personal_email             4
 auto_action unique: ['none']
-==> radar scored 7387 rows -> /tmp/radar-main-e2e/scores.csv
+==> radar scored 7387 rows -> /tmp/radar-e2e/scores.csv
 ```
 
 801 of 7,387 renewals (10.8 %) get a playbook action, 87 (1.2 %) are held out, and 6,499 get none.
@@ -76,9 +80,10 @@ auto_action unique: ['none']
 ## Tests on that checkout
 
 ```text
-$ cd /tmp/radar-main-e2e && CHURN_DATA_SOURCE=synthetic PYTHONPATH=src .venv/bin/python -m pytest -q -p no:cacheprovider
+$ cd /tmp/radar-e2e && git log -1 --oneline && CHURN_DATA_SOURCE=synthetic PYTHONPATH=src .venv/bin/python -m pytest -q -p no:cacheprovider
+07d8205 docs: professional README; make setup fixes OpenMP on macOS without Homebrew libomp
 ... (warnings summary trimmed: deprecation notices from fastapi, shap, sklearn)
-96 passed, 7 warnings in 36.95s
+101 passed, 7 warnings in 40.93s
 ```
 
 ## Committed model bundle (`models/metrics.json`, synthetic seed-42 test split)
@@ -96,12 +101,9 @@ These describe the bundle that scored the export. They are not measured on lakeh
 
 ## CI
 
-| Where | Run | Result |
-|---|---|---|
-| radar `main` at `4a947be` | [37051673526](https://github.com/santoshshinde2012/retention-radar/actions/runs/37051673526) | `test` and `e2e-local` green |
-| radar `main` at `7e3bec8` | [37029880425](https://github.com/santoshshinde2012/retention-radar/actions/runs/37029880425) | `test` and `e2e-local` green |
-| radar PR #21 head `65cab25` | [37019854227](https://github.com/santoshshinde2012/retention-radar/actions/runs/37019854227) | `test` and `e2e-local` green |
-| lakehouse `main` at `08bb274` | [37046795038](https://github.com/santoshshinde2012/local-data-lakehouse/actions/runs/37046795038), [`t0-unit` job](https://github.com/santoshshinde2012/local-data-lakehouse/actions/runs/37046795038/job/110970109891) | all green; step "Retention Radar consumes the export": radar `7e3bec8`, 7,387 rows scored |
+The CI runs for this branch are listed in [PR #24](https://github.com/santoshshinde2012/retention-radar/pull/24)
+(jobs `test` and `e2e-local`; `e2e-local` clones the lakehouse branch of the same name and re-runs the
+lakehouse E2E on Linux).
 
 ## Known gaps
 

@@ -30,7 +30,7 @@ def resolve_users_csv(path: Path | None = None) -> Path:
 
 
 def resolve_hero_json(name: str | None = None, path: Path | None = None) -> Path:
-    """Scoring-time JSON for a worked example (``maya`` / ``arjun``)."""
+    """Scoring-time JSON for a worked example (``santosh`` / ``arjun``)."""
     if path is not None:
         return Path(path)
     key = (name or config.DEFAULT_HERO).lower()

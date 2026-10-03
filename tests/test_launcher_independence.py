@@ -32,17 +32,17 @@ def test_committed_pickles_do_not_reference_src_package():
         assert b"src.retention_radar" not in (config.SEED_MODELS_DIR / name).read_bytes(), name
 
 
-def test_bundle_scores_maya_outside_repo_root(tmp_path):
+def test_bundle_scores_santosh_outside_repo_root(tmp_path):
     code = f"""
 import json, sys
 assert {str(ROOT)!r} not in sys.path and '' not in sys.path[1:]
 from retention_radar.serving.packet import build_decision_packet
-p = build_decision_packet(json.load(open({str(ROOT / 'data/raw/subscribers/maya.json')!r})))
+p = build_decision_packet(json.load(open({str(ROOT / 'data/raw/subscribers/santosh.json')!r})))
 print(round(p['scoring']['churn_probability_calibrated'], 3), p['decision']['action'])
 """
     res = _run(code, tmp_path)
     assert res.returncode == 0, res.stderr[-2000:]
-    assert res.stdout.split()[-2:] == ["0.288", "limit_reset"]
+    assert res.stdout.split()[-2:] == ["0.288", "holdout"]
 
 
 def test_streamlit_app_boots_like_streamlit_cloud(tmp_path):

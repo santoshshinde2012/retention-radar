@@ -1,5 +1,54 @@
 # Changelog
 
+## 2026-10-03 — lakehouse consume results from the empty-volume run
+
+- `results/lakehouse-consume-e2e.md` now records the 2026-10-03 local-data-lakehouse run from empty
+  volumes on the branch heads (lakehouse `2fcb92f` / `6c57111`, radar `98df572` / `07d8205`): 7,387 rows
+  scored twice (Spark export, then the pandas twin export) with the same action counts, 101 tests passed
+  on each checkout, and this run's export hashes.
+
+## 2026-10-03 — README rewrite; `make setup` works on a Mac without Homebrew's libomp
+
+- README rewritten: value statement, badges (CI, licence, Python), who it is for, the pipeline diagram, a
+  tested quick start, data sources and commands, results, docs map, how the lakehouse connects (with its
+  flow diagram), testing and CI, troubleshooting, contributing.
+- `scripts/fix_macos_libomp.sh`, now part of `make setup`: on macOS without `brew install libomp`, it
+  points the XGBoost and LightGBM wheels at scikit-learn's bundled `libomp` (venv-local, the same fix the
+  lakehouse's `radar_consume.sh` applies). Found while testing the quick start in a fresh clone, where
+  `make test`, `make infer` and `make use-cases` failed to load XGBoost. No-op on Linux.
+
+## 2026-10-03 — one file-naming convention; link and naming checks
+
+- Renamed with `git mv`: `docs/USE_CASE.md` → `docs/use-case.md`, `results/WORKED_EXAMPLES.md` →
+  `results/worked-examples.md`. Links, the notebook and `docs_gen` (which writes the model card) follow.
+- Convention in [CONTRIBUTING.md](CONTRIBUTING.md#file-names): standard root files keep their uppercase
+  names; other `.md` files are lowercase kebab-case; files under `docs/` and `results/` are lowercase;
+  data is `snake_case`; Python follows PEP 8.
+- `scripts/check_docs.py` (`make docs-check`) checks the names and every relative Markdown link and
+  anchor; `tests/test_file_naming.py` runs it in pytest and CI runs it as a step in the `test` job.
+- Diagrams: new [docs/diagrams.md](docs/diagrams.md) (the palette and rules shared with the lakehouse) and
+  `tests/test_mermaid_diagrams.py`. The architecture flow is redrawn in that palette as the pipeline
+  diagram (train → bundle → serve → surfaces), and
+  [docs/data/data-foundation-lakehouse.md](docs/data/data-foundation-lakehouse.md) gains the
+  lakehouse-to-radar flow.
+
+## 2026-10-03 — sample customer renamed to `sub_santosh`; the worked example is a holdout case
+
+- The worked example's record id is now `sub_santosh` (was a different sample name; files, docs and
+  tests follow, e.g. `data/raw/subscribers/santosh.json`, `results/santosh_decision_packet.sample.json`).
+- The new id hashes into bucket 8 of 100, inside the 10% holdout, so the committed policy holds him
+  back: action `holdout`, nothing sent, `would_have_sent: limit_reset`. Score, band and drivers are
+  unchanged (0.717 → 0.288, medium). No policy change: the worked example is now written as a
+  control-group case that shows the playbook he would have got.
+- Use-case pack: the `santosh_capped_pro` scenario expects medium / `holdout` and the build checks
+  `would_have_sent == limit_reset`; the scenario table shows "holdout (would have sent ...)". The daily
+  queue moves one row: `limit_reset` 36 → 35, `holdout` 5 → 6.
+- `results/lakehouse_e2e_summary.json`: worked-example action `limit_reset` → `holdout`; the training
+  numbers are unchanged (the lakehouse features file has the same sha256). CI `e2e-local` re-runs the
+  lakehouse E2E on Linux against the lakehouse branch of the same name and compares.
+- `results/lakehouse-consume-e2e.md`: new hero-record sha256 (it carries the id and name).
+- Tests: two checks that used the new name as an "unknown" value now use other values.
+
 ## 2026-10-03 — lakehouse consume run moves to `results/`
 
 - `docs/e2e/lakehouse-consume.md` → [`results/lakehouse-consume-e2e.md`](results/lakehouse-consume-e2e.md).
@@ -52,10 +101,10 @@ where noted.
   `pause_offer`, `cancel_flow_discount`, `personal_email` for Ultra only), with a
   deterministic 10% holdout. Bands are low < 0.10 ≤ medium < 0.30 ≤ high. `auto_action` is
   always `none`; `hitl_required` is true only for `personal_email`.
-- Worked examples: Maya (Pro, capped, first renewal since the cap cut; 0.717 → 0.288,
+- Worked examples: Santosh (Pro, capped, first renewal since the cap cut; 0.717 → 0.288,
   medium, `limit_reset`) and Arjun (steady Pro+; 0.124 → 0.025, low, `no_action`) replace
-  the earlier single example. Files: `data/raw/subscribers/maya.json`, `arjun.json`;
-  `--user maya|arjun`; `make infer` writes `artifacts/maya_decision_packet.json`.
+  the earlier single example. Files: `data/raw/subscribers/santosh.json`, `arjun.json`;
+  `--user santosh|arjun`; `make infer` writes `artifacts/santosh_decision_packet.json`.
 - Renames: packet key `hitl` → `decision`; queue column `hitl_action` → `action`, plus
   `holdout`, `would_have_sent`, `expected_value_usd`; `serving/hitl_log.py` →
   `serving/action_log.py` and `cli.hitl_log` → `cli.action_log` (columns `user_id, p_cal,
@@ -69,14 +118,14 @@ where noted.
   invalid records, `daily_t7_batch.csv`, `actions_taken.csv` (send export) and
   `renewal_outcomes.csv` (simulated from the assumed playbook effects).
 - Results and docs: `results/SANTOSH_ANALYSIS.md` → `results/WORKED_EXAMPLES.md`;
-  `results/maya_decision_packet.sample.json`; `docs/case-study/renewal-worked-examples.md`;
+  `results/santosh_decision_packet.sample.json`; `docs/case-study/renewal-worked-examples.md`;
   new `docs/USE_CASE.md`; guides rewritten for the new use case. Notebook renamed to
   `notebooks/01_explore_renewals.ipynb`.
 - Lakehouse: the local-data-lakehouse export must now produce the v2 contract
   (`churn_user_features.csv` with the 24 fields + `churned`, and
   `hero_inference_record.json`), built from raw billing + usage events as of T-7.
   `results/lakehouse-e2e-summary.json` refreshed from that run: 7,387 renewals, calibrated
-  test AUC 0.726, Maya 0.210 → `limit_reset`.
+  test AUC 0.726, Santosh 0.210 → `limit_reset`.
 - Latency: warm single-row score + calibrate, p50 about 2.7 ms on a GitHub Actions runner.
 - New `python -m retention_radar.cli.analysis` (run by `run_all.sh`; committed copy
   `results/analysis.json`): paired bootstrap of logistic regression vs tuned XGBoost,

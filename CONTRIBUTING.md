@@ -59,6 +59,29 @@ committed `results/lakehouse_e2e_summary.json`, and needs the lakehouse repo's v
 git checkout -- results/lakehouse_e2e_summary.json   # unless you mean to publish it
 ```
 
+## File names
+
+One convention for the whole repo, checked by `make docs-check` (`scripts/check_docs.py`), by
+`tests/test_file_naming.py` in pytest, and by a CI step in the `test` job:
+
+| Where | Rule | Examples |
+|---|---|---|
+| Repo root, standard files | Conventional uppercase names | `README.md`, `CHANGELOG.md`, `CONTRIBUTING.md`, `LICENSE` |
+| Any folder, directory index | `README.md` | `docs/README.md`, `results/README.md` |
+| Other `.md` and `.mmd` files | Lowercase kebab-case; dots only between parts | `docs/use-case.md`, `results/worked-examples.md` |
+| Everything under `docs/` and `results/` | Lowercase, no spaces (`a-z 0-9 . _ -`) | `results/plots/pr_curve.png` |
+| Data files | Lowercase `snake_case` | `results/lakehouse_e2e_summary.json`, `data/use_cases/personas.json` |
+| Python | PEP 8: `snake_case.py` modules, tests `test_*.py` | `src/retention_radar/docs_gen.py` |
+| Shell scripts | Lowercase `snake_case.sh` | `scripts/run_local_e2e.sh` |
+
+Rename with `git mv` so history follows the file, then run `make docs-check`: it also fails on any
+relative link or `#anchor` in a tracked Markdown file that no longer resolves.
+
+## Diagrams
+
+Mermaid diagrams follow [docs/diagrams.md](docs/diagrams.md): the shared palette, GitHub-safe syntax,
+and a render check with mermaid-cli. `tests/test_mermaid_diagrams.py` checks every Mermaid block.
+
 ## Conventions
 
 - Open-source tools only in the core path. See [docs/guides/e2e-free-platforms.md](docs/guides/e2e-free-platforms.md).

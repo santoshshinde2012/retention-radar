@@ -61,7 +61,7 @@ def _r4(x):
 
 art = Path("artifacts/lakehouse_run")
 metrics_path = art / "metrics.json"
-packet_path = art / "maya_decision_packet.json"
+packet_path = art / "santosh_decision_packet.json"
 summary_path = Path(os.environ.get("LAKEHOUSE_SUMMARY_PATH", "results/lakehouse_e2e_summary.json"))
 
 metrics = {}

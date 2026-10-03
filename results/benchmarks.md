@@ -4,7 +4,7 @@ What the reference run produced and how to read it. Source of truth:
 [`../models/metrics.json`](../models/metrics.json) for metrics and
 [`analysis.json`](analysis.json) (bootstrap, calibrator comparison, deciles, holdout sizes).
 Model card: [`../docs/model-card.md`](../docs/model-card.md). Worked examples:
-[`WORKED_EXAMPLES.md`](WORKED_EXAMPLES.md).
+[`worked-examples.md`](worked-examples.md).
 
 The committed bundle is trained on Linux x86-64 (the CI platform), where `make reproduce`
 matches it exactly. On other CPUs (for example Apple Silicon) the tree libraries and the

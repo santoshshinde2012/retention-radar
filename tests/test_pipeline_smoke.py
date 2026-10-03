@@ -12,8 +12,8 @@ from retention_radar.cli.train import main as train_main
 from retention_radar.data.generate import (
     arjun_profile,
     generate_renewals,
-    maya_profile,
     model_table,
+    santosh_profile,
 )
 from retention_radar.data.ingest import validate_users
 from retention_radar.features.transform import prepare_xy
@@ -78,9 +78,9 @@ def tiny_data(tmp_path, monkeypatch):
     monkeypatch.setenv("N_OPTUNA_TRIALS", "3")
 
     model_table(generate_renewals(n=1500, seed=42)).to_csv(users_csv, index=False)
-    (hero_dir / "maya.json").write_text(json.dumps(maya_profile()), encoding="utf-8")
+    (hero_dir / "santosh.json").write_text(json.dumps(santosh_profile()), encoding="utf-8")
     (hero_dir / "arjun.json").write_text(json.dumps(arjun_profile()), encoding="utf-8")
-    return {k.lower(): v for k, v in paths.items() if isinstance(v, Path)} | {"maya_json": hero_dir / "maya.json"}
+    return {k.lower(): v for k, v in paths.items() if isinstance(v, Path)} | {"santosh_json": hero_dir / "santosh.json"}
 
 
 def test_ai_tool_features_in_config():
@@ -153,7 +153,7 @@ def test_train_evaluate_and_packet(tiny_data):
     assert set(analysis["holdout"]["power"]) == {"limit_reset", "cancel_flow_discount"}
     assert analysis["calibration"]["distinct_values_platt"] >= analysis["calibration"]["distinct_values_isotonic"]
 
-    profile = json.loads(tiny_data["maya_json"].read_text(encoding="utf-8"))
+    profile = json.loads(tiny_data["santosh_json"].read_text(encoding="utf-8"))
     bundle = load_model_bundle(tiny_data["model_path"])
     calibrator = load_calibrator(tiny_data["calibrator_path"])
     result = predict_user(profile, bundle, calibrator=calibrator)
@@ -170,7 +170,7 @@ def test_train_evaluate_and_packet(tiny_data):
 
 
 def test_worked_example_profiles_match_contract():
-    for fn in (maya_profile, arjun_profile):
+    for fn in (santosh_profile, arjun_profile):
         p = fn()
         assert set(p) == set(config.INFERENCE_REQUIRED_KEYS)
         assert "churned" not in p

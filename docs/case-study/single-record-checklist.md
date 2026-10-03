@@ -31,7 +31,7 @@ What one T-7 record goes through in this repo, and what is deliberately left out
 ```bash
 ./scripts/run_all.sh
 pytest -q
-python -m retention_radar.cli.single_record --user maya
+python -m retention_radar.cli.single_record --user santosh
 python -m retention_radar.cli.single_record --dir data/use_cases/invalid   # all held
 make use-cases
 ```

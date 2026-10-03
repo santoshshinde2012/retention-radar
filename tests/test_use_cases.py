@@ -190,12 +190,13 @@ def test_api_batch_and_action_flow(client, manifest, tmp_path):
     assert len(body["queue"]) == db["valid_rows"] and len(body["rejected"]) == db["invalid_rows"]
     assert [q["rank"] for q in body["queue"][:3]] == [1, 2, 3]
 
-    maya = next(p for p in manifest["personas"] if p["id"] == "maya_capped_pro")["record"]["user_id"]
-    rv = client.post("/v1/churn/actions", json={"user_id": maya, "executed_by": "lifecycle-tool",
-                                                "action_taken": "limit_reset", "notes": "sent"})
+    santosh = next(p for p in manifest["personas"] if p["id"] == "santosh_capped_pro")["record"]["user_id"]
+    rv = client.post("/v1/churn/actions", json={"user_id": santosh, "executed_by": "none",
+                                                "action_taken": "holdout", "notes": "holdout: nothing sent"})
     assert rv.status_code == 200, rv.text
     logged = rv.json()["logged"]
-    assert logged["action_suggested"] == "limit_reset" and logged["band"] == "medium"
+    assert logged["action_suggested"] == "holdout" and logged["band"] == "medium"
+    assert logged["would_have_sent"] == "limit_reset"
     assert (tmp_path / "action_log.csv").exists()
 
     missing = client.post("/v1/churn/actions", json={"user_id": "never_scored", "executed_by": "x",

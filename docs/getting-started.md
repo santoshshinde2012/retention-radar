@@ -3,7 +3,7 @@
 Retention Radar scores paying subscribers of a monthly AI coding assistant plan seven
 days before renewal (T-7) and suggests one approved playbook, a holdout, or nothing.
 The data is synthetic (seed 42). The service never sends anything: `auto_action` is
-always `none`. Background: [USE_CASE.md](USE_CASE.md).
+always `none`. Background: [use-case.md](use-case.md).
 
 ## 1. Install
 
@@ -32,7 +32,7 @@ CHURN_DATA_SOURCE=synthetic ./scripts/run_all.sh
 ```
 
 Generate → ingest → train → evaluate → slices → explain → benchmark → drift check →
-decision packets for Maya and Arjun. Without `RETENTION_RADAR_ARTIFACT_DIR` it retrains
+decision packets for Santosh and Arjun. Without `RETENTION_RADAR_ARTIFACT_DIR` it retrains
 into `models/` and replaces the committed bundle. For a fast smoke run that leaves
 `models/` alone:
 
@@ -48,11 +48,11 @@ Cite `models/metrics.json`. Explanation of the numbers: [results/benchmarks.md](
 ```bash
 make infer
 # same as:
-python -m retention_radar.cli.single_record --user maya --out artifacts/maya_decision_packet.json
+python -m retention_radar.cli.single_record --user santosh --out artifacts/santosh_decision_packet.json
 ```
 
-Maya: calibrated P(lapse) 0.288, band medium, action `limit_reset`. `--user arjun` gives
-0.025, low, `no_action`. Walkthrough: [results/WORKED_EXAMPLES.md](../results/WORKED_EXAMPLES.md).
+Santosh: calibrated P(lapse) 0.288, band medium, action `holdout` (he is in the 10% control group; `would_have_sent` is `limit_reset`). `--user arjun` gives
+0.025, low, `no_action`. Walkthrough: [results/worked-examples.md](../results/worked-examples.md).
 
 ## 4. UI and tests
 

@@ -86,10 +86,10 @@ Order used at train / infer time:
 
 ## Worked examples (scoring-time records, no label)
 
-| Field | maya | arjun |
+| Field | santosh | arjun |
 |-------|---|---|
-| `user_id` | sub_maya | sub_arjun |
-| `user_name` | Maya (worked example) | Arjun (worked example) |
+| `user_id` | sub_santosh | sub_arjun |
+| `user_name` | Santosh (worked example) | Arjun (worked example) |
 | `plan_tier` | pro | pro_plus |
 | `renewals_completed` | 3 | 12 |
 | `active_days_7d` | 2 | 5 |

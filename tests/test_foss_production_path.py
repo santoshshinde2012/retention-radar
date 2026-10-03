@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 
 from retention_radar import config
-from retention_radar.data.generate import maya_profile
+from retention_radar.data.generate import santosh_profile
 from retention_radar.serving.action_log import (
     ACTION_LOG_COLUMNS,
     append_action_row,
@@ -19,7 +19,7 @@ from retention_radar.serving.action_log import (
 from retention_radar.serving.batch_score import SCORE_COLUMNS, score_csv
 
 FIXTURE_CSV = Path(__file__).resolve().parent / "fixtures" / "batch" / "tiny_features.csv"
-MAYA_JSON = config.PROJECT_ROOT / "data" / "raw" / "subscribers" / "maya.json"
+SANTOSH_JSON = config.PROJECT_ROOT / "data" / "raw" / "subscribers" / "santosh.json"
 
 
 @pytest.fixture()
@@ -53,7 +53,7 @@ def test_batch_score_tiny_fixture(tmp_path, committed_models_ok):
 def test_action_log_append(tmp_path):
     log_path = tmp_path / "action_log.csv"
     packet = {
-        "user_id": "sub_maya",
+        "user_id": "u-0000",
         "scoring": {"churn_probability_calibrated": 0.153, "risk_band": "medium"},
         "decision": {"action": "limit_reset", "auto_action": "none", "holdout": False},
     }
@@ -71,7 +71,7 @@ def test_action_log_append(tmp_path):
         rows = list(csv.DictReader(f))
     assert list(rows[0].keys()) == ACTION_LOG_COLUMNS
     assert len(rows) == 2
-    assert rows[0]["user_id"] == "sub_maya" and rows[0]["action_suggested"] == "limit_reset"
+    assert rows[0]["user_id"] == "u-0000" and rows[0]["action_suggested"] == "limit_reset"
     assert rows[1]["holdout"] == "true" and rows[1]["would_have_sent"] == "limit_reset"
 
     template = config.PROJECT_ROOT / "configs" / "templates" / "action_log.csv"
@@ -80,7 +80,7 @@ def test_action_log_append(tmp_path):
     assert schema["required"] == ACTION_LOG_COLUMNS
 
 
-def test_fastapi_score_maya(committed_models_ok, tmp_path, monkeypatch):
+def test_fastapi_score_santosh(committed_models_ok, tmp_path, monkeypatch):
     pytest.importorskip("fastapi")
     from fastapi.testclient import TestClient
 
@@ -88,15 +88,16 @@ def test_fastapi_score_maya(committed_models_ok, tmp_path, monkeypatch):
 
     monkeypatch.setattr(config, "ARTIFACTS_DIR", tmp_path)
     api_mod._load_serve_bundle.cache_clear()
-    payload = json.loads(MAYA_JSON.read_text()) if MAYA_JSON.exists() else maya_profile()
+    payload = json.loads(SANTOSH_JSON.read_text()) if SANTOSH_JSON.exists() else santosh_profile()
 
     client = TestClient(api_mod.app)
     resp = client.post("/v1/churn/score", json=payload)
     assert resp.status_code == 200, resp.text
     body = resp.json()
     assert body["auto_action"] == "none"
-    assert body["band"] == "medium" and body["action"] == "limit_reset"
-    assert body["expected_value_usd"] > 0 and body["holdout"] is False
+    # sub_santosh hashes into the 10% holdout: the limit reset is what he would have got.
+    assert body["band"] == "medium" and body["action"] == "holdout"
+    assert body["holdout"] is True and body["expected_value_usd"] is None
     assert body["model_version"] and body.get("shap_top") is None
 
     shap_body = client.post("/v1/churn/score?shap=true&log=false", json=payload).json()
@@ -116,9 +117,9 @@ def test_fastapi_rejects_teams_plan_and_normalises_case(committed_models_ok, tmp
     api_mod._load_serve_bundle.cache_clear()
     client = TestClient(api_mod.app)
 
-    bad = client.post("/v1/churn/score?log=false", json={**maya_profile(), "plan_tier": "teams"})
+    bad = client.post("/v1/churn/score?log=false", json={**santosh_profile(), "plan_tier": "teams"})
     assert bad.status_code == 422 and "plan_tier" in bad.text
-    ok = client.post("/v1/churn/score?log=false", json={**maya_profile(), "plan_tier": " Pro "})
+    ok = client.post("/v1/churn/score?log=false", json={**santosh_profile(), "plan_tier": " Pro "})
     assert ok.status_code == 200, ok.text
 
 

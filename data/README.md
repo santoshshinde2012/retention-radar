@@ -4,7 +4,7 @@ Layout follows the cookiecutter-data-science data layers.
 
 | Layer | Path | Contents |
 |-------|------|----------|
-| raw | `raw/` | `renewals_t7.csv`: the model table, one row per subscriber at T-7 (generated, gitignored). `renewals_all.csv`: every generated renewal with `outcome` and `route` (dunning, cancel_flow, model), for auditing the label (generated, gitignored). `subscribers/maya.json`, `subscribers/arjun.json`: scoring-time records for the worked examples (committed) |
+| raw | `raw/` | `renewals_t7.csv`: the model table, one row per subscriber at T-7 (generated, gitignored). `renewals_all.csv`: every generated renewal with `outcome` and `route` (dunning, cancel_flow, model), for auditing the label (generated, gitignored). `subscribers/santosh.json`, `subscribers/arjun.json`: scoring-time records for the worked examples (committed) |
 | interim | `interim/` | empty |
 | processed | `processed/` | empty; features are built in memory |
 | external | `external/` | lakehouse exports: `churn_user_features.csv`, `hero_inference_record.json` (gitignored) |

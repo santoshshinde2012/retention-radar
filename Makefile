@@ -1,4 +1,4 @@
-.PHONY: setup run run-lakehouse test lint infer ui api use-cases build-use-cases reproduce e2e-local docs-results
+.PHONY: setup run run-lakehouse test lint infer ui api use-cases build-use-cases reproduce e2e-local docs-results docs-check
 
 # Python 3.12+ is required (committed bundle trained with XGBoost 3.4.1).
 PYTHON ?= $(shell command -v python3.12 || command -v python3)
@@ -11,6 +11,7 @@ setup:
 	@$(PYTHON) -c 'import sys; sys.exit(0 if sys.version_info >= (3, 12) else "Python 3.12+ required, got " + sys.version.split()[0] + " — run: make setup PYTHON=python3.12")'
 	$(PYTHON) -m venv .venv
 	.venv/bin/pip install -r requirements.txt && .venv/bin/pip install -e . ruff
+	./scripts/fix_macos_libomp.sh .venv
 
 run:
 	CHURN_DATA_SOURCE=synthetic ./scripts/run_all.sh
@@ -24,8 +25,12 @@ test:
 lint:
 	$(PY) -m ruff check src/ tests/ app/
 
+# File-naming convention + relative Markdown links (CONTRIBUTING.md, "File names"); also a pytest test and a CI step.
+docs-check:
+	$(PY) scripts/check_docs.py
+
 infer:
-	$(PY) -m retention_radar.cli.single_record --user maya --out artifacts/maya_decision_packet.json
+	$(PY) -m retention_radar.cli.single_record --user santosh --out artifacts/santosh_decision_packet.json
 
 ui:
 	$(PY) -m streamlit run app/streamlit_app.py

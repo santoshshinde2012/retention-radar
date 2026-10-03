@@ -3,7 +3,7 @@
 A small, reproducible slice of the renewal business, built from the seed-42
 cohort and the committed ``models/`` bundle:
 
-* Scenarios: the two worked examples (Maya, Arjun) plus one real test-split
+* Scenarios: the two worked examples (Santosh, Arjun) plus one real test-split
   subscriber per path through the policy (limit reset, pause offer, cancel-flow
   discount on a first renewal, overage shock, quiet-but-fine, holdout, the one
   Ultra subscriber who gets a person-written email).
@@ -70,23 +70,28 @@ class Scenario:
     hero: str | None = None
     executed_as: str | None = None  # what the send export records (override)
     note: str = "sent as suggested"
+    would_have_sent: str | None = None  # holdout rows: the playbook they were held back from
     # ``story`` and ``note`` are str.format templates over the record, so every
     # number quoted in them is true of that record by construction.
 
 
 SCENARIOS: list[Scenario] = [
     Scenario(
-        "maya_capped_pro",
-        "Maya: capped on Pro, first renewal since the cut",
-        "Pro, {renewals_completed:.0f} renewals paid, and this is her first renewal since the "
+        "santosh_capped_pro",
+        "Santosh: capped on Pro, first renewal since the cut",
+        "Pro, {renewals_completed:.0f} renewals paid, and this is his first renewal since the "
         "weekly cap was cut. {limit_hits_14d:.0f} cap hits in 14 days, {cheap_model_share_28d:.0%} "
         "of requests on the cheaper model, {active_days_7d:.0f} active days this week against "
-        "{active_days_28d:.0f} in 28. The policy picks the limit reset over a discount: her "
-        "problem is the cap, not the price.",
+        "{active_days_28d:.0f} in 28. The policy would pick the limit reset over a discount (his "
+        "problem is the cap, not the price), but `{user_id}` hashes into the {holdout_pct}% "
+        "holdout, so nothing is sent: he is part of the control group the limit reset is "
+        "measured against.",
         "medium",
-        "limit_reset",
+        HOLDOUT,
         None,
-        hero="maya",
+        hero="santosh",
+        note="holdout: nothing sent",
+        would_have_sent="limit_reset",
     ),
     Scenario(
         "arjun_steady_pro_plus",
@@ -219,6 +224,7 @@ def _score_one(record: dict, bundle, calibrator, metrics) -> dict[str, Any]:
         "action": d["action"],
         "holdout": bool(d["holdout"]),
         "expected_value_usd": d["expected_value_usd"],
+        "would_have_sent": d.get("would_have_sent"),
         "top_drivers": [
             {"feature": f, "contribution": round(float(c), 3)} for f, c in res["top_features"]
         ],
@@ -231,6 +237,14 @@ def _story_fields(record: dict) -> dict[str, Any]:
         "holdout_pct": config.HOLDOUT_PCT,
         "price": config.PLAN_PRICE_USD[record["plan_tier"]],
     }
+
+
+def _action_cell(expected: dict[str, Any]) -> str:
+    """The suggested action; a holdout row also names the playbook it was held back from."""
+    held = expected.get("would_have_sent")
+    if expected["action"] == HOLDOUT and held:
+        return f"{HOLDOUT} (would have sent {held})"
+    return expected["action"]
 
 
 def _executed(action: str, override: str | None) -> tuple[str, str]:
@@ -282,6 +296,10 @@ def build_use_cases(out_dir: Path = USE_CASE_DIR) -> dict[str, Any]:
         result = _score_one(record, bundle, calibrator, metrics)
         if result["action"] != sc.action or (sc.band and result["band"] != sc.band):
             raise RuntimeError(f"{sc.id}: bundle returned {result}, expected {sc.band}/{sc.action}")
+        if sc.would_have_sent and result["would_have_sent"] != sc.would_have_sent:
+            raise RuntimeError(
+                f"{sc.id}: would have sent {result['would_have_sent']!r}, expected {sc.would_have_sent!r}"
+            )
         executed_by, action_taken = _executed(sc.action, sc.executed_as)
         fields = _story_fields(record)
         personas.append(
@@ -292,7 +310,15 @@ def build_use_cases(out_dir: Path = USE_CASE_DIR) -> dict[str, Any]:
                 "source": source,
                 "expected": {
                     k: result[k]
-                    for k in ("p_raw", "p_cal", "band", "action", "holdout", "expected_value_usd")
+                    for k in (
+                        "p_raw",
+                        "p_cal",
+                        "band",
+                        "action",
+                        "holdout",
+                        "would_have_sent",
+                        "expected_value_usd",
+                    )
                 },
                 "top_drivers": result["top_drivers"],
                 "executed": {
@@ -347,7 +373,7 @@ def build_use_cases(out_dir: Path = USE_CASE_DIR) -> dict[str, Any]:
 
     # Renewal outcomes: generator ground truth + the simulated playbook effect.
     truth = users.set_index("user_id")[config.TARGET_COLUMN]
-    hero_truth = {"sub_maya": 1, "sub_arjun": 0}  # worked examples: illustrative outcomes
+    hero_truth = {"sub_santosh": 1, "sub_arjun": 0}  # worked examples: illustrative outcomes
     taken = {s["user_id"]: s["action_taken"] for s in sends}
     rng = np.random.default_rng(config.RANDOM_SEED)
     outcomes = []
@@ -482,7 +508,7 @@ def _readme(manifest: dict[str, Any], n_sends: int) -> str:
         "subscribers whose renewal is seven days out, what the policy suggests for each, "
         "what the messaging tool actually sent, and whether each subscriber renewed. "
         "Scenario rows are real **test-split** rows (never used for training, calibration "
-        "or τ); Maya and Arjun are worked examples scored at T-7. Expected results are what "
+        "or τ); Santosh and Arjun are worked examples scored at T-7. Expected results are what "
         f"the committed `models/` bundle returns (τ = {tau}); "
         "`python -m retention_radar.cli.build_use_cases --check` re-verifies them. "
         "Synthetic data only, no real PII.",
@@ -497,7 +523,7 @@ def _readme(manifest: dict[str, Any], n_sends: int) -> str:
         lines.append(
             f"| **{p['title']}** | [`records/{p['id']}.json`](records/{p['id']}.json) "
             f"(`{p['record']['user_id']}`) | {e['p_raw']:.3f} → {e['p_cal']:.3f} | "
-            f"{e['band']} | {e['action']} | {x['action_taken']} |"
+            f"{e['band']} | {_action_cell(e)} | {x['action_taken']} |"
         )
     lines += ["", "Stories and top drivers:", ""]
     for p in manifest["personas"]:
@@ -548,7 +574,7 @@ def _readme(manifest: dict[str, Any], n_sends: int) -> str:
         "python -m retention_radar.cli.outcomes --log artifacts/use_cases/action_log.csv \\",
         "  --labels data/use_cases/renewal_outcomes.csv --out artifacts/use_cases/outcomes.csv",
         "curl -s localhost:8000/v1/churn/score -H 'content-type: application/json' \\",
-        "  -d @data/use_cases/records/maya_capped_pro.json",
+        "  -d @data/use_cases/records/santosh_capped_pro.json",
         "```",
         "",
     ]

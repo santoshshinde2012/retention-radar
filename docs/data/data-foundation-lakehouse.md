@@ -5,6 +5,51 @@ The synthetic generator in this repo produces the T-7 renewal table directly.
 the same table the way a real team would: from raw billing and usage events, through
 bronze and silver, into a gold feature table as of each subscriber's T-7 date.
 
+## How the data flows
+
+The lakehouse builds and checks the export; this repo syncs it, validates it and scores it with the
+committed bundle (or retrains on it with `make run-lakehouse`).
+
+```mermaid
+%%{init: {"theme": "base", "flowchart": {"wrappingWidth": 360}, "themeVariables": {"primaryColor": "#CCFBF1", "primaryTextColor": "#0F172A", "primaryBorderColor": "#0F766E", "lineColor": "#64748B", "textColor": "#0F172A", "edgeLabelBackground": "#FFFFFF", "clusterBkg": "#FFFFFF", "clusterBorder": "#64748B", "titleColor": "#0F172A", "attributeBackgroundColorOdd": "#FFFFFF", "attributeBackgroundColorEven": "#F0FDFA", "relationColor": "#64748B", "relationLabelBackground": "#FFFFFF", "relationLabelColor": "#0F172A"}}}%%
+flowchart LR
+  subgraph lake ["local-data-lakehouse"]
+    EV["Bronze events<br/>billing + usage<br/>(make churn-sample)"]
+    SP["Spark 4.1.3 + Iceberg 1.12<br/>bronze → silver → gold<br/>(make churn-e2e)"]
+    CAT["Lakekeeper REST catalog<br/>+ RustFS object store"]
+    EXP["data/export/<br/>churn_user_features.csv<br/>hero_inference_record.json<br/>churn_renewals_audit.csv"]
+    CON["Export contract<br/>check_churn_export.py --strict"]
+  end
+  subgraph radar ["retention-radar"]
+    SYNC["Sync + ingest<br/>CHURN_DATA_SOURCE=lakehouse"]
+    MOD["Committed model bundle<br/>models/ (seed 42)"]
+    SC["Batch score<br/>ranked action queue"]
+    PK["Decision packet<br/>score, band, drivers, action"]
+  end
+  EV --> SP
+  SP -->|"commits Iceberg tables"| CAT
+  SP --> EXP
+  EXP --> CON
+  CON -->|"radar_consume.sh"| SYNC
+  SYNC --> SC
+  MOD --> SC
+  SC --> PK
+  classDef storage fill:#DBEAFE,stroke:#1D4ED8,color:#0F172A,stroke-width:1.5px
+  classDef catalog fill:#FEF3C7,stroke:#B45309,color:#0F172A,stroke-width:1.5px
+  classDef compute fill:#ECFCCB,stroke:#4D7C0F,color:#0F172A,stroke-width:1.5px
+  classDef orchestration fill:#FCE7F3,stroke:#BE185D,color:#0F172A,stroke-width:1.5px
+  classDef graphlayer fill:#CCFBF1,stroke:#0F766E,color:#0F172A,stroke-width:1.5px
+  classDef consumer fill:#FFEDD5,stroke:#C2410C,color:#0F172A,stroke-width:1.5px
+  classDef data fill:#F1F5F9,stroke:#475569,color:#0F172A,stroke-width:1.5px
+  class EV,EXP data
+  class SP compute
+  class CAT catalog
+  class CON graphlayer
+  class SYNC,SC compute
+  class MOD storage
+  class PK consumer
+```
+
 ## Required export (v2 contract)
 
 This repo reads two files from the lakehouse export directory:
@@ -23,7 +68,8 @@ billing and usage events, computing every feature as of each renewal's T-7 and d
 label from billing events. The last run, recorded in
 [`results/lakehouse_e2e_summary.json`](../../results/lakehouse_e2e_summary.json):
 7,387 renewals routed to the model (7.4% voluntary lapse), calibrated test AUC 0.726, and
-Maya's event-built record scored 0.774 raw → 0.210 calibrated, medium, `limit_reset`. Those
+Santosh's event-built record scored 0.774 raw → 0.210 calibrated, medium, `holdout` (his id falls in the
+10% control group; the limit reset is what he would have got). Those
 numbers are a different world from the synthetic run and are not the published ladder.
 
 ## Path
@@ -49,8 +95,8 @@ The lakehouse owns the features. Model choice lives in this repo
 - `lakehouse`: require `data/external/churn_user_features.csv`.
 - `auto`: use `data/external/` if present, else synthetic.
 
-With `lakehouse` (or `auto` and an export present), `--user maya` scores
-`hero_inference_record.json` instead of `data/raw/subscribers/maya.json`.
+With `lakehouse` (or `auto` and an export present), `--user santosh` scores
+`hero_inference_record.json` instead of `data/raw/subscribers/santosh.json`.
 
 ## One command
 

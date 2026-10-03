@@ -18,7 +18,7 @@ CHURN_DATA_SOURCE=synthetic ./scripts/run_all.sh
 ```
 
 This generates 8,000 renewals (seed 42), trains and calibrates the models, and writes
-decision packets for the two worked examples. Maya should come out at calibrated 0.288,
+decision packets for the two worked examples. Santosh should come out at calibrated 0.288,
 band medium, action `limit_reset`. Arjun should come out at 0.025, band low, `no_action`.
 
 Numbers to cite: [`models/metrics.json`](../../models/metrics.json). How to read them:
@@ -50,13 +50,13 @@ python -m retention_radar.cli.batch_score --csv data/raw/renewals_t7.csv \
 
 # Log what was done for one subscriber
 python -m retention_radar.cli.action_log \
-  --from-packet artifacts/maya_decision_packet.json \
-  --executed-by lifecycle_tool --action-taken limit_reset
+  --from-packet artifacts/santosh_decision_packet.json \
+  --executed-by none --action-taken holdout   # Santosh is in the 10% holdout
 
 # Thin local API (no auth)
 uvicorn retention_radar.serving.api:app --app-dir src --port 8000
 curl -s localhost:8000/v1/churn/score -H 'content-type: application/json' \
-  -d @data/raw/subscribers/maya.json
+  -d @data/raw/subscribers/santosh.json
 ```
 
 Action-log template and schema: [`configs/templates/action_log.csv`](../../configs/templates/action_log.csv) ·
@@ -85,7 +85,7 @@ deploy steps are in [deploy-later.md](deploy-later.md).
 
 ## What to read
 
-1. [USE_CASE.md](../USE_CASE.md): the business problem and its sources.
-2. [results/WORKED_EXAMPLES.md](../../results/WORKED_EXAMPLES.md): Maya and Arjun.
+1. [use-case.md](../use-case.md): the business problem and its sources.
+2. [results/worked-examples.md](../../results/worked-examples.md): Santosh and Arjun.
 3. [results/benchmarks.md](../../results/benchmarks.md): the ladder, calibration, the policy.
 4. [model-card.md](../model-card.md): intended use and limits.

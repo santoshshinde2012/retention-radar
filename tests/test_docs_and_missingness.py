@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from retention_radar.data.generate import maya_profile
+from retention_radar.data.generate import santosh_profile
 from retention_radar.docs_gen import (
     load_user_record_schema,
     schema_field_meta,
@@ -43,7 +43,7 @@ def test_write_dictionary_and_model_card(tmp_path, monkeypatch):
     assert "no NaNs by design" in text
     assert "`limit_hits_14d`" in text
     assert "dunning" in text and "cancel flow" in text  # label routing is documented
-    assert "Maya" in text or "maya" in text
+    assert "Santosh" in text or "santosh" in text
 
     metrics = {
         "dummy_val": {"roc_auc": 0.5, "f1": 0.0, "average_precision": 0.2},
@@ -91,21 +91,21 @@ def test_write_dictionary_and_model_card(tmp_path, monkeypatch):
 
 
 def test_serve_fails_loud_on_nan():
-    profile = maya_profile()
+    profile = santosh_profile()
     profile["suggestion_accept_rate_28d"] = None
     with pytest.raises(ValueError, match="NaNs"):
         row_to_feature_frame(profile)
 
 
 def test_serve_fails_loud_on_non_numeric():
-    profile = maya_profile()
+    profile = santosh_profile()
     profile["active_days_7d"] = "not-a-number"
     with pytest.raises(ValueError, match="NaNs"):
         row_to_feature_frame(profile)
 
 
 def test_valid_worked_example_row_has_no_nans():
-    profile = maya_profile()
+    profile = santosh_profile()
     X = row_to_feature_frame(profile)
     assert not X.isna().any().any()
     assert len(X) == 1
