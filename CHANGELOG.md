@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-03 — lakehouse consume results from the empty-volume run
+
+- `results/lakehouse-consume-e2e.md` now records the 2026-10-03 local-data-lakehouse run from empty
+  volumes on the branch heads (lakehouse `2fcb92f` / `6c57111`, radar `98df572` / `07d8205`): 7,387 rows
+  scored twice (Spark export, then the pandas twin export) with the same action counts, 101 tests passed
+  on each checkout, and this run's export hashes.
+
 ## 2026-10-03 — README rewrite; `make setup` works on a Mac without Homebrew's libomp
 
 - README rewritten: value statement, badges (CI, licence, Python), who it is for, the pipeline diagram, a
