@@ -1,0 +1,14 @@
+# Weekly, grouped updates for the GitHub Actions in .github/workflows/ci.yml.
+# Python packages are not auto-bumped: the model-affecting libraries are pinned to the versions that
+# produced the committed models/ bundle (see requirements.txt), so they change only with a retrain.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      timezone: "Asia/Kolkata"
+    groups:
+      github-actions:
+        patterns: ["*"]

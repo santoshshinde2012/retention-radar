@@ -9,12 +9,12 @@ not the published ladder; CI `e2e-local` re-runs it on every pull request and co
 **This run:** 2026-10-03 (IST), on a MacBook Pro (Apple M1 Pro, macOS 26.6.2, Docker Desktop 29.8.1), as part
 of the lakehouse's full end-to-end run from empty volumes (`make purge` first). All numbers below are from
 that run. The lakehouse write-up of the same run: its
-[RESULTS.md](https://github.com/santoshshinde2012/local-data-lakehouse/blob/chore/sample-customer-santosh/RESULTS.md).
+[RESULTS.md](https://github.com/santoshshinde2012/local-data-lakehouse/blob/main/RESULTS.md).
 
 | Repo | Branch | Commit |
 |---|---|---|
-| local-data-lakehouse | `chore/sample-customer-santosh` ([PR #16](https://github.com/santoshshinde2012/local-data-lakehouse/pull/16)) | `2fcb92f` for the pipeline steps; `6c57111` for the second consume (README only in between) |
-| retention-radar | `chore/sample-customer-santosh` ([PR #24](https://github.com/santoshshinde2012/retention-radar/pull/24)) | `98df572` for the first consume, `07d8205` for the second (README, `make setup` and docs only in between) |
+| local-data-lakehouse | `chore/sample-customer-santosh`, merged as [PR #16](https://github.com/santoshshinde2012/local-data-lakehouse/pull/16) | `2fcb92f` for the pipeline steps; `6c57111` for the second consume (README only in between) |
+| retention-radar | `chore/sample-customer-santosh`, merged as [PR #24](https://github.com/santoshshinde2012/retention-radar/pull/24) | `98df572` for the first consume, `07d8205` for the second (README, `make setup` and docs only in between) |
 
 `pipelines/radar_consume.sh` in the lakehouse clones radar at `RADAR_REF`, builds a Python 3.12 venv,
 copies the export into `data/external/`, then runs `cli.ingest` with `CHURN_DATA_SOURCE=lakehouse` and
@@ -36,6 +36,14 @@ copies the export into `data/external/`, then runs `cli.ingest` with `CHURN_DATA
 | radar pytest on that checkout | 0 | 42.3 (101 passed) |
 
 Both consumes loaded 7,387 rows (churn rate 0.074) and produced the same action counts.
+
+**Re-run on `main`:** later the same day (18:07 IST), the lakehouse re-ran every step at `59b08b6` on existing
+volumes, and `radar_consume.sh` cloned radar `main` at `c5dd040` (the merged PR #24). It took 75.9 s, the radar
+tests passed (101 in 41.7 s), and it scored 7,387 rows with the same action counts. The features and hero sha256
+values matched the ones below.
+
+Run times next to the model's latency: [benchmarks.md](benchmarks.md#table-e-run-times). The whole lakehouse run
+(start-up, memory, disk, CI): [docs/benchmarks.md](https://github.com/santoshshinde2012/local-data-lakehouse/blob/main/docs/benchmarks.md) in local-data-lakehouse.
 
 ## The export it read (v2 contract)
 
@@ -101,9 +109,9 @@ These describe the bundle that scored the export. They are not measured on lakeh
 
 ## CI
 
-The CI runs for this branch are listed in [PR #24](https://github.com/santoshshinde2012/retention-radar/pull/24)
-(jobs `test` and `e2e-local`; `e2e-local` clones the lakehouse branch of the same name and re-runs the
-lakehouse E2E on Linux).
+The CI runs for this work are listed in [PR #24](https://github.com/santoshshinde2012/retention-radar/pull/24), now merged
+(jobs `test` and `e2e-local`; `e2e-local` clones the lakehouse branch of the same name, or `main` when there is none,
+and re-runs the lakehouse E2E on Linux).
 
 ## Known gaps
 

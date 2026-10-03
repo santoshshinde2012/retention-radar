@@ -199,6 +199,102 @@ def write_data_dictionary(path: Path | None = None) -> Path:
     return path
 
 
+def _extra_sections(metrics: dict) -> list[str]:
+    """Training setup, segment and policy numbers, the lakehouse run and the holdout design (from files, never typed)."""
+    out: list[str] = []
+    bp = metrics.get("best_params") or {}
+    if bp:
+        out += ["", "## Training setup", "",
+                f"Optuna ({metrics.get('n_trials', '?')} trials, objective: validation AUC, best "
+                f"{_fmt_scalar(metrics.get('best_optuna_auc'))}) chose these XGBoost parameters:", "",
+                "| Parameter | Value |", "|---|---|"]
+        out += [f"| `{k}` | {_fmt_scalar(v) if isinstance(v, float) else v} |" for k, v in bp.items()]
+        out += ["", f"The threshold τ = {_fmt_scalar(metrics.get('best_f1_threshold'), 2)} is chosen on the "
+                f"{metrics.get('best_f1_threshold_source', 'validation')} split (best F1) and applied once to test."]
+    top = metrics.get("capture_at_top_10pct")
+    if top is not None:
+        out += ["", "### Ranking (test)", "",
+                f"- Base rate: {_fmt_scalar(metrics.get('base_rate_test'))}.",
+                f"- Top 10% by score: precision {_fmt_scalar(metrics.get('precision_at_top_10pct'))}, "
+                f"capturing {_fmt_scalar(top)} of all lapses."]
+    sl = (metrics.get("slice_metrics_by_plan_tier") or {}).get("by_plan_tier") or {}
+    if sl:
+        out += ["", "### By plan (test, at τ)", "",
+                "Segment diagnostics only, not a fairness audit.", "",
+                "| Plan | n | Lapse rate | Precision | Recall | ROC AUC |", "|---|---:|---:|---:|---:|---:|"]
+        for tier, v in sl.items():
+            auc = _fmt_scalar(v.get("roc_auc")) if v.get("enough_samples_for_auc") else "too few"
+            out.append(f"| {tier} | {v.get('n')} | {_fmt_scalar(v.get('churn_rate'))} | "
+                       f"{_fmt_scalar(v.get('precision'))} | {_fmt_scalar(v.get('recall'))} | {auc} |")
+    pol = metrics.get("policy_on_test") or {}
+    if pol.get("actions"):
+        out += ["", "### Policy on the test set", "",
+                f"n = {pol.get('n')}; contacted share {_fmt_scalar(pol.get('contacted_share'))}; expected value "
+                f"${pol.get('expected_value_usd_total')} (assumed playbook effects).", "",
+                "| Action | Rows |", "|---|---:|"]
+        out += [f"| `{a}` | {n} |" for a, n in sorted(pol["actions"].items(), key=lambda kv: -kv[1])]
+    out += ["", "## Holdout and control design", "",
+            f"- {config.HOLDOUT_PCT}% of eligible subscribers are a fixed control group: a subscriber is in it when the first "
+            "8 hex digits of `sha256(\"holdout:<user_id>\")` mod 100 fall below the holdout share "
+            "(`serving/policy.py`). The same id always lands in the same group.",
+            "- Holdout rows are scored and logged with the action the policy would have taken (`would_have_sent`), "
+            "but nothing is sent. Lift is the outcome gap between treated and holdout rows (`cli.outcomes`).",
+            "- The worked example `sub_santosh` is in the holdout: medium risk, `would_have_sent: limit_reset`."]
+    summary = config.RESULTS_DIR / "lakehouse_e2e_summary.json" if hasattr(config, "RESULTS_DIR") else None
+    if summary is not None and summary.exists():
+        lk = json.loads(summary.read_text(encoding="utf-8"))
+        out += ["", "## Lakehouse data (separate run)", "",
+                "The same pipeline also trains on the feature export of "
+                "[local-data-lakehouse](https://github.com/santoshshinde2012/local-data-lakehouse) (synthetic events "
+                "turned into point-in-time gold). That run writes only under `artifacts/lakehouse_run/`; the "
+                "committed bundle above stays on the synthetic seed-42 data.", "",
+                "| Quantity | Value |", "|---|---|",
+                f"| Source | {lk.get('source')} (verified {lk.get('verified_at')}) |",
+                f"| n_train / n_test | {lk.get('n_train')} / {lk.get('n_test')} |",
+                f"| Train lapse rate | {_fmt_scalar(lk.get('churn_rate_train'))} |",
+                f"| Best Optuna AUC (val) | {_fmt_scalar(lk.get('best_optuna_auc_val'))} |",
+                f"| Calibrated test ROC AUC | {_fmt_scalar(lk.get('calibrated_test_roc_auc'))} |",
+                f"| Threshold τ | {lk.get('best_f1_threshold')} |",
+                "", "Source: [`results/lakehouse_e2e_summary.json`](../results/lakehouse_e2e_summary.json)."]
+    return out
+
+
+def _data_limits(metrics: dict) -> list[str]:
+    out = []
+    sl = (metrics.get("slice_metrics_by_plan_tier") or {}).get("by_plan_tier") or {}
+    thin = [f"`{t}` ({v.get('n_positive')} lapses in {v.get('n')} test rows)" for t, v in sl.items()
+            if (v.get("n_positive") or 0) < 20]
+    if thin:
+        out.append("- Thin segments: " + ", ".join(thin) + ". Treat their numbers as anecdotes.")
+    stats = Path(config.METRICS_PATH).parent / "feature_stats.json"
+    if stats.exists():
+        fs = json.loads(stats.read_text(encoding="utf-8"))
+        if not any(isinstance(v, dict) and "psi_bins" in v for v in fs.values()):
+            out.append("- Drift checks fall back to the standardised mean difference: the committed "
+                       "`models/feature_stats.json` has no PSI bins.")
+    return out
+
+
+def _versioning_section(metrics: dict) -> list[str]:
+    """Bundle files with sha256 prefixes and the pinned model libraries (read from disk at generation time)."""
+    import hashlib
+    out = ["## Versioning", "",
+           f"The served bundle is the committed `models/` directory (seed {metrics.get('random_seed', config.RANDOM_SEED)}). "
+           "It changes only with a retrain, recorded in the CHANGELOG; `make reproduce` retrains into `artifacts/repro/` "
+           "and diffs against `models/metrics.json`.", "",
+           "| File | sha256 (first 12) |", "|---|---|"]
+    models_dir = Path(config.METRICS_PATH).parent
+    for f in sorted(models_dir.glob("*")):
+        if f.is_file() and f.suffix in (".joblib", ".json"):
+            out.append(f"| `models/{f.name}` | `{hashlib.sha256(f.read_bytes()).hexdigest()[:12]}` |")
+    req = config.PROJECT_ROOT / "requirements.txt" if hasattr(config, "PROJECT_ROOT") else None
+    if req is not None and req.exists():
+        pins = [ln.strip() for ln in req.read_text(encoding="utf-8").splitlines() if "==" in ln and not ln.startswith("#")]
+        if pins:
+            out += ["", "Pinned model libraries (`requirements.txt`): " + ", ".join(f"`{p}`" for p in pins) + "."]
+    return out
+
+
 def write_model_card(metrics: dict | None = None, path: Path | None = None) -> Path:
     path = path or config.MODEL_CARD_PATH
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -303,6 +399,9 @@ def write_model_card(metrics: dict | None = None, path: Path | None = None) -> P
         f"{_fmt(metrics.get('calibrated_test'), 'f1')} | "
         f"{_fmt_scalar(op_ap)} |",
         "",
+        "F1 columns use a 0.5 threshold. Calibrated scores sit near the ~9% base rate and rarely reach 0.5, so the "
+        "calibrated row shows F1 0; the served threshold τ is in the operating point below.",
+        "",
         "### Calibration (Brier — lower is better)",
         "",
         "| Split | Raw Brier | Calibrated Brier |",
@@ -332,6 +431,7 @@ def write_model_card(metrics: dict | None = None, path: Path | None = None) -> P
             f"`{_fmt_scalar(lat.get('latency_ms_p50'), 2)}` / "
             f"`{_fmt_scalar(lat.get('latency_ms_p95'), 2)}` |"
         )
+    lines += _extra_sections(metrics)
     lines += [
         "",
         "## Result plots",
@@ -371,6 +471,16 @@ def write_model_card(metrics: dict | None = None, path: Path | None = None) -> P
         "human-approved playbooks, and a deterministic holdout is kept out of every playbook.",
         "- Contacting at-risk subscribers can raise churn (Ascarza et al., JMR 2016). "
         "Measure lift against the holdout before scaling any playbook.",
+        "",
+        "## Limitations",
+        "",
+        "- Trained and evaluated on synthetic data only; there is no labelled real-world outcome.",
+        "- One seed (42) and one split. With about 140 lapses in test, AUC differences of a few points between ladder rows are within noise.",
+        "- Playbook effects and costs in `config.PLAYBOOKS` are assumptions, so the expected value is too.",
+        *_data_limits(metrics),
+        "- Latency is one machine's warm in-process timing, not a service SLA.",
+        "",
+        *_versioning_section(metrics),
         "",
         "## Related reading",
         "",
