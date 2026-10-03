@@ -2,7 +2,7 @@
 
 How a T-7 renewal record becomes a score and a suggested action, and where the line
 between training and serving sits. Related: [model-card.md](model-card.md) ·
-[USE_CASE.md](USE_CASE.md) · [../results/benchmarks.md](../results/benchmarks.md).
+[use-case.md](use-case.md) · [../results/benchmarks.md](../results/benchmarks.md).
 
 Everything is open source: Python, pandas, scikit-learn, XGBoost, LightGBM, CatBoost,
 Optuna, SHAP, FastAPI, Streamlit.

@@ -27,7 +27,7 @@ so the score has to drive automated, measurable actions. That is what this repo 
 The data is synthetic (seed **42**, no real PII), but the mechanisms behind it are the
 ones in the public record: cap hits, rationing to a cheaper model, a surprise overage
 bill, the first renewal after a pricing change, a rival tool taking the work. Sources:
-[docs/USE_CASE.md](docs/USE_CASE.md).
+[docs/use-case.md](docs/use-case.md).
 
 ## What this is
 
@@ -178,9 +178,9 @@ retention-radar/
 
 | Doc | Purpose |
 |-----|---------|
-| [docs/USE_CASE.md](docs/USE_CASE.md) | The use case, the evidence behind it, and what the synthetic data can and cannot show |
+| [docs/use-case.md](docs/use-case.md) | The use case, the evidence behind it, and what the synthetic data can and cannot show |
 | [results/benchmarks.md](results/benchmarks.md) | Ladder, calibration, operating point, policy, latency |
-| [results/WORKED_EXAMPLES.md](results/WORKED_EXAMPLES.md) | Santosh and Arjun, end to end |
+| [results/worked-examples.md](results/worked-examples.md) | Santosh and Arjun, end to end |
 | [results/lakehouse-consume-e2e.md](results/lakehouse-consume-e2e.md) | Radar main scoring the local-data-lakehouse export: 7,387 rows, actions, tests, CI |
 | [docs/model-card.md](docs/model-card.md) | Intended use + metrics |
 | [docs/guides/start-here.md](docs/guides/start-here.md) | Clone → one command → what to read |

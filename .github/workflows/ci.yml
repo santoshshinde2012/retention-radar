@@ -44,6 +44,9 @@ jobs:
       - name: Ruff (src/ tests/ app/)
         run: ruff check src/ tests/ app/
 
+      - name: File names and relative links (CONTRIBUTING.md, "File names")
+        run: python scripts/check_docs.py
+
       # Smoke retrain (N=800, 5 trials) goes to an isolated dir so the committed
       # seed-42 bundle in models/ stays the one pytest's golden tests check.
       - name: End-to-end pipeline (synthetic smoke, isolated)

@@ -3,7 +3,7 @@
 Retention Radar scores paying subscribers of a monthly AI coding assistant plan seven
 days before renewal (T-7) and suggests one approved playbook, a holdout, or nothing.
 The data is synthetic (seed 42). The service never sends anything: `auto_action` is
-always `none`. Background: [USE_CASE.md](USE_CASE.md).
+always `none`. Background: [use-case.md](use-case.md).
 
 ## 1. Install
 
@@ -52,7 +52,7 @@ python -m retention_radar.cli.single_record --user santosh --out artifacts/santo
 ```
 
 Santosh: calibrated P(lapse) 0.288, band medium, action `holdout` (he is in the 10% control group; `would_have_sent` is `limit_reset`). `--user arjun` gives
-0.025, low, `no_action`. Walkthrough: [results/WORKED_EXAMPLES.md](../results/WORKED_EXAMPLES.md).
+0.025, low, `no_action`. Walkthrough: [results/worked-examples.md](../results/worked-examples.md).
 
 ## 4. UI and tests
 

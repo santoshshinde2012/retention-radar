@@ -85,7 +85,7 @@ deploy steps are in [deploy-later.md](deploy-later.md).
 
 ## What to read
 
-1. [USE_CASE.md](../USE_CASE.md): the business problem and its sources.
-2. [results/WORKED_EXAMPLES.md](../../results/WORKED_EXAMPLES.md): Santosh and Arjun.
+1. [use-case.md](../use-case.md): the business problem and its sources.
+2. [results/worked-examples.md](../../results/worked-examples.md): Santosh and Arjun.
 3. [results/benchmarks.md](../../results/benchmarks.md): the ladder, calibration, the policy.
 4. [model-card.md](../model-card.md): intended use and limits.

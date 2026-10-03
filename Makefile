@@ -1,4 +1,4 @@
-.PHONY: setup run run-lakehouse test lint infer ui api use-cases build-use-cases reproduce e2e-local docs-results
+.PHONY: setup run run-lakehouse test lint infer ui api use-cases build-use-cases reproduce e2e-local docs-results docs-check
 
 # Python 3.12+ is required (committed bundle trained with XGBoost 3.4.1).
 PYTHON ?= $(shell command -v python3.12 || command -v python3)
@@ -23,6 +23,10 @@ test:
 
 lint:
 	$(PY) -m ruff check src/ tests/ app/
+
+# File-naming convention + relative Markdown links (CONTRIBUTING.md, "File names"); also a pytest test and a CI step.
+docs-check:
+	$(PY) scripts/check_docs.py
 
 infer:
 	$(PY) -m retention_radar.cli.single_record --user santosh --out artifacts/santosh_decision_packet.json

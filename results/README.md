@@ -5,7 +5,7 @@ Analysis home for the seed-42 reference run.
 | Path | Role |
 |------|------|
 | [`benchmarks.md`](benchmarks.md) | Ladder, calibration, operating point, policy on test, holdout size, latency |
-| [`WORKED_EXAMPLES.md`](WORKED_EXAMPLES.md) | Santosh and Arjun at T-7 |
+| [`worked-examples.md`](worked-examples.md) | Santosh and Arjun at T-7 |
 | [`analysis.json`](analysis.json) | Bootstrap of the ladder, isotonic vs Platt, deciles/quintiles, holdout sizes (`python -m retention_radar.cli.analysis`) |
 | [`plots/`](plots/) | Committed ROC / PR / calibration / confusion / threshold charts |
 | [`santosh_decision_packet.sample.json`](santosh_decision_packet.sample.json) | Sample decision packet |

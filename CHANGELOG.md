@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-10-03 — one file-naming convention; link and naming checks
+
+- Renamed with `git mv`: `docs/USE_CASE.md` → `docs/use-case.md`, `results/WORKED_EXAMPLES.md` →
+  `results/worked-examples.md`. Links, the notebook and `docs_gen` (which writes the model card) follow.
+- Convention in [CONTRIBUTING.md](CONTRIBUTING.md#file-names): standard root files keep their uppercase
+  names; other `.md` files are lowercase kebab-case; files under `docs/` and `results/` are lowercase;
+  data is `snake_case`; Python follows PEP 8.
+- `scripts/check_docs.py` (`make docs-check`) checks the names and every relative Markdown link and
+  anchor; `tests/test_file_naming.py` runs it in pytest and CI runs it as a step in the `test` job.
+
 ## 2026-10-03 — sample customer renamed to `sub_santosh`; the worked example is a holdout case
 
 - The worked example's record id is now `sub_santosh` (was a different sample name; files, docs and
