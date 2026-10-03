@@ -51,7 +51,7 @@ python -m retention_radar.cli.batch_score --csv data/raw/renewals_t7.csv \
 # Log what was done for one subscriber
 python -m retention_radar.cli.action_log \
   --from-packet artifacts/santosh_decision_packet.json \
-  --executed-by lifecycle_tool --action-taken limit_reset
+  --executed-by none --action-taken holdout   # Santosh is in the 10% holdout
 
 # Thin local API (no auth)
 uvicorn retention_radar.serving.api:app --app-dir src --port 8000

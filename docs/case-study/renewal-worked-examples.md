@@ -19,13 +19,18 @@ cap was cut. In the last 14 days he hit the cap four times (90th percentile). He
 | Score | raw 0.717 → calibrated **0.288** (base rate 0.096) |
 | Band | medium (edges 0.10 / 0.30) |
 | Explain (SHAP, log-odds) | `limit_hits_14d` +0.63 · `cheap_model_share_28d` +0.30 · `first_renewal_after_pricing_change` +0.21 · `renewals_completed` +0.09 · `active_days_28d` −0.08 |
-| Decide | above τ = 0.16 → eligible; not in the holdout; candidates `limit_reset` $5.20 · `cancel_flow_discount` $2.79 · `in_app_usage_tips` $1.13 → **limit_reset** |
-| Executed by | the lifecycle tool, after a retention lead approved the playbook. `auto_action: none` |
+| Decide | above τ = 0.16 → eligible; candidates `limit_reset` $5.20 · `cancel_flow_discount` $2.79 · `in_app_usage_tips` $1.13; best is `limit_reset`, but `sub_santosh` hashes into the 10% holdout (bucket 8 of 100) → **holdout**, `would_have_sent: limit_reset` |
+| Executed by | nobody: nothing is sent and the row is logged as a control. `auto_action: none` |
 
 What the drivers do and do not say: four cap hits and rationing to the cheap model are the
 strongest pushes toward lapse in *this model's* view of him. That is not evidence that a limit reset will
 change his decision. The expected value of $5.20 uses an **assumed** 25% effect; only the
 holdout can say whether the reset works.
+
+Santosh is part of that holdout. He is exactly the subscriber the limit reset is for, and he
+does not get it: the hash of his id puts him in the 10% control group, so his renewal outcome
+is what the treated subscribers are compared against. Without the holdout, the policy would
+have sent him the limit reset.
 
 ## Arjun
 
@@ -54,9 +59,9 @@ churn from 6% to 10% (Ascarza, Iyengar & Schleicher, JMR 2016).
               "risk_band": "medium", "best_f1_threshold": 0.16},
   "explanation": {"top_features": [{"feature": "limit_hits_14d", "contribution": 0.633}]},
   "cohort_compare": {"limit_hits_14d": {"value": 4.0, "percentile": 90.4}},
-  "decision": {"action": "limit_reset", "holdout": false, "expected_value_usd": 5.2,
+  "decision": {"action": "holdout", "holdout": true, "expected_value_usd": null,
                "candidates": [{"playbook": "limit_reset", "expected_value_usd": 5.2}],
-               "auto_action": "none", "hitl_required": false}
+               "would_have_sent": "limit_reset", "auto_action": "none", "hitl_required": false}
 }
 ```
 

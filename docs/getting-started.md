@@ -51,7 +51,7 @@ make infer
 python -m retention_radar.cli.single_record --user santosh --out artifacts/santosh_decision_packet.json
 ```
 
-Santosh: calibrated P(lapse) 0.288, band medium, action `limit_reset`. `--user arjun` gives
+Santosh: calibrated P(lapse) 0.288, band medium, action `holdout` (he is in the 10% control group; `would_have_sent` is `limit_reset`). `--user arjun` gives
 0.025, low, `no_action`. Walkthrough: [results/WORKED_EXAMPLES.md](../results/WORKED_EXAMPLES.md).
 
 ## 4. UI and tests

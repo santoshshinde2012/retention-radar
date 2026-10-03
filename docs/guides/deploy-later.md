@@ -24,7 +24,7 @@ Longer notes: [e2e-free-platforms.md](e2e-free-platforms.md).
 4. Python version: 3.12.
 5. Leave Secrets empty.
 6. Deploy and wait for `pip install -r requirements.txt` to finish.
-7. Open the Decision tab with Santosh selected. Expect calibrated 0.288, `limit_reset`, `Auto action: none`.
+7. Open the Decision tab with Santosh selected. Expect calibrated 0.288, `holdout` (he is in the 10% control group; the limit reset is what he would have got), `Auto action: none`.
 8. Put the `*.streamlit.app` URL in `README.md` and `docs/guides/start-here.md`.
 
 ## Checks after deploy

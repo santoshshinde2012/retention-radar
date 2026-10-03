@@ -150,8 +150,9 @@ code, out = post("/v1/churn/batch", {"records": records})
 assert code == 200 and len(out["rejected"]) == manifest["daily_batch"]["invalid_rows"], out
 print(f"POST /v1/churn/batch → queue {len(out['queue'])}, rejected {len(out['rejected'])}, top {out['queue'][0]['action']}")
 santosh = next(p for p in manifest["personas"] if p["id"] == "santosh_capped_pro")["record"]["user_id"]
-code, out = post("/v1/churn/actions", {"user_id": santosh, "executed_by": "local-e2e", "action_taken": "limit_reset"})
-assert code == 200 and out["logged"]["action_suggested"] == "limit_reset", out
+code, out = post("/v1/churn/actions", {"user_id": santosh, "executed_by": "none", "action_taken": "holdout"})
+assert code == 200 and out["logged"]["action_suggested"] == "holdout", out
+assert out["logged"]["would_have_sent"] == "limit_reset", out  # Santosh is in the 10% holdout
 print("POST /v1/churn/actions → logged against the service's own score")
 PY
 kill "${PIDS[${#PIDS[@]}-1]}" 2>/dev/null || true

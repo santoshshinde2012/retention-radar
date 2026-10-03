@@ -42,7 +42,7 @@ bill, the first renewal after a pricing change, a rival tool taking the work. So
 
 | Subscriber | Raw → calibrated P(lapse) | Band | Action |
 |------------|---------------------------|------|--------|
-| Santosh: Pro, 4 cap hits in 14 days, 68% of requests on the cheap model, first renewal since the cap cut | 0.717 → **0.288** | medium | `limit_reset` (EV ≈ $5.20) |
+| Santosh: Pro, 4 cap hits in 14 days, 68% of requests on the cheap model, first renewal since the cap cut | 0.717 → **0.288** | medium | `holdout`: in the 10% control group, so nothing is sent; would have got `limit_reset` (EV ≈ $5.20) |
 | Arjun: Pro+, 12 renewals, 66% of allowance used, no cap hits | 0.124 → **0.025** | low | `no_action` |
 
 **Honest ladder (test AUC, 7,329 T-7 rows, 9.6% base rate):** LogReg **0.781** · CatBoost
