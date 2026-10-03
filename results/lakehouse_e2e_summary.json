@@ -1,5 +1,5 @@
 {
-  "verified_at": "2026-09-30",
+  "verified_at": "2026-10-03",
   "source": "lakehouse gold N=7387 seed=42",
   "n_train": 4431,
   "n_test": 1478,
@@ -13,7 +13,7 @@
     "p_churn_raw": 0.7744,
     "p_churn_calibrated": 0.2101,
     "risk": "medium",
-    "action": "limit_reset"
+    "action": "holdout"
   },
   "artifact_dir": "artifacts/lakehouse_run",
   "note": "Lakehouse E2E writes only under artifacts/lakehouse_run/ via RETENTION_RADAR_ARTIFACT_DIR. Committed models/ + docs/model-card.md are the published synthetic seed-42 ladder and must not be replaced."

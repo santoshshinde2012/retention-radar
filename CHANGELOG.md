@@ -1,5 +1,22 @@
 # Changelog
 
+## 2026-10-03 — sample customer renamed to `sub_santosh`; the worked example is a holdout case
+
+- The worked example's record id is now `sub_santosh` (was a different sample name; files, docs and
+  tests follow, e.g. `data/raw/subscribers/santosh.json`, `results/santosh_decision_packet.sample.json`).
+- The new id hashes into bucket 8 of 100, inside the 10% holdout, so the committed policy holds him
+  back: action `holdout`, nothing sent, `would_have_sent: limit_reset`. Score, band and drivers are
+  unchanged (0.717 → 0.288, medium). No policy change: the worked example is now written as a
+  control-group case that shows the playbook he would have got.
+- Use-case pack: the `santosh_capped_pro` scenario expects medium / `holdout` and the build checks
+  `would_have_sent == limit_reset`; the scenario table shows "holdout (would have sent ...)". The daily
+  queue moves one row: `limit_reset` 36 → 35, `holdout` 5 → 6.
+- `results/lakehouse_e2e_summary.json`: worked-example action `limit_reset` → `holdout`; the training
+  numbers are unchanged (the lakehouse features file has the same sha256). CI `e2e-local` re-runs the
+  lakehouse E2E on Linux against the lakehouse branch of the same name and compares.
+- `results/lakehouse-consume-e2e.md`: new hero-record sha256 (it carries the id and name).
+- Tests: two checks that used the new name as an "unknown" value now use other values.
+
 ## 2026-10-03 — lakehouse consume run moves to `results/`
 
 - `docs/e2e/lakehouse-consume.md` → [`results/lakehouse-consume-e2e.md`](results/lakehouse-consume-e2e.md).

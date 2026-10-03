@@ -4,7 +4,8 @@ Radar `main` scoring the v2 export of
 [local-data-lakehouse](https://github.com/santoshshinde2012/local-data-lakehouse) `main` with the
 committed seed-42 bundle. No retraining: this is the consume path only (sync → ingest → batch score).
 For a retrain on lakehouse gold, see [`lakehouse_e2e_summary.json`](lakehouse_e2e_summary.json)
-(a separate run, 2026-09-30, not the published ladder).
+(a separate run, 2026-09-30, not the published ladder; since the rename its worked-example action is
+`holdout`, re-checked by CI `e2e-local` on 2026-10-03).
 
 Captured 2026-10-03 00:49–00:53 IST on a MacBook Pro (Apple M1 Pro, macOS 26.6.2), Docker Compose,
 starting from the lakehouse's existing volumes.
@@ -39,11 +40,19 @@ Churn export contract OK (7387 renewals, 25 cols) → .../local-data-lakehouse/d
 | File | Content | sha256 |
 |---|---|---|
 | `churn_user_features.csv` | 7,387 renewals, 25 columns (22 T-7 features + ids + `churned`) | `742f9028e4216d32ad6029007ee3b57414d1772344005ea907a5e5cf80eba18d` |
-| `hero_inference_record.json` | `sub_santosh`, 24 keys, no label | `49abdddc526827375b2f8d442fda6359cc2532353d528207545b204e3eb10878` |
-| `churn_renewals_audit.csv` | Lakehouse-side audit (radar does not read it) | `e07dcfceb32c00a4b4ab34615ef7a9a40ea3ba165fa9468a6ab3db30cd5c12f2` |
+| `hero_inference_record.json` | `sub_santosh`, 24 keys, no label | `0db4f2de0cdec5e15d31ef85ff2de814525f854de734b28414ac0bcaf7abcfe5` |
+| `churn_renewals_audit.csv` | Lakehouse-side audit (radar does not read it) | `69c685026ca08ae7d01cad74586ae51e28b58c6df51f9f0850b062df7f15054a` |
 
 The features and hero hashes match the earlier Spark export at lakehouse `7f5fc43`, so the export is
 deterministic across these commits.
+
+**Updated 2026-10-03 (sample customer renamed to `sub_santosh`).** The hero and audit hashes above are from
+a Spark export (`make churn-e2e`) of lakehouse branch `chore/sample-customer-santosh` at `7ce6002`. The
+hero record carries the customer's id and name, so its hash changed (it was `49abdddc…`). The audit file has
+a `built_at` timestamp, so its hash changes on every run. `churn_user_features.csv`, the only file radar
+scores, has the same sha256 as before, so the scores and action counts below stand. The hero itself is
+`holdout` in radar: `sub_santosh` hashes into the 10% control group (the limit reset is what he would have
+got).
 
 ## Sync, ingest, batch score
 
