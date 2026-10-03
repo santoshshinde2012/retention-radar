@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-10-03 — community files and docs polish
+
+- Added `SECURITY.md` (private vulnerability reporting, scope and known trade-offs), `CODE_OF_CONDUCT.md`
+  (Contributor Covenant 2.1 by reference), `.editorconfig`, a pull-request template, bug and feature issue
+  templates, and `.github/dependabot.yml` for GitHub Actions only (the model-affecting Python pins change
+  only with a retrain).
+- `docs/folder-structure.md` lists the current scripts, results files, serving modules and root files.
+- `results/lakehouse-consume-e2e.md` links the merged PRs and `main`, and records the re-run against radar
+  `main` (`c5dd040`): 7,387 rows, the same action counts, 101 tests passed.
+
 ## 2026-10-03 — lakehouse consume results from the empty-volume run
 
 - `results/lakehouse-consume-e2e.md` now records the 2026-10-03 local-data-lakehouse run from empty
