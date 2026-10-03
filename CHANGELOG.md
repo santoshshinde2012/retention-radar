@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-10-03 — README rewrite; `make setup` works on a Mac without Homebrew's libomp
+
+- README rewritten: value statement, badges (CI, licence, Python), who it is for, the pipeline diagram, a
+  tested quick start, data sources and commands, results, docs map, how the lakehouse connects (with its
+  flow diagram), testing and CI, troubleshooting, contributing.
+- `scripts/fix_macos_libomp.sh`, now part of `make setup`: on macOS without `brew install libomp`, it
+  points the XGBoost and LightGBM wheels at scikit-learn's bundled `libomp` (venv-local, the same fix the
+  lakehouse's `radar_consume.sh` applies). Found while testing the quick start in a fresh clone, where
+  `make test`, `make infer` and `make use-cases` failed to load XGBoost. No-op on Linux.
+
 ## 2026-10-03 — one file-naming convention; link and naming checks
 
 - Renamed with `git mv`: `docs/USE_CASE.md` → `docs/use-case.md`, `results/WORKED_EXAMPLES.md` →

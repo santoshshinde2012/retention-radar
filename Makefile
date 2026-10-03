@@ -11,6 +11,7 @@ setup:
 	@$(PYTHON) -c 'import sys; sys.exit(0 if sys.version_info >= (3, 12) else "Python 3.12+ required, got " + sys.version.split()[0] + " — run: make setup PYTHON=python3.12")'
 	$(PYTHON) -m venv .venv
 	.venv/bin/pip install -r requirements.txt && .venv/bin/pip install -e . ruff
+	./scripts/fix_macos_libomp.sh .venv
 
 run:
 	CHURN_DATA_SOURCE=synthetic ./scripts/run_all.sh
