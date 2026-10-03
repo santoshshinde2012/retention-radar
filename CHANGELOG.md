@@ -9,6 +9,11 @@
   data is `snake_case`; Python follows PEP 8.
 - `scripts/check_docs.py` (`make docs-check`) checks the names and every relative Markdown link and
   anchor; `tests/test_file_naming.py` runs it in pytest and CI runs it as a step in the `test` job.
+- Diagrams: new [docs/diagrams.md](docs/diagrams.md) (the palette and rules shared with the lakehouse) and
+  `tests/test_mermaid_diagrams.py`. The architecture flow is redrawn in that palette as the pipeline
+  diagram (train → bundle → serve → surfaces), and
+  [docs/data/data-foundation-lakehouse.md](docs/data/data-foundation-lakehouse.md) gains the
+  lakehouse-to-radar flow.
 
 ## 2026-10-03 — sample customer renamed to `sub_santosh`; the worked example is a holdout case
 

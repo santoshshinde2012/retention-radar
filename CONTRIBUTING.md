@@ -77,6 +77,11 @@ One convention for the whole repo, checked by `make docs-check` (`scripts/check_
 Rename with `git mv` so history follows the file, then run `make docs-check`: it also fails on any
 relative link or `#anchor` in a tracked Markdown file that no longer resolves.
 
+## Diagrams
+
+Mermaid diagrams follow [docs/diagrams.md](docs/diagrams.md): the shared palette, GitHub-safe syntax,
+and a render check with mermaid-cli. `tests/test_mermaid_diagrams.py` checks every Mermaid block.
+
 ## Conventions
 
 - Open-source tools only in the core path. See [docs/guides/e2e-free-platforms.md](docs/guides/e2e-free-platforms.md).

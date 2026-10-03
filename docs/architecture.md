@@ -9,33 +9,54 @@ Optuna, SHAP, FastAPI, Streamlit.
 
 ## Flow
 
+Train once, then serve read-only from the committed bundle. Diagram rules: [diagrams.md](diagrams.md).
+
 ```mermaid
+%%{init: {"theme": "base", "flowchart": {"wrappingWidth": 360}, "themeVariables": {"primaryColor": "#CCFBF1", "primaryTextColor": "#0F172A", "primaryBorderColor": "#0F766E", "lineColor": "#64748B", "textColor": "#0F172A", "edgeLabelBackground": "#FFFFFF", "clusterBkg": "#FFFFFF", "clusterBorder": "#64748B", "titleColor": "#0F172A", "attributeBackgroundColorOdd": "#FFFFFF", "attributeBackgroundColorEven": "#F0FDFA", "relationColor": "#64748B", "relationLabelBackground": "#FFFFFF", "relationLabelColor": "#0F172A"}}}%%
 flowchart TB
-  subgraph offline ["Train (may write)"]
-    A["Generate renewals<br/>renewals_all.csv"] --> R["Route: dunning / cancel_flow / model"]
-    R --> B["renewals_t7.csv<br/>24 fields + churned"]
-    B --> C["Features: encode plan_tier"]
-    C --> D["Stratified split 60/20/20"]
-    D --> E["Ladder: Dummy, LogReg, RF, XGB, Optuna XGB, LightGBM, CatBoost"]
-    E --> F["Platt calibration + τ on validation"]
-    F --> G["models/ bundle + metrics.json"]
+  subgraph train ["1. Train: writes models/ or an artifact dir"]
+    direction LR
+    G["Generate or sync<br/>synthetic, or the lakehouse export"] --> I["Ingest + validate<br/>schema, ranges, label rate"]
+    I --> F["Features<br/>22 model columns"]
+    F --> T["Train ladder<br/>Dummy → XGBoost + Optuna"]
+    T --> E["Evaluate + calibrate<br/>AUC, PR-AUC, Brier, Platt, τ"]
   end
-
-  subgraph online ["Serve (read only)"]
-    G --> H["Validate record"]
-    H --> I["Score: raw + calibrated"]
-    I --> K["Band"]
-    I --> L["SHAP drivers"]
-    I --> P["Policy: no_action / holdout / playbook"]
-    P --> Q["Packet, action queue, API response"]
+  B["Model bundle<br/>models/ + metrics.json"]
+  subgraph serve ["2. Serve: read only"]
+    direction LR
+    V["Validate record"] --> S["Score<br/>raw + calibrated"]
+    S --> X["Explain<br/>SHAP drivers"]
+    X --> P["Policy<br/>no_action / holdout / playbook"]
   end
-
-  Q --> T["Lifecycle tool sends approved playbooks"]
-  T --> U["Action log"]
-  U --> V["Outcomes: lift vs holdout"]
+  subgraph out ["3. Surfaces: suggest, never send"]
+    direction LR
+    C["CLI packet + batch queue"]
+    A["FastAPI /v1/churn/*"]
+    U["Streamlit UI"]
+  end
+  L["Lifecycle tool<br/>(outside this repo)"]
+  O["Action log → outcomes<br/>lift vs holdout"]
+  train --> B
+  B --> serve
+  serve --> out
+  out -->|"approved playbooks"| L
+  L --> O
+  classDef storage fill:#DBEAFE,stroke:#1D4ED8,color:#0F172A,stroke-width:1.5px
+  classDef catalog fill:#FEF3C7,stroke:#B45309,color:#0F172A,stroke-width:1.5px
+  classDef compute fill:#ECFCCB,stroke:#4D7C0F,color:#0F172A,stroke-width:1.5px
+  classDef orchestration fill:#FCE7F3,stroke:#BE185D,color:#0F172A,stroke-width:1.5px
+  classDef graphlayer fill:#CCFBF1,stroke:#0F766E,color:#0F172A,stroke-width:1.5px
+  classDef consumer fill:#FFEDD5,stroke:#C2410C,color:#0F172A,stroke-width:1.5px
+  classDef data fill:#F1F5F9,stroke:#475569,color:#0F172A,stroke-width:1.5px
+  class G,I,F,T,E,V,S,X compute
+  class B storage
+  class P graphlayer
+  class C,A,U consumer
+  class L,O data
+  style L stroke-dasharray:5 5
 ```
 
-The service stops at the suggestion. A lifecycle or messaging tool runs the approved
+The service stops at the suggestion (dashed: outside this repo). A lifecycle or messaging tool runs the approved
 playbook; the service only records what was done (`action_log`) and later measures it
 (`outcomes`).
 

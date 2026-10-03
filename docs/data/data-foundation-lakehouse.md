@@ -5,6 +5,51 @@ The synthetic generator in this repo produces the T-7 renewal table directly.
 the same table the way a real team would: from raw billing and usage events, through
 bronze and silver, into a gold feature table as of each subscriber's T-7 date.
 
+## How the data flows
+
+The lakehouse builds and checks the export; this repo syncs it, validates it and scores it with the
+committed bundle (or retrains on it with `make run-lakehouse`).
+
+```mermaid
+%%{init: {"theme": "base", "flowchart": {"wrappingWidth": 360}, "themeVariables": {"primaryColor": "#CCFBF1", "primaryTextColor": "#0F172A", "primaryBorderColor": "#0F766E", "lineColor": "#64748B", "textColor": "#0F172A", "edgeLabelBackground": "#FFFFFF", "clusterBkg": "#FFFFFF", "clusterBorder": "#64748B", "titleColor": "#0F172A", "attributeBackgroundColorOdd": "#FFFFFF", "attributeBackgroundColorEven": "#F0FDFA", "relationColor": "#64748B", "relationLabelBackground": "#FFFFFF", "relationLabelColor": "#0F172A"}}}%%
+flowchart LR
+  subgraph lake ["local-data-lakehouse"]
+    EV["Bronze events<br/>billing + usage<br/>(make churn-sample)"]
+    SP["Spark 4.1.3 + Iceberg 1.12<br/>bronze → silver → gold<br/>(make churn-e2e)"]
+    CAT["Lakekeeper REST catalog<br/>+ RustFS object store"]
+    EXP["data/export/<br/>churn_user_features.csv<br/>hero_inference_record.json<br/>churn_renewals_audit.csv"]
+    CON["Export contract<br/>check_churn_export.py --strict"]
+  end
+  subgraph radar ["retention-radar"]
+    SYNC["Sync + ingest<br/>CHURN_DATA_SOURCE=lakehouse"]
+    MOD["Committed model bundle<br/>models/ (seed 42)"]
+    SC["Batch score<br/>ranked action queue"]
+    PK["Decision packet<br/>score, band, drivers, action"]
+  end
+  EV --> SP
+  SP -->|"commits Iceberg tables"| CAT
+  SP --> EXP
+  EXP --> CON
+  CON -->|"radar_consume.sh"| SYNC
+  SYNC --> SC
+  MOD --> SC
+  SC --> PK
+  classDef storage fill:#DBEAFE,stroke:#1D4ED8,color:#0F172A,stroke-width:1.5px
+  classDef catalog fill:#FEF3C7,stroke:#B45309,color:#0F172A,stroke-width:1.5px
+  classDef compute fill:#ECFCCB,stroke:#4D7C0F,color:#0F172A,stroke-width:1.5px
+  classDef orchestration fill:#FCE7F3,stroke:#BE185D,color:#0F172A,stroke-width:1.5px
+  classDef graphlayer fill:#CCFBF1,stroke:#0F766E,color:#0F172A,stroke-width:1.5px
+  classDef consumer fill:#FFEDD5,stroke:#C2410C,color:#0F172A,stroke-width:1.5px
+  classDef data fill:#F1F5F9,stroke:#475569,color:#0F172A,stroke-width:1.5px
+  class EV,EXP data
+  class SP compute
+  class CAT catalog
+  class CON graphlayer
+  class SYNC,SC compute
+  class MOD storage
+  class PK consumer
+```
+
 ## Required export (v2 contract)
 
 This repo reads two files from the lakehouse export directory:
