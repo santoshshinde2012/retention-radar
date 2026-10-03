@@ -12,8 +12,8 @@ from retention_radar.cli.train import main as train_main
 from retention_radar.data.generate import (
     arjun_profile,
     generate_renewals,
-    santosh_profile,
     model_table,
+    santosh_profile,
 )
 from retention_radar.data.ingest import validate_users
 from retention_radar.features.transform import prepare_xy

@@ -115,7 +115,7 @@ def test_risk_band_cutoffs():
 def test_streamlit_uses_active_hero_resolver():
     text = (Path(__file__).resolve().parents[1] / "app" / "streamlit_app.py").read_text(encoding="utf-8")
     assert "resolve_hero_json" in text
-    assert "santosh" not in text.lower()
+    assert "santosh.json" not in text.lower()  # the hero record comes from the resolver
 
 
 def test_risk_band_rejects_non_finite():

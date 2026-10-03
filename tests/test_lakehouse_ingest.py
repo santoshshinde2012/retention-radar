@@ -35,7 +35,7 @@ def test_resolve_prefers_external_when_present(tmp_path, monkeypatch):
     assert resolve_users_csv() == raw / "renewals_t7.csv"
     assert resolve_hero_json() == raw / "subscribers" / "santosh.json"
     with pytest.raises(ValueError, match="Unknown worked example"):
-        resolve_hero_json("santosh")
+        resolve_hero_json("nobody")
 
 
 def test_sync_lakehouse_exports(tmp_path, monkeypatch):

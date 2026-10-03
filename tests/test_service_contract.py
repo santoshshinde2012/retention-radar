@@ -174,7 +174,7 @@ def test_packet_dir_holds_unreadable_files_and_default_out_follows_user(tmp_path
     (d / "c_list.json").write_text("[1, 2]")
     packet_main(["--dir", str(d), "--out", str(tmp_path / "p.jsonl")])
     lines = [json.loads(x) for x in (tmp_path / "p.jsonl").read_text().splitlines()]
-    assert [p["decision"]["action"] for p in lines] == ["limit_reset", HOLD_ACTION, HOLD_ACTION]
+    assert [p["decision"]["action"] for p in lines] == ["holdout", HOLD_ACTION, HOLD_ACTION]
 
     monkeypatch.setattr(config, "ARTIFACTS_DIR", tmp_path)
     packet_main(["--json", str(d / "a_good.json")])
@@ -217,7 +217,7 @@ def test_api_same_contract_as_batch(client, santosh):
     many = client.post("/v1/churn/batch?log=false", content=body, headers={"content-type": "application/json"})
     assert one.status_code == 200 and many.status_code == 200, (one.text, many.text)
     assert many.json()["queue"][0]["p_cal"] == one.json()["p_cal"]
-    assert many.json()["queue"][0]["action"] == one.json()["action"] == "limit_reset"
+    assert many.json()["queue"][0]["action"] == one.json()["action"] == "holdout"
     assert [r["row_number"] for r in many.json()["rejected"]] == [2, 3, 4]
 
 

@@ -53,7 +53,7 @@ def test_batch_score_tiny_fixture(tmp_path, committed_models_ok):
 def test_action_log_append(tmp_path):
     log_path = tmp_path / "action_log.csv"
     packet = {
-        "user_id": "sub_santosh",
+        "user_id": "u-0000",
         "scoring": {"churn_probability_calibrated": 0.153, "risk_band": "medium"},
         "decision": {"action": "limit_reset", "auto_action": "none", "holdout": False},
     }
@@ -71,7 +71,7 @@ def test_action_log_append(tmp_path):
         rows = list(csv.DictReader(f))
     assert list(rows[0].keys()) == ACTION_LOG_COLUMNS
     assert len(rows) == 2
-    assert rows[0]["user_id"] == "sub_santosh" and rows[0]["action_suggested"] == "limit_reset"
+    assert rows[0]["user_id"] == "u-0000" and rows[0]["action_suggested"] == "limit_reset"
     assert rows[1]["holdout"] == "true" and rows[1]["would_have_sent"] == "limit_reset"
 
     template = config.PROJECT_ROOT / "configs" / "templates" / "action_log.csv"
@@ -95,8 +95,9 @@ def test_fastapi_score_santosh(committed_models_ok, tmp_path, monkeypatch):
     assert resp.status_code == 200, resp.text
     body = resp.json()
     assert body["auto_action"] == "none"
-    assert body["band"] == "medium" and body["action"] == "limit_reset"
-    assert body["expected_value_usd"] > 0 and body["holdout"] is False
+    # sub_santosh hashes into the 10% holdout: the limit reset is what he would have got.
+    assert body["band"] == "medium" and body["action"] == "holdout"
+    assert body["holdout"] is True and body["expected_value_usd"] is None
     assert body["model_version"] and body.get("shap_top") is None
 
     shap_body = client.post("/v1/churn/score?shap=true&log=false", json=payload).json()

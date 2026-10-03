@@ -12,7 +12,7 @@
     {
       "id": "santosh_capped_pro",
       "title": "Santosh: capped on Pro, first renewal since the cut",
-      "story": "Pro, 3 renewals paid, and this is his first renewal since the weekly cap was cut. 4 cap hits in 14 days, 68% of requests on the cheaper model, 2 active days this week against 15 in 28. The policy picks the limit reset over a discount: his problem is the cap, not the price.",
+      "story": "Pro, 3 renewals paid, and this is his first renewal since the weekly cap was cut. 4 cap hits in 14 days, 68% of requests on the cheaper model, 2 active days this week against 15 in 28. The policy would pick the limit reset over a discount (his problem is the cap, not the price), but `sub_santosh` hashes into the 10% holdout, so nothing is sent: he is part of the control group the limit reset is measured against.",
       "source": {
         "dataset": "data/raw/subscribers/santosh.json",
         "split": "worked example (scoring-time record, not in training)"
@@ -21,9 +21,10 @@
         "p_raw": 0.716523,
         "p_cal": 0.288047,
         "band": "medium",
-        "action": "limit_reset",
-        "holdout": false,
-        "expected_value_usd": 5.2
+        "action": "holdout",
+        "holdout": true,
+        "would_have_sent": "limit_reset",
+        "expected_value_usd": null
       },
       "top_drivers": [
         {
@@ -40,9 +41,9 @@
         }
       ],
       "executed": {
-        "executed_by": "lifecycle-tool",
-        "action_taken": "limit_reset",
-        "notes": "sent as suggested"
+        "executed_by": "none",
+        "action_taken": "holdout",
+        "notes": "holdout: nothing sent"
       },
       "record": {
         "user_id": "sub_santosh",
@@ -85,6 +86,7 @@
         "band": "low",
         "action": "no_action",
         "holdout": false,
+        "would_have_sent": null,
         "expected_value_usd": null
       },
       "top_drivers": [
@@ -148,6 +150,7 @@
         "band": "medium",
         "action": "cancel_flow_discount",
         "holdout": false,
+        "would_have_sent": "cancel_flow_discount",
         "expected_value_usd": 1.91
       },
       "top_drivers": [
@@ -211,6 +214,7 @@
         "band": "medium",
         "action": "pause_offer",
         "holdout": false,
+        "would_have_sent": "pause_offer",
         "expected_value_usd": 2.38
       },
       "top_drivers": [
@@ -274,6 +278,7 @@
         "band": "medium",
         "action": "limit_reset",
         "holdout": false,
+        "would_have_sent": "limit_reset",
         "expected_value_usd": 4.26
       },
       "top_drivers": [
@@ -337,6 +342,7 @@
         "band": "low",
         "action": "no_action",
         "holdout": false,
+        "would_have_sent": null,
         "expected_value_usd": null
       },
       "top_drivers": [
@@ -400,6 +406,7 @@
         "band": "medium",
         "action": "holdout",
         "holdout": true,
+        "would_have_sent": "limit_reset",
         "expected_value_usd": null
       },
       "top_drivers": [
@@ -463,6 +470,7 @@
         "band": "medium",
         "action": "personal_email",
         "holdout": false,
+        "would_have_sent": "personal_email",
         "expected_value_usd": 33.42
       },
       "top_drivers": [
@@ -645,8 +653,8 @@
     "invalid_rows": 4,
     "expected_actions": {
       "cancel_flow_discount": 22,
-      "holdout": 5,
-      "limit_reset": 36,
+      "holdout": 6,
+      "limit_reset": 35,
       "no_action": 338,
       "pause_offer": 6,
       "personal_email": 1

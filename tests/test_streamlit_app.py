@@ -28,5 +28,5 @@ def test_streamlit_app_scores_santosh_without_auto_action(committed_bundle):
     ]
     text = " ".join(m.value for m in at.markdown) + " ".join(c.value for c in at.caption)
     assert "Auto action: `none`" in text
-    assert "**Risk band:** `medium`" in text  # Santosh preset (seed 42) → medium / limit_reset
-    assert "**Action:** `limit_reset`" in text
+    assert "**Risk band:** `medium`" in text  # Santosh preset (seed 42) → medium / holdout
+    assert "**Action:** `holdout`" in text
