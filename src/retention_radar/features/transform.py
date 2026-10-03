@@ -8,7 +8,7 @@ from retention_radar import config
 
 
 def encode_plan_tier(df: pd.DataFrame) -> pd.DataFrame:
-    """Map plan_tier string → ordinal plan_tier_code (free=0 … enterprise=3)."""
+    """Map plan_tier string → ordinal plan_tier_code (pro=0, pro_plus=1, ultra=2); unknown tiers raise."""
     out = df.copy()
     unknown = set(out["plan_tier"].unique()) - set(config.PLAN_TIER_MAP)
     if unknown:
