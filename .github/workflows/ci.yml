@@ -17,10 +17,10 @@ jobs:
       # Frozen seed-42 bundle for canary (snapshotted before smoke retrain)
       RETENTION_RADAR_CANARY_DIR: ${{ github.workspace }}/.ci_seed42_fixtures
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up Python 3.12
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip
@@ -68,10 +68,10 @@ jobs:
     # lakehouse gold E2E vs results/lakehouse_e2e_summary.json, isolation check.
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up Python 3.12
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip
