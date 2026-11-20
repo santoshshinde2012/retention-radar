@@ -5,6 +5,7 @@
 [![CI](https://github.com/santoshshinde2012/retention-radar/actions/workflows/ci.yml/badge.svg)](https://github.com/santoshshinde2012/retention-radar/actions/workflows/ci.yml)
 [![Licence: MIT](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)](runtime.txt)
+[![Buy Me a Coffee](https://img.shields.io/badge/buymeacoffee-black?style=for-the-badge&logo=buymeacoffee&logoColor=white)](https://buymeacoffee.com/santoshshin)
 
 ## What it is
 
